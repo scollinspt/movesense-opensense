@@ -2,6 +2,18 @@
 
 Maintain this as a chronological record of completed work, evidence, decisions, and blockers. Planned work belongs in the workplan; this log records what actually happened.
 
+## 2026-10-01
+
+### Completed
+
+- Confirmed that SimTK approved and published `Movesense-OpenSense Integration` at `https://simtk.org/projects/movesense2os`.
+- Requested association with the SimTK OpenSim community through the project administration page.
+- Selected Apache-2.0 for project-authored software and documentation, aligned with OpenSim's license and with an explicit patent grant for reusable technical tooling.
+
+### Pending
+
+- The OpenSim community association is awaiting community administrator approval.
+
 ## 2026-09-28
 
 ### Completed
@@ -24,7 +36,5 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
 
 ### Open work
 
-- Monitor the SimTK administrator decision and, after approval, associate the project with the OpenSim community.
 - Inventory available Movesense hardware and firmware.
 - Confirm the initial acquisition route and capture the first non-human bench recording.
-- Select a repository license before the first public release.
