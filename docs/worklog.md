@@ -2,6 +2,22 @@
 
 Maintain this as a chronological record of completed work, evidence, decisions, and blockers. Planned work belongs in the workplan; this log records what actually happened.
 
+## 2026-10-02
+
+### Completed
+
+- Confirmed that the SimTK project is associated with the OpenSim community.
+- Completed the first part of the hardware inventory by recording the hardware identifiers and Bluetooth addresses for ten Movesense devices in a governed inventory outside Git.
+- Documented the planned single-sensor bench acquisition using the official GATT SensorData Protocol Python client with Bleak.
+
+### Remaining Milestone 1 work
+
+- Read and record firmware, hardware, and application information from each device.
+- Record batteries, attachment accessories, Flash capability, receiver details, and acquisition software versions.
+- Test one sensor with its existing firmware and capture the first non-human bench recording.
+
+See [acquisition-plan.md](acquisition-plan.md) for the planned first acquisition.
+
 ## 2026-10-01
 
 ### Completed
@@ -9,10 +25,6 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
 - Confirmed that SimTK approved and published `Movesense-OpenSense Integration` at `https://simtk.org/projects/movesense2os`.
 - Requested association with the SimTK OpenSim community through the project administration page.
 - Selected Apache-2.0 for project-authored software and documentation, aligned with OpenSim's license and with an explicit patent grant for reusable technical tooling.
-
-### Pending
-
-- The OpenSim community association is awaiting community administrator approval.
 
 ## 2026-09-28
 
