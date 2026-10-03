@@ -2,6 +2,19 @@
 
 Maintain this as a chronological record of completed work, evidence, decisions, and blockers. Planned work belongs in the workplan; this log records what actually happened.
 
+## 2026-10-03
+
+### Decisions
+
+- Revised the development sequence so each new sensor count, task, placement, or processing claim is tested non-human before corresponding human feasibility is considered.
+- Defined the sensor-count progression as one sensor, two sensors, and then staged 3-, 5-, and 10-sensor configurations.
+- Separated human feasibility from measurement validity: any human activity requires a documented institutional governance determination and applicable consent, privacy, supervision, and data plans.
+- Split the public HMS Lab sequence into acquisition, multi-sensor scaling, orientation validation, OpenSense interoperability, and OpenCap comparison projects.
+
+### Current next step
+
+- Complete HMS-PROJ-001 inventory work and the first non-human one-sensor bench recording. Do not begin human feasibility until the bench criteria and governance gate are satisfied.
+
 ## 2026-10-02
 
 ### Completed
