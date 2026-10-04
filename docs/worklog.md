@@ -2,6 +2,32 @@
 
 Maintain this as a chronological record of completed work, evidence, decisions, and blockers. Planned work belongs in the workplan; this log records what actually happened.
 
+## 2026-10-04
+
+### Decisions
+
+- Selected a passive, manually operated three-axis gimbal with independent optical encoders as the leading controlled-motion fixture for HMS-PROJ-001 preparation.
+- Reserved a bicycle crank for use as a possible later drive mechanism rather than treating it as a multidimensional reference fixture.
+- Identified an encoded spatial linkage as the preferred later fixture for multisensor, multibody, translational-acceleration, and relative-orientation work.
+- Chose a command-line acquisition workflow on macOS as the first software target. A future student GUI should call the same acquisition and processing services rather than implement a separate data path.
+- Kept the project boundaries explicit: HMS-PROJ-001 establishes one-sensor raw acquisition and integrity; orientation estimation belongs to HMS-PROJ-003; OpenSense and custom OpenSim model interoperability belong to HMS-PROJ-004.
+- Allowed synthetic orientation and custom-model tests to de-risk later architecture without treating them as evidence that the corresponding sensor-processing milestones have been completed.
+
+### Technical findings
+
+- Confirmed that the local OpenSim 4.6 Python SDK loads under Python 3.11 and exposes `IMUPlacer`, `IMUInverseKinematicsTool`, and `TimeSeriesTableQuaternion`.
+- Confirmed that OpenSense can use a custom OpenSim model and quaternion orientation files, provided orientations have already been fused and synchronized.
+- Defined the initial custom-model concept as three nested rotational bodies representing the gimbal's yaw, pitch, and roll axes, with an IMU frame fixed to the sensor platform.
+
+### Planned fixture
+
+- Mount the Movesense sensor near the common center of the three rotational axes to isolate orientation behavior and reduce translational acceleration.
+- Provide mechanical zero references, angle index marks, hard stops, repeatable static positions, and a documented sensor-to-fixture axis alignment.
+- Prefer optical encoders over magnetic encoders near the Movesense magnetometer.
+- Record all three encoder channels through one timestamping controller while preserving encoder-controller, host-monotonic, and Movesense sensor-native timing as distinct clocks.
+
+See [passive-gimbal-build-guide.md](passive-gimbal-build-guide.md) for the preliminary build specification. Component specifications, prices, and availability must be verified before procurement.
+
 ## 2026-10-03
 
 ### Decisions

@@ -17,8 +17,10 @@ Establish what the available sensors and acquisition path actually provide befor
 5. Document the exact source schema, units, sample-rate configuration, sensor-native timing or counters, packet sequence information, and host receipt timing available from that route.
 6. Add a synthetic or explicitly redistributable fixture representing the verified schema.
 7. Implement one command that inspects a recording and reports sample counts, timing continuity, and missing or malformed records.
-8. Obtain and record the institutional governance determination required before any human activity.
-9. If permitted, complete one simple one-sensor human feasibility session to assess attachment, tolerability, workflow, recording continuity, and data quality without making validity or clinical claims.
+8. Design and build a passive three-axis gimbal that can provide repeatable non-human poses and prescribed manual rotations. Treat its encoder output as reference-fixture data to be characterized, not as validated ground truth by assumption.
+9. Record all encoder channels through one controller with a shared controller timestamp, and preserve that clock separately from Movesense sensor-native and host receipt timing.
+10. Obtain and record the institutional governance determination required before any human activity.
+11. If permitted, complete one simple one-sensor human feasibility session to assess attachment, tolerability, workflow, recording continuity, and data quality without making validity or clinical claims.
 
 ### Exit criteria
 
@@ -28,6 +30,7 @@ Establish what the available sensors and acquisition path actually provide befor
 - The raw data contract distinguishes sensor-native timing from host receipt timing.
 - The public test suite can inspect a redistributable fixture without governed-storage access.
 - Unknown fields, timing limitations, and open acquisition questions are recorded explicitly.
+- The passive fixture can hold repeatable poses and record encoder observations, but no orientation-estimation validity claim is made in this milestone.
 - The governance status of human feasibility work is explicit.
 - If a human session is permitted and justified, its workflow and data-quality findings are recorded separately from measurement-validity claims.
 
@@ -44,11 +47,11 @@ Simultaneous BLE subscription is not evidence of synchronized sensing. Configura
 
 ## Milestone 3: Calibration and orientation estimation
 
-Select a maintained, license-compatible sensor-fusion implementation; document initialization, magnetic-field handling, quaternion conventions, and coordinate frames; then validate static poses and prescribed rotations. Repeat the non-human-before-human progression for one sensor, two sensors, and justified higher sensor counts rather than generalizing from a single configuration.
+Select a maintained, license-compatible sensor-fusion implementation; document initialization, magnetic-field handling, quaternion conventions, and coordinate frames; then compare static poses and prescribed rotations against the characterized passive-gimbal encoder record. Repeat the non-human-before-human progression for one sensor, two sensors, and justified higher sensor counts rather than generalizing from a single configuration.
 
 ## Milestone 4: Minimal OpenSense integration
 
-Round-trip synthetic trajectories first, then map two or three logical sensors to model IMU frames in a non-human acceptance run. Export normalized quaternions in OpenSense-compatible `.sto` format, run `IMUPlacer` and `IMUInverseKinematicsTool`, and retain orientation errors and reproducibility records. A bounded human OpenSense feasibility session may follow only after governance review and successful non-human acceptance.
+Round-trip synthetic trajectories first, beginning with a custom three-body model matching the passive gimbal's yaw, pitch, and roll axes. Then map two or three logical sensors to model IMU frames in a non-human acceptance run. Export normalized quaternions in OpenSense-compatible `.sto` format, run `IMUPlacer` and `IMUInverseKinematicsTool`, and retain orientation errors and reproducibility records. A bounded human OpenSense feasibility session may follow only after governance review and successful non-human acceptance.
 
 ## Milestone 5: External and task-specific validation
 
