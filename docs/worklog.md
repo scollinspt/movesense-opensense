@@ -2,11 +2,30 @@
 
 Maintain this as a chronological record of completed work, evidence, decisions, and blockers. Planned work belongs in the workplan; this log records what actually happened.
 
+## 2026-10-06
+
+### Decisions
+
+- Replaced the passive three-axis gimbal as the preferred teaching apparatus with a workshop-buildable, foot-fixed lower-extremity mechanism.
+- Defined the apparatus as a sagittal-plane wooden linkage with a fixed foot, friction-adjustable ankle and knee hinges, and foot, shank, and thigh sensor platforms.
+- Chose to attach educational foot, leg, and thigh bones to the wooden segments as visible anatomical overlays. The wooden linkage controls the motion; the bone-model joints do not serve as precision bearings.
+- Reframed the apparatus around end-to-end interoperability and instruction: Movesense acquisition, orientation processing, OpenSense inverse kinematics, and visualization in a matching OpenSim model.
+- Retained the passive-gimbal design only as optional future orientation-validation work. It is not required for HMS-PROJ-001 or for the first interoperability demonstration.
+
+### Scope
+
+- The first model will be a planar chain: `ground -> foot -> shank -> thigh`.
+- The foot will be fixed to the base, while the ankle and knee will use parallel hinge axes and friction knobs so static poses can be held.
+- The physical and OpenSim models will be deliberately simplified and matched to each other. They are not intended to reproduce full lower-extremity anatomy, validate Movesense hardware, or support clinical claims.
+- Approximate mechanical angle references may be used to detect mapping, sign, calibration, and plausibility errors without being represented as metrological ground truth.
+
+See [lower-extremity-rig-design-brief.md](lower-extremity-rig-design-brief.md) for the sourcing and schematic-generation brief.
+
 ## 2026-10-04
 
 ### Decisions
 
-- Selected a passive, manually operated three-axis gimbal with independent optical encoders as the leading controlled-motion fixture for HMS-PROJ-001 preparation.
+- Initially selected a passive, manually operated three-axis gimbal with independent optical encoders as the leading controlled-motion fixture for HMS-PROJ-001 preparation. This was superseded on 2026-10-06 by the simpler lower-extremity teaching apparatus.
 - Reserved a bicycle crank for use as a possible later drive mechanism rather than treating it as a multidimensional reference fixture.
 - Identified an encoded spatial linkage as the preferred later fixture for multisensor, multibody, translational-acceleration, and relative-orientation work.
 - Chose a command-line acquisition workflow on macOS as the first software target. A future student GUI should call the same acquisition and processing services rather than implement a separate data path.

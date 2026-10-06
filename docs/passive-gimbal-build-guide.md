@@ -1,5 +1,7 @@
 # Passive Three-Axis Gimbal Build Guide
 
+> **Status:** Optional future validation fixture. This design was superseded as the preferred teaching apparatus by the simpler [foot-fixed lower-extremity rig](lower-extremity-rig-design-brief.md). It is not a requirement for HMS-PROJ-001 or for the first OpenSense interoperability demonstration.
+
 ## Purpose
 
 Build a manually operated fixture that places one Movesense sensor in repeatable static orientations and prescribed three-axis rotations while independently measuring each mechanical axis. The fixture supports acquisition development in HMS-PROJ-001 and later orientation evaluation in HMS-PROJ-003.

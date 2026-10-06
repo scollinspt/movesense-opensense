@@ -6,5 +6,6 @@ This directory will define the architecture, data contracts, synchronization, ca
 
 - [Workplan](workplan.md)
 - [Worklog](worklog.md)
-- [Passive gimbal build guide](passive-gimbal-build-guide.md)
+- [Lower-extremity rig design brief](lower-extremity-rig-design-brief.md)
+- [Passive gimbal build guide (optional future fixture)](passive-gimbal-build-guide.md)
 - [Governance boundaries](governance-boundaries.md)
