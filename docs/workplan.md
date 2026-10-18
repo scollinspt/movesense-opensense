@@ -4,7 +4,36 @@
 
 Build an open, reproducible pipeline that acquires Movesense IMU measurements and produces synchronized, convention-documented orientation data suitable for OpenSense/OpenSim. Interoperability milestones do not establish scientific or clinical validity.
 
+## Current state and next execution order
+
+Completed engineering milestones:
+
+1. Live macOS BLE/GSP acquisition of governed IMU9 recordings.
+2. Checksum, schema, timing-continuity, calibration, and movement-interval
+   inspection in the Processing Studio.
+3. Constrained one-sensor forearm pronation/supination and elbow
+   flexion/extension estimators.
+4. Side-aware quaternion STO generation, project-owned one-DOF OpenSim models,
+   OpenSense inverse kinematics, and numerical round-trip validation.
+5. Synchronized in-canvas visualization of the source OpenSense orientation and
+   OpenSim IK motion.
+
+Next execution order:
+
+1. Run `upper-limb-next-sessions-v1` Session 1 to characterize one-sensor
+   repeatability and placement sensitivity.
+2. Extend acquisition to two concurrent sensors and complete the rigid-fixture
+   timing session.
+3. Add explicit inter-sensor synchronization diagnostics and acceptance output.
+4. Complete isolated two-sensor elbow and forearm sessions.
+5. Replace the one-axis estimator with documented segment-orientation and
+   relative-joint processing before combined elbow/forearm motion.
+6. Defer shoulder and larger sensor counts until the two-sensor path is
+   measured and reproducible.
+
 ## Milestone 1: Inventory and single-sensor feasibility
+
+**Status: engineering feasibility achieved; repeatability work remains.**
 
 Establish what the available sensors and acquisition path actually provide before designing downstream processing.
 
@@ -21,6 +50,30 @@ Establish what the available sensors and acquisition path actually provide befor
 9. Obtain and record the institutional governance determination required before any human activity.
 10. If permitted, complete one simple one-sensor human feasibility session to assess attachment, tolerability, workflow, recording continuity, and data quality without making validity or clinical claims.
 
+### Constrained single-wrist movement progression
+
+Use the versioned `single-wrist-feasibility-v1` mounting and protocol before
+adding multi-joint or shoulder motion. Require explicit confirmation of the
+anatomical starting position and control of the trunk and non-target joints
+before every recording.
+
+1. Capture a static anatomical-position reference.
+2. Capture isolated forearm supination/pronation as one DOF while the trunk,
+   shoulder, elbow, and wrist remain in their defined positions.
+3. Capture isolated elbow flexion/extension as one sagittal-plane DOF while the
+   trunk and shoulder remain fixed and forearm rotation is held constant.
+4. Combine elbow flexion/extension with forearm rotation as two DOFs only after
+   the isolated stages pass. Treat forearm rotation as occurring in a reference
+   frame that changes with elbow position.
+5. Defer shoulder movement until the constrained elbow-plus-forearm problem is
+   understood. Then progress from isolated shoulder motion (three DOFs), to
+   shoulder plus elbow, and finally shoulder plus elbow plus forearm.
+
+This progression controls degrees of freedom for development; it does not make
+all joint coordinates observable from one distal sensor. The combined
+shoulder-elbow-forearm chain will require additional segment sensors and/or
+validated model constraints.
+
 ### Exit criteria
 
 - Hardware and firmware inventory is complete for the sensors intended for the pilot.
@@ -32,25 +85,61 @@ Establish what the available sensors and acquisition path actually provide befor
 - The bench fixture can hold repeatable approximate poses, but no orientation-estimation validity claim is made in this milestone.
 - The governance status of human feasibility work is explicit.
 - If a human session is permitted and justified, its workflow and data-quality findings are recorded separately from measurement-validity claims.
+- Isolated forearm and isolated elbow recordings are completed before any
+  combined two-DOF recording.
+- Starting-pose and proximal-control confirmations are retained in each
+  recording manifest.
 
 ## Milestone 2: Multi-sensor timing and scaling
 
-1. Capture a mechanically shared event with two sensors in a non-human setup.
-2. Estimate clock offset and drift from sensor-native timing; quantify packet loss, jitter, start and stop behavior, and residual alignment error.
-3. Repeat non-human load tests with 3, 5, and 10 sensors at the intended stream and sample rate.
-4. Make sensor count a versioned configuration option rather than a code change.
-5. After a documented governance determination, and only if permitted, complete simple human feasibility sessions first with two sensors and then with 3, 5, and 10 sensors.
-6. Advance only after the corresponding non-human stage and preceding human stage meet predefined stop/go criteria.
+**Status: next major implementation milestone.**
+
+1. Generalize the acquisition session from one connection to a versioned list of
+   sensor connections without duplicating recording logic.
+2. Capture mechanically shared events with two sensors on one rigid non-human
+   fixture using Session 2 of `upper-limb-next-sessions-v1`.
+3. Estimate clock offset and drift from sensor-native timing; quantify packet
+   loss, jitter, start and stop behavior, and residual alignment error.
+4. Add a synchronized two-sensor recording manifest and Processing Studio
+   diagnostics before interpreting joint motion.
+5. Complete isolated two-sensor elbow and forearm researcher self-experiments,
+   followed by the defined combined-motion session.
+6. Repeat non-human load tests with 3, 5, and 10 sensors only after the
+   two-sensor path meets its timing and reliability criteria.
+7. Make sensor count a versioned configuration option rather than a code
+   change.
 
 Simultaneous BLE subscription is not evidence of synchronized sensing. Configuration support is not evidence that a sensor count performs acceptably.
 
 ## Milestone 3: Calibration and orientation estimation
 
-Select a maintained, license-compatible sensor-fusion implementation; document initialization, magnetic-field handling, quaternion conventions, and coordinate frames; then evaluate static poses and prescribed rotations using fixtures appropriate to the claim being tested. Repeat the non-human-before-human progression for one sensor, two sensors, and justified higher sensor counts rather than generalizing from a single configuration. An encoded gimbal may be considered later if quantitative orientation validation requires it.
+**Status: constrained one-DOF path implemented; general orientation remains.**
+
+The current gyroscope-only integrator is intentionally limited to isolated
+one-axis trials. Select a maintained, license-compatible sensor-fusion
+implementation; document initialization, magnetic-field handling, quaternion
+conventions, and sensor-to-model coordinate frames; then evaluate static poses
+and prescribed rotations using fixtures appropriate to the claim being tested.
+Two-sensor segment processing must calculate relative orientation rather than
+assigning a distal sensor angle directly to a joint coordinate. An encoded
+gimbal may be considered later if quantitative orientation validation requires
+it.
 
 ## Milestone 4: Minimal OpenSense integration
 
-Round-trip synthetic trajectories first, beginning with a custom foot-fixed model matching the wooden lower-extremity teaching apparatus. The initial physical and modeled chain is `ground -> foot -> shank -> thigh`, with pin-joint ankle and knee coordinates. Then map the foot, shank, and thigh sensors to model IMU frames in a non-human acceptance run. Export normalized quaternions in OpenSense-compatible `.sto` format, run `IMUPlacer` and `IMUInverseKinematicsTool`, and retain orientation errors and reproducibility records. A bounded human OpenSense feasibility session may follow only after governance review and successful non-human acceptance.
+**Status: upper-limb one-DOF interoperability achieved; multi-segment work remains.**
+
+The project now exports normalized neutral-referenced quaternions, builds
+side-aware fixed-humerus forearm and elbow models, runs
+`IMUInverseKinematicsTool`, retains orientation errors, and validates the
+coordinate trajectory against the source constrained angle. The Processing
+Studio visualizes the OpenSense orientation and OpenSim IK result together.
+
+Next, add synchronized humerus and forearm IMU frames, a reproducible static
+calibration transform, and relative segment orientation. Preserve the existing
+one-DOF path as a regression fixture rather than stretching it to combined
+motion. The custom lower-extremity teaching-apparatus path remains a later,
+separate multi-segment application.
 
 ## Milestone 5: External and task-specific validation
 
@@ -58,7 +147,14 @@ Compare bounded outputs against an appropriate synchronized reference, beginning
 
 ## Governing escalation rule
 
-Every new sensor count, task, placement, or processing claim is demonstrated non-human before a corresponding human feasibility stage is considered. The planned sensor-count progression is one sensor, two sensors, and then 3, 5, and 10 sensors. Human activity requires a documented institutional governance determination and applicable consent, privacy, supervision, and data plans. Human feasibility evaluates workflow and bounded method behavior; it does not establish validity, reliability, clinical utility, or an operational service.
+Every new sensor count, task, placement, or processing claim is first exercised
+on a non-human fixture where that is technically meaningful. Researcher
+self-experimentation is stored in the private governed repository and used for
+engineering development without making participant-study or clinical claims.
+Any activity involving someone other than the researcher/developer requires a
+separate study protocol, governance determination, consent process, privacy
+plan, and approved data storage. The planned sensor-count progression is one
+sensor, two sensors, and then 3, 5, and 10 sensors.
 
 ## Cross-cutting requirements
 

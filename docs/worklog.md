@@ -2,6 +2,91 @@
 
 Maintain this as a chronological record of completed work, evidence, decisions, and blockers. Planned work belongs in the workplan; this log records what actually happened.
 
+## 2026-10-18
+
+### Completed
+
+- Retained the later anatomical-neutral isolated forearm
+  pronation/supination recording and removed the earlier rejected trial from
+  governed storage.
+- Verified the retained recording's SHA-256 checksum, 2,488-row sample count,
+  sensor timestamp continuity, and absence of malformed rows or gaps over 30
+  milliseconds.
+- Added the Movesense Processing Studio canvas for governed-recording
+  integrity, timing, interactive raw-signal visualization, shared
+  drag-to-select intervals, axis controls, calibration diagnostics, and
+  movement interval annotation. The canvas reads recording data in place and
+  persists only private selection state.
+- Confirmed that the retained trial's sensor X axis carries 99.43 percent of
+  bias-corrected gyroscope energy during the annotated movement interval.
+- Added a constrained one-axis gyroscope integration and assigned the empirical
+  mapping from sensor-positive X to pronation-positive rotation based on the
+  confirmed first intentional movement.
+- Verified that OpenSim 4.6's bundled Arm26 model has only shoulder-elevation
+  and elbow-flexion coordinates and cannot represent pronation/supination.
+- Added a project-owned fixed-humerus, one-DOF right-forearm model with a
+  `pro_sup_r` coordinate and `forearm_r_imu` frame.
+- Generated 2,206 neutral-referenced quaternion samples, exported an
+  OpenSense-compatible `.sto`, and ran IMU inverse kinematics across 43.934
+  seconds.
+- Verified that the OpenSense `pro_sup_r` output reproduces the source
+  constrained angle with 0.000794 degrees maximum absolute error and 0.000029
+  degrees RMS error.
+- Extended the Processing Studio to run or re-run the pipeline using private
+  host-specific OpenSim runtime paths and to expose checksum-verified
+  orientation, model, inverse-kinematics, and processing-manifest artifacts.
+- Added visible asymmetric geometry to the one-DOF model: a fixed upper-arm
+  segment, rotating forearm segment, and offset dorsal marker. This makes
+  longitudinal pronation/supination visible in the OpenSim GUI without changing
+  the validated coordinate solution.
+- Generalized sign mapping and the constrained exporter by movement protocol.
+  Elbow trials now offer flexion/extension, map the wrist sensor's dominant
+  gyroscope axis into a model-Z elbow hinge, and produce a side-aware
+  `elbow_flex_l` or `elbow_flex_r` OpenSim coordinate.
+- Generated and validated the left-wrist elbow trial across 1,762 samples and
+  35.083 seconds. OpenSense reproduced the source constrained elbow angle with
+  0.000770 degrees maximum absolute error and 0.000037 degrees RMS error.
+- Corrected elbow model provenance to the left side, including
+  `forearm_l_imu`, `elbow_flex_l`, and `left_elbow_1dof.osim`, and removed the
+  superseded right-side model.
+- Added a synchronized Processing Studio motion viewer that animates the
+  Movesense-derived OpenSense quaternion beside the OpenSim inverse-kinematics
+  coordinate, with scrubbing, playback speed, and per-frame angular error.
+- Added `upper-limb-next-sessions-v1`, defining one-sensor repeatability,
+  two-sensor rigid-fixture timing, isolated two-sensor upper-limb motion, and
+  combined-motion sessions with explicit advancement checks.
+- Added the Movesense Studio Hub canvas and documented the stable Copilot Chat
+  launch phrases for the Acquisition, Processing, and Firmware Update studios.
+- Updated the development plan to preserve the validated one-DOF path as a
+  regression baseline while prioritizing concurrent two-sensor acquisition,
+  synchronization measurement, segment orientation, and relative joint motion.
+
+### Technical findings
+
+- The retained recording spans 49.552 seconds of sensor time at an effective
+  rate of approximately 50.190 Hz, despite requesting `/Meas/IMU9/52`.
+- Repeated host receipt timestamps occur in four-sample BLE packet batches and
+  must not be treated as repeated sensor timestamps.
+- General multi-axis orientation fusion remains unimplemented pending
+  calibration-interval review, magnetic-field interpretation, and explicit
+  sensor-to-model frame mapping; the constrained one-DOF OpenSense export is
+  implemented and validated.
+
+### Decisions
+
+- Standardized the supplied-strap wrist mounting as dorsal with the logo face
+  outward and the wordmark axis approximately proximal-distal. The `M` end is
+  distal on the right wrist; the final `E` end is distal on the left wrist.
+- Required explicit confirmation of anatomical starting position and control of
+  the trunk, shoulder, and non-target joints before recording.
+- Defined a staged movement progression: static reference, isolated forearm
+  rotation, isolated elbow flexion/extension, combined elbow plus forearm,
+  isolated shoulder, shoulder plus elbow, and finally shoulder plus elbow plus
+  forearm.
+- Kept the interpretation boundary explicit: constraints permit bounded
+  one-DOF and two-DOF development, but one wrist sensor cannot uniquely identify
+  the full shoulder-elbow-forearm joint state.
+
 ## 2026-10-06
 
 ### Decisions

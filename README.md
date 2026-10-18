@@ -4,11 +4,138 @@ An open, reproducible pipeline for acquiring Movesense IMU data and preparing sy
 
 The project is in its initial interoperability phase. It does not yet establish scientific or clinical validity.
 
+## Open the canvas studios
+
+In Copilot Chat, enter:
+
+> **Open Movesense Studio Hub**
+
+The hub explains which studio to use and provides copyable launch phrases for
+the Acquisition, Processing, and Firmware Update studios. Canvas pages cannot
+directly control the VS Code host, so the copied phrase is pasted back into
+Copilot Chat to open the selected studio.
+
+The direct launch phrases are:
+
+- **Open Movesense Acquisition Studio**
+- **Open Movesense Processing Studio**
+- **Open Movesense Firmware Update Studio**
+
+See [`configs/protocols/upper-limb-next-sessions-v1.md`](configs/protocols/upper-limb-next-sessions-v1.md)
+before the next collection session.
+
 ## Data boundary
 
-Human-subject data, participant identifiers, consent records, and other restricted material must not be committed to this repository. Set `MOVESENSE_DATA_ROOT` to an approved governed-storage location.
+Recordings and generated artifacts must not be committed to this public
+repository. Researcher self-recordings used for engineering development are
+stored in the separate private governed-storage repository. Human-subject data,
+participant identifiers, consent records, and other restricted material require
+a separately approved storage and governance plan. Set `MOVESENSE_DATA_ROOT` to
+the applicable governed-storage location.
 
 See `docs/governance-boundaries.md` for the complete boundary.
+
+## Live acquisition prototype
+
+The Movesense Acquisition Studio project canvas can scan for a nearby Movesense
+sensor, subscribe to `/Meas/IMU9/52` over the official GATT SensorData Protocol,
+and plot acceleration, angular velocity, and magnetic-field samples in real time.
+
+Create the development environment before opening the canvas:
+
+```console
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+```
+
+On macOS, enable Bluetooth and grant VS Code or Python access under **System
+Settings > Privacy & Security > Bluetooth**. Wake the sensor, select **Scan** in
+the canvas, choose the discovered device, and select **Connect**.
+
+The dashboard provides start/stop recording controls when a sensor is connected.
+Sensor-native timestamps and host receipt times remain separate in every decoded
+sample. Recordings are written under the configured governed data root:
+
+```text
+MOVESENSE_DATA_ROOT/
+├── raw/YYYY-MM-DD/<recording-id>/imu9.csv
+└── manifests/YYYY-MM-DD/<recording-id>.json
+```
+
+The raw CSV preserves sensor-native timestamps, host monotonic receipt times,
+host wall-clock receipt times, and IMU9 values. The manifest records the
+requested resource and sample rate, movement protocol, placement, sensor
+orientation, units, timestamp semantics, sample count, software environment,
+and SHA-256 checksum. A raw recording is acquisition input; OpenSense requires
+later synchronization, calibrated orientation estimation, coordinate
+conversion, and quaternion `.sto` export.
+
+## Governed recording inspection
+
+The Movesense Processing Studio project canvas reads a selected recording
+directly from its governed-storage repository. It verifies the raw CSV checksum
+and sample count, reports sensor-time continuity and effective rate, displays
+acceleration, angular-velocity, and magnetic-field traces, supports shared
+drag-to-select intervals and axis visibility controls, calculates calibration
+interval diagnostics, records private calibration and movement annotations, and
+builds a bias-corrected constrained one-DOF forearm or elbow angle after the
+user assigns the anatomical sign.
+
+The studio stores only its selected recording ID, governed-storage root, and
+calibration and annotation state in private Copilot extension data. It does not
+copy raw recordings into this repository.
+
+For a constrained forearm or elbow trial, the studio can run a bias-corrected
+one-axis estimator, generate normalized neutral-referenced quaternions, build a
+side-aware one-DOF OpenSim model, export an OpenSense quaternion `.sto`, run
+IMU inverse kinematics, and checksum and validate the result. A synchronized
+canvas viewer animates the source OpenSense quaternion beside the OpenSim IK
+coordinate, with playback controls and per-frame angular error. Generated
+artifacts remain under the governed root:
+
+```text
+derived/YYYY-MM-DD/<recording-id>/opensense-one-dof/
+├── forearm_orientations.sto
+├── right_forearm_1dof.osim
+├── forearm_ik.mot
+├── forearm_ik.mot_orientationErrors.sto
+└── processing-manifest.json
+```
+
+This path requires an installed OpenSim 4.6 Python SDK and a compatible Python
+3.11 interpreter. Their host-specific paths are saved only in private extension
+state. The OpenSim source repository is not required. The bundled Arm26 model
+is not used because its two coordinates are shoulder elevation and elbow
+flexion; it does not model forearm pronation/supination.
+
+The constrained estimator does not replace general orientation fusion for
+arbitrary three-dimensional motion or multi-segment trials.
+
+## Firmware fleet preparation
+
+The Movesense Firmware Update Studio project canvas maintains a private
+ten-sensor inventory and update queue. It can:
+
+- scan for and inventory nearby sensors;
+- classify sensors as GSP-ready, legacy MDS, or unknown;
+- download the commit-pinned official SS2 default-firmware package; and
+- import a supplied Nordic DFU ZIP;
+- validate safe ZIP paths, the DFU manifest, and referenced application and
+  bootloader images; and
+- verify the official package against the project's recorded SHA-256 checksum.
+
+Disconnect a sensor from the Movesense mobile app before scanning from the
+computer because a connected sensor may stop advertising. Firmware flashing is
+intentionally locked until desktop bootloader entry and Nordic DFU transfer have
+been validated on one test sensor. Inventory records and downloaded firmware are
+stored in private Copilot extension data rather than Git.
+
+The supported fleet workflow is deliberately sequential: inventory one sensor,
+verify the package, release the desktop BLE connection, perform DFU through a
+maintained Nordic/Movesense mobile transport, then reconnect from the studio and
+confirm the sensor exposes GSP before moving to the next sensor. A structurally
+valid user-supplied ZIP is not treated as trusted until its provenance and
+checksum have been approved.
 
 ## License
 
