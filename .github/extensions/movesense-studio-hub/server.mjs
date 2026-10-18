@@ -6,7 +6,7 @@ export const STUDIOS = [
     name: "Acquisition Studio",
     prompt: "Open Movesense Acquisition Studio",
     purpose: "Connect Movesense sensors, inspect live IMU9 signals, and record governed data.",
-    next: "Use this for the next repeatability and multi-sensor collection sessions.",
+    next: "Use this for the next repeatability, one-sensor two-DOF, and multi-sensor sessions.",
   },
   {
     id: "movesense-opensense-processing-studio",

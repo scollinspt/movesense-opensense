@@ -2,11 +2,11 @@
 
 ## Purpose
 
-Extend the current one-sensor feasibility result into repeatable recordings and
-then into a two-sensor upper-limb pipeline. These are researcher
-self-experiments for engineering development. They do not establish anatomical,
-scientific, or clinical validity and are not a protocol for enrolling other
-participants.
+Extend the current one-sensor feasibility result into repeatable recordings, a
+one-sensor two-DOF recording, and then a two-sensor upper-limb pipeline. These
+are researcher self-experiments for engineering development. They do not
+establish anatomical, scientific, or clinical validity and are not a protocol
+for enrolling other participants.
 
 ## Shared recording rules
 
@@ -59,7 +59,45 @@ settings as the retained feasibility recordings.
   are compared across trials.
 - Unexpected cross-axis motion is documented rather than silently filtered.
 
-## Session 2: two-sensor bench timing
+## Session 2: one-sensor elbow plus forearm rotation
+
+Keep the sensor on the left wrist using the documented placement. Keep the
+trunk, shoulder, and humerus fixed so the distal orientation is constrained to
+elbow flexion/extension and forearm pronation/supination.
+
+Each recording uses this ordered sequence:
+
+1. Hold anatomical neutral for at least five seconds.
+2. Perform three isolated elbow flexion/extension cycles while maintaining
+   supination.
+3. Flex the elbow to approximately 90 degrees and hold that elbow angle.
+4. Perform three isolated pronation/supination cycles.
+5. Return to supination and extend the elbow.
+6. Perform three combined cycles in which elbow angle and forearm rotation both
+   change.
+7. Return to anatomical neutral and remain still for at least three seconds.
+8. Record three trials.
+
+Do not process this recording with the current dominant-axis one-DOF estimator.
+Before interpreting it, implement:
+
+- a full 3-D orientation estimate with documented initialization and magnetic
+  field handling;
+- a neutral sensor-to-model frame transform;
+- a fixed-humerus OpenSim model with separate elbow-flexion and forearm-rotation
+  coordinates;
+- inverse kinematics that solves both coordinates from the wrist orientation;
+  and
+- a 3-D-capable canvas viewer that compares the source orientation with the
+  resulting two-coordinate OpenSim motion.
+
+The ordered isolated phases provide internal checks that one coordinate remains
+approximately fixed while the other changes. The combined phase tests the
+time-varying forearm-rotation reference frame. A successful visualization and
+IK round trip demonstrate pipeline consistency, not independent anatomical
+validity.
+
+## Session 3: two-sensor bench timing
 
 Attach both sensors rigidly to the same non-human board or fixture.
 
@@ -75,7 +113,7 @@ Do not proceed to joint-angle interpretation until the acquisition system can
 record both sensors concurrently and report sensor-time offset, drift, packet
 loss, and residual alignment around the shared events.
 
-## Session 3: two-sensor isolated upper-limb motion
+## Session 4: two-sensor isolated upper-limb motion
 
 Place one sensor on the lateral upper arm and one on the dorsal distal forearm
 or wrist. Record exact landmarks, side, logo direction, and strap orientation.
@@ -91,9 +129,9 @@ or wrist. Record exact landmarks, side, logo direction, and strap orientation.
 Advancement requires synchronized recordings, reproducible neutral mapping, and
 an explicit sensor-to-model frame transform for both placements.
 
-## Session 4: two-sensor combined motion
+## Session 5: two-sensor combined motion
 
-Only after Sessions 2 and 3 pass:
+Only after Sessions 3 and 4 pass:
 
 1. Begin in anatomical neutral.
 2. Flex the elbow to a comfortable mid-range position.

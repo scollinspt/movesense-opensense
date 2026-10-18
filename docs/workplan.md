@@ -22,13 +22,15 @@ Next execution order:
 
 1. Run `upper-limb-next-sessions-v1` Session 1 to characterize one-sensor
    repeatability and placement sensitivity.
-2. Extend acquisition to two concurrent sensors and complete the rigid-fixture
+2. Generalize processing from one-axis integration to calibrated full 3-D
+   orientation, a two-coordinate fixed-humerus model, and a 3-D-capable viewer.
+3. Complete the staged one-sensor elbow-flexion plus forearm-rotation session.
+4. Extend acquisition to two concurrent sensors and complete the rigid-fixture
    timing session.
-3. Add explicit inter-sensor synchronization diagnostics and acceptance output.
-4. Complete isolated two-sensor elbow and forearm sessions.
-5. Replace the one-axis estimator with documented segment-orientation and
-   relative-joint processing before combined elbow/forearm motion.
-6. Defer shoulder and larger sensor counts until the two-sensor path is
+5. Add explicit inter-sensor synchronization diagnostics and acceptance output.
+6. Complete isolated and combined two-sensor elbow and forearm sessions using
+   relative segment orientation.
+7. Defer shoulder and larger sensor counts until the two-sensor path is
    measured and reproducible.
 
 ## Milestone 1: Inventory and single-sensor feasibility
@@ -116,14 +118,18 @@ Simultaneous BLE subscription is not evidence of synchronized sensing. Configura
 **Status: constrained one-DOF path implemented; general orientation remains.**
 
 The current gyroscope-only integrator is intentionally limited to isolated
-one-axis trials. Select a maintained, license-compatible sensor-fusion
-implementation; document initialization, magnetic-field handling, quaternion
-conventions, and sensor-to-model coordinate frames; then evaluate static poses
-and prescribed rotations using fixtures appropriate to the claim being tested.
-Two-sensor segment processing must calculate relative orientation rather than
-assigning a distal sensor angle directly to a joint coordinate. An encoded
-gimbal may be considered later if quantitative orientation validation requires
-it.
+one-axis trials. The next processing milestone is a one-sensor, two-DOF wrist
+trial with a fixed humerus. Select a maintained, license-compatible
+sensor-fusion implementation; document initialization, magnetic-field handling,
+quaternion conventions, and sensor-to-model coordinate frames; then solve
+elbow flexion and forearm rotation with a two-coordinate constrained model. The
+staged protocol includes isolated phases before combined motion so coordinate
+cross-talk can be inspected.
+
+After that milestone, two-sensor segment processing must calculate relative
+orientation rather than assigning a distal sensor angle directly to a joint
+coordinate. An encoded gimbal may be considered later if quantitative
+orientation validation requires it.
 
 ## Milestone 4: Minimal OpenSense integration
 
@@ -135,11 +141,13 @@ side-aware fixed-humerus forearm and elbow models, runs
 coordinate trajectory against the source constrained angle. The Processing
 Studio visualizes the OpenSense orientation and OpenSim IK result together.
 
-Next, add synchronized humerus and forearm IMU frames, a reproducible static
-calibration transform, and relative segment orientation. Preserve the existing
-one-DOF path as a regression fixture rather than stretching it to combined
-motion. The custom lower-extremity teaching-apparatus path remains a later,
-separate multi-segment application.
+Next, add a two-coordinate fixed-humerus model and a 3-D-capable synchronized
+viewer for the one-sensor elbow-plus-forearm trial. Preserve the existing
+one-DOF path as a regression fixture rather than applying its dominant-axis
+estimator to combined motion. Then add synchronized humerus and forearm IMU
+frames, a reproducible static calibration transform, and relative segment
+orientation. The custom lower-extremity teaching-apparatus path remains a
+later, separate multi-segment application.
 
 ## Milestone 5: External and task-specific validation
 

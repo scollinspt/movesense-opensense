@@ -60,6 +60,11 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
 - Updated the development plan to preserve the validated one-DOF path as a
   regression baseline while prioritizing concurrent two-sensor acquisition,
   synchronization measurement, segment orientation, and relative joint motion.
+- Inserted a one-sensor, two-DOF wrist milestone before two-sensor acquisition.
+  The fixed-humerus protocol stages isolated elbow flexion, isolated forearm
+  rotation, and then combined motion. Processing must move to calibrated 3-D
+  orientation, a two-coordinate OpenSim model, and a 3-D-capable viewer rather
+  than extending the dominant-axis estimator.
 
 ### Technical findings
 
