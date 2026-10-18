@@ -3,10 +3,11 @@
 ## Purpose
 
 Extend the current one-sensor feasibility result into repeatable recordings, a
-one-sensor two-DOF recording, and then a two-sensor upper-limb pipeline. These
-are researcher self-experiments for engineering development. They do not
-establish anatomical, scientific, or clinical validity and are not a protocol
-for enrolling other participants.
+one-sensor two-DOF wrist recording, a one-sensor three-DOF humerus recording,
+and then a two-sensor upper-limb pipeline. These are researcher
+self-experiments for engineering development. They do not establish anatomical,
+scientific, or clinical validity and are not a protocol for enrolling other
+participants.
 
 ## Shared recording rules
 
@@ -97,7 +98,48 @@ time-varying forearm-rotation reference frame. A successful visualization and
 IK round trip demonstrate pipeline consistency, not independent anatomical
 validity.
 
-## Session 3: two-sensor bench timing
+## Session 3: one-sensor three-DOF shoulder motion
+
+Move the sensor to the lateral distal humerus and document the exact landmark,
+distance from the lateral epicondyle, logo direction, strap direction, and side.
+Keep the trunk supported and as still as practical. Hold the elbow and forearm
+in the protocol-defined position during each shoulder movement.
+
+Each recording uses this ordered sequence:
+
+1. Hold anatomical neutral for at least five seconds.
+2. Perform three isolated shoulder flexion/extension cycles in the sagittal
+   plane.
+3. Return to neutral and remain still for at least three seconds.
+4. Perform three isolated abduction/adduction cycles in the frontal plane.
+5. Return to neutral and remain still for at least three seconds.
+6. With the upper arm adducted and elbow flexed approximately 90 degrees,
+   perform three internal/external humeral-rotation cycles.
+7. Return to neutral and remain still for at least three seconds.
+8. Perform three slow combined shoulder-motion cycles that vary elevation
+   plane, elevation angle, and humeral rotation.
+9. Return to anatomical neutral and remain still for at least three seconds.
+10. Record three trials, removing and replacing the sensor before the third
+    trial.
+
+Processing and visualization requirements:
+
+- reuse the calibrated full 3-D orientation pipeline established by Session 2;
+- define a distal-humerus sensor-to-model frame transform;
+- use a fixed-trunk, fixed-scapula OpenSim model with three model-documented
+  glenohumeral coordinates;
+- report the coordinate sequence and rotation convention explicitly;
+- visualize the source humerus orientation and OpenSim shoulder motion in the
+  3-D-capable canvas viewer; and
+- inspect cross-talk during each isolated movement phase before interpreting
+  combined motion.
+
+Fixed trunk does not guarantee fixed scapular orientation. With no scapular
+sensor, the three coordinates are the constrained model's decomposition of
+humerus orientation relative to the assumed fixed shoulder girdle. They must
+not be presented as independently validated anatomical glenohumeral angles.
+
+## Session 4: two-sensor bench timing
 
 Attach both sensors rigidly to the same non-human board or fixture.
 
@@ -113,7 +155,7 @@ Do not proceed to joint-angle interpretation until the acquisition system can
 record both sensors concurrently and report sensor-time offset, drift, packet
 loss, and residual alignment around the shared events.
 
-## Session 4: two-sensor isolated upper-limb motion
+## Session 5: two-sensor isolated upper-limb motion
 
 Place one sensor on the lateral upper arm and one on the dorsal distal forearm
 or wrist. Record exact landmarks, side, logo direction, and strap orientation.
@@ -129,9 +171,9 @@ or wrist. Record exact landmarks, side, logo direction, and strap orientation.
 Advancement requires synchronized recordings, reproducible neutral mapping, and
 an explicit sensor-to-model frame transform for both placements.
 
-## Session 5: two-sensor combined motion
+## Session 6: two-sensor combined motion
 
-Only after Sessions 3 and 4 pass:
+Only after Sessions 4 and 5 pass:
 
 1. Begin in anatomical neutral.
 2. Flex the elbow to a comfortable mid-range position.
@@ -145,8 +187,9 @@ independent elbow and forearm coordinates.
 
 ## Deferred sessions
 
-- Shoulder motion remains deferred until upper-arm and forearm segment
-  orientation and relative elbow motion are reproducible.
+- Shoulder motion beyond the constrained fixed-scapula Session 3 protocol
+  remains deferred until scapular or thorax reference motion can be measured or
+  otherwise justified.
 - Three-, five-, and ten-sensor load testing remains deferred until the
   two-sensor acquisition and synchronization path is measured.
 - Any session involving someone other than the researcher/developer requires a

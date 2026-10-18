@@ -25,13 +25,16 @@ Next execution order:
 2. Generalize processing from one-axis integration to calibrated full 3-D
    orientation, a two-coordinate fixed-humerus model, and a 3-D-capable viewer.
 3. Complete the staged one-sensor elbow-flexion plus forearm-rotation session.
-4. Extend acquisition to two concurrent sensors and complete the rigid-fixture
+4. Reuse the full-orientation pipeline for a distal-humerus, three-DOF,
+   fixed-trunk and fixed-scapula shoulder model and 3-D visualization.
+5. Complete the staged isolated and combined one-sensor shoulder session.
+6. Extend acquisition to two concurrent sensors and complete the rigid-fixture
    timing session.
-5. Add explicit inter-sensor synchronization diagnostics and acceptance output.
-6. Complete isolated and combined two-sensor elbow and forearm sessions using
+7. Add explicit inter-sensor synchronization diagnostics and acceptance output.
+8. Complete isolated and combined two-sensor elbow and forearm sessions using
    relative segment orientation.
-7. Defer shoulder and larger sensor counts until the two-sensor path is
-   measured and reproducible.
+9. Defer unconstrained shoulder-girdle interpretation and larger sensor counts
+   until the two-sensor path is measured and reproducible.
 
 ## Milestone 1: Inventory and single-sensor feasibility
 
@@ -128,8 +131,12 @@ cross-talk can be inspected.
 
 After that milestone, two-sensor segment processing must calculate relative
 orientation rather than assigning a distal sensor angle directly to a joint
-coordinate. An encoded gimbal may be considered later if quantitative
-orientation validation requires it.
+coordinate. Before two-sensor work, reuse the same full-orientation foundation
+for a distal-humerus sensor and a three-coordinate shoulder model. Stage
+flexion/extension, abduction/adduction, and internal/external rotation
+separately before combined shoulder motion. Treat the fixed scapula as an
+explicit model constraint, not an observed anatomical fact. An encoded gimbal
+may be considered later if quantitative orientation validation requires it.
 
 ## Milestone 4: Minimal OpenSense integration
 
@@ -144,10 +151,12 @@ Studio visualizes the OpenSense orientation and OpenSim IK result together.
 Next, add a two-coordinate fixed-humerus model and a 3-D-capable synchronized
 viewer for the one-sensor elbow-plus-forearm trial. Preserve the existing
 one-DOF path as a regression fixture rather than applying its dominant-axis
-estimator to combined motion. Then add synchronized humerus and forearm IMU
-frames, a reproducible static calibration transform, and relative segment
-orientation. The custom lower-extremity teaching-apparatus path remains a
-later, separate multi-segment application.
+estimator to combined motion. Then add a three-coordinate, fixed-trunk and
+fixed-scapula shoulder model driven by a distal-humerus sensor and verify it in
+the same 3-D viewer. After both one-sensor multi-DOF stages, add synchronized
+humerus and forearm IMU frames, a reproducible static calibration transform,
+and relative segment orientation. The custom lower-extremity
+teaching-apparatus path remains a later, separate multi-segment application.
 
 ## Milestone 5: External and task-specific validation
 

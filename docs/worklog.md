@@ -65,6 +65,12 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
   rotation, and then combined motion. Processing must move to calibrated 3-D
   orientation, a two-coordinate OpenSim model, and a 3-D-capable viewer rather
   than extending the dominant-axis estimator.
+- Inserted a distal-humerus, one-sensor three-DOF shoulder milestone after the
+  wrist two-DOF stage and before two-sensor acquisition. The protocol stages
+  shoulder flexion/extension, abduction/adduction, internal/external humeral
+  rotation, and then combined motion using a fixed-trunk and fixed-scapula
+  model. The fixed scapula remains an explicit modeling assumption because
+  trunk control alone does not measure or eliminate scapulothoracic motion.
 
 ### Technical findings
 

@@ -5,8 +5,9 @@ Store versioned sampling, recording, and calibration protocol settings.
 ## Current protocol documents
 
 - [`upper-limb-next-sessions-v1.md`](./upper-limb-next-sessions-v1.md) defines
-  the next one-sensor repeatability, one-sensor two-DOF, two-sensor bench
-  timing, isolated two-sensor motion, and combined-motion sessions.
+  the next one-sensor repeatability, one-sensor wrist two-DOF, one-sensor
+  humerus three-DOF, two-sensor bench timing, isolated two-sensor motion, and
+  combined-motion sessions.
 
 ## Single-wrist constrained progression
 
