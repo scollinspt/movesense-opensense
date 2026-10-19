@@ -187,6 +187,44 @@ export function parseOpenSenseVisualization(orientationsText, motionText, estima
   };
 }
 
+export function parseTwoDofVisualization(motionText, estimator) {
+  const lines = dataLines(motionText, "IK motion");
+  const columns = lines.shift().trim().split(/\s+/);
+  const coordinateIndices = estimator.coordinates.map((coordinate) =>
+    columns.indexOf(coordinate)
+  );
+  if (coordinateIndices.some((index) => index < 1)) {
+    throw new ProcessingError(
+      "INVALID_OPENSENSE_ARTIFACT",
+      "Two-DOF IK motion is missing a configured coordinate.",
+    );
+  }
+  const frames = lines.map((line) => {
+    const fields = line.trim().split(/\s+/).map(Number);
+    return {
+      timeSeconds: fields[0],
+      elbowFlexionDegrees: fields[coordinateIndices[0]],
+      pronationSupinationDegrees: fields[coordinateIndices[1]],
+    };
+  });
+  if (
+    frames.length < 2 ||
+    frames.some((frame) => Object.values(frame).some((value) => !Number.isFinite(value)))
+  ) {
+    throw new ProcessingError(
+      "INVALID_OPENSENSE_ARTIFACT",
+      "Two-DOF IK motion contains invalid samples.",
+    );
+  }
+  return {
+    motionType: "elbow_flexion_and_forearm_rotation",
+    side: estimator.side,
+    coordinateNames: estimator.coordinates,
+    durationSeconds: frames.at(-1).timeSeconds,
+    frames: downsample(frames, 700),
+  };
+}
+
 function rangeFor(rows, key) {
   return [0, 1, 2].map((axis) => ({
     min: Math.min(...rows.map((row) => row[key][axis])),
@@ -437,18 +475,42 @@ export async function loadOpenSenseResult(governedRoot, recordingId) {
     throw new ProcessingError("INVALID_RECORDING_ID", "Recording ID must begin with YYYYMMDD.");
   }
   const dateFolder = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`;
-  const resultPath = path.join(
-    governedRoot,
-    "derived",
-    dateFolder,
-    recordingId,
-    "opensense-one-dof",
-    "processing-manifest.json",
+  const resultPaths = ["opensense-two-dof", "opensense-one-dof"].map((directory) =>
+    path.join(
+      governedRoot,
+      "derived",
+      dateFolder,
+      recordingId,
+      directory,
+      "processing-manifest.json",
+    )
   );
   try {
-    const manifest = JSON.parse(await readFile(resultPath, "utf8"));
+    let resultPath;
+    let resultText;
+    for (const candidate of resultPaths) {
+      try {
+        resultText = await readFile(candidate, "utf8");
+        resultPath = candidate;
+        break;
+      } catch (error) {
+        if (error?.code !== "ENOENT") throw error;
+      }
+    }
+    if (!resultPath) return null;
+    const manifest = JSON.parse(resultText);
+    const isTwoDof =
+      manifest.format === "movesense-opensense-two-dof-processing";
     if (
-      manifest.format !== "movesense-opensense-one-dof-processing" ||
+      !isTwoDof &&
+      manifest.format !== "movesense-opensense-one-dof-processing"
+    ) {
+      throw new ProcessingError(
+        "INVALID_PROCESSING_RESULT",
+        "The OpenSense processing manifest format is invalid.",
+      );
+    }
+    if (
       manifest.version !== 1 ||
       !manifest.outputs ||
       !manifest.validation
@@ -480,11 +542,16 @@ export async function loadOpenSenseResult(governedRoot, recordingId) {
       }
       artifactContents[name] = bytes;
     }
-    const visualization = parseOpenSenseVisualization(
-      artifactContents.orientationsSto.toString("utf8"),
-      artifactContents.inverseKinematicsMotion.toString("utf8"),
-      manifest.estimator,
-    );
+    const visualization = isTwoDof
+      ? parseTwoDofVisualization(
+          artifactContents.inverseKinematicsMotion.toString("utf8"),
+          manifest.estimator,
+        )
+      : parseOpenSenseVisualization(
+          artifactContents.orientationsSto.toString("utf8"),
+          artifactContents.inverseKinematicsMotion.toString("utf8"),
+          manifest.estimator,
+        );
     return {
       manifestPath: resultPath,
       visualization,
@@ -495,7 +562,10 @@ export async function loadOpenSenseResult(governedRoot, recordingId) {
       throw error;
     }
     if (error?.code === "ENOENT") {
-      return null;
+      throw new ProcessingError(
+        "PROCESSING_ARTIFACT_NOT_FOUND",
+        `An OpenSense artifact is missing: ${error.path || error.message}`,
+      );
     }
     if (error instanceof SyntaxError) {
       throw new ProcessingError(

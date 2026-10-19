@@ -114,6 +114,19 @@ state. The OpenSim source repository is not required. The bundled Arm26 model
 is not used because its two coordinates are shoulder elevation and elbow
 flexion; it does not model forearm pronation/supination.
 
+For a marked left-wrist elbow-plus-forearm session, the studio can also run a
+two-stage full-orientation pipeline. The project virtual environment performs
+six-axis x-io Fusion AHRS processing and endpoint-neutral drift closure; the
+configured OpenSim Python runtime maps NWU orientations to OpenSim ground,
+calibrates `radius_l_imu` on the Rajagopal OpenSense model, locks every
+coordinate except `elbow_flex_l` and `pro_sup_l`, and runs orientation IK.
+Generated artifacts are stored separately under
+`derived/YYYY-MM-DD/<recording-id>/opensense-two-dof/`. The processing manifest
+reports magnetic-field exclusion, neutral closure, orientation residuals,
+coordinate-limit occupancy, and phase-specific coordinate ranges. A completed
+IK run is not reported as validated when these diagnostics exceed their
+acceptance thresholds.
+
 The constrained estimator does not replace general orientation fusion for
 arbitrary three-dimensional motion or multi-segment trials.
 

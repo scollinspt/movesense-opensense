@@ -7,7 +7,7 @@ import { CanvasError } from "@github/copilot-sdk/extension";
 
 const CANVAS_ID = "movesense-opensense-processing-studio";
 const FORMAT = "movesense-processing-studio-state";
-const VERSION = 5;
+const VERSION = 6;
 
 function copilotHome() {
   return process.env.COPILOT_HOME?.trim() || path.join(os.homedir(), ".copilot");
@@ -49,6 +49,7 @@ function defaultState() {
     opensimRuntime: {
       pythonExecutable: "",
       sdkPythonPath: "",
+      modelPath: "",
     },
   };
 }
@@ -66,6 +67,7 @@ function migrateState(value) {
       opensimRuntime: {
         pythonExecutable: "",
         sdkPythonPath: "",
+        modelPath: "",
       },
       updatedAt: new Date().toISOString(),
     };
@@ -81,6 +83,7 @@ function migrateState(value) {
       opensimRuntime: {
         pythonExecutable: "",
         sdkPythonPath: "",
+        modelPath: "",
       },
       updatedAt: new Date().toISOString(),
     };
@@ -92,6 +95,7 @@ function migrateState(value) {
       opensimRuntime: {
         pythonExecutable: "",
         sdkPythonPath: "",
+        modelPath: "",
       },
       updatedAt: new Date().toISOString(),
     };
@@ -106,6 +110,21 @@ function migrateState(value) {
           value.oneDofMapping?.firstMovement === "unassigned"
             ? "unassigned"
             : value.oneDofMapping?.positiveDirection,
+      },
+      opensimRuntime: {
+        ...value.opensimRuntime,
+        modelPath: "",
+      },
+      updatedAt: new Date().toISOString(),
+    };
+  }
+  if (value?.format === FORMAT && value.version === 5) {
+    return {
+      ...value,
+      version: VERSION,
+      opensimRuntime: {
+        ...value.opensimRuntime,
+        modelPath: "",
       },
       updatedAt: new Date().toISOString(),
     };
@@ -140,6 +159,7 @@ function validateState(value) {
     !value.opensimRuntime ||
     typeof value.opensimRuntime.pythonExecutable !== "string" ||
     typeof value.opensimRuntime.sdkPythonPath !== "string" ||
+    typeof value.opensimRuntime.modelPath !== "string" ||
     value.annotations.some(
       (annotation) =>
         !annotation ||
@@ -340,11 +360,13 @@ export async function configureOpenSimRuntime(identity, input) {
     typeof input.pythonExecutable !== "string" ||
     !path.isAbsolute(input.pythonExecutable) ||
     typeof input.sdkPythonPath !== "string" ||
-    !path.isAbsolute(input.sdkPythonPath)
+    !path.isAbsolute(input.sdkPythonPath) ||
+    typeof input.modelPath !== "string" ||
+    (input.modelPath !== "" && !path.isAbsolute(input.modelPath))
   ) {
     throw new CanvasError(
       "INVALID_INPUT",
-      "Absolute OpenSim Python executable and SDK Python paths are required.",
+      "Absolute OpenSim Python and SDK paths are required; the model path must be empty or absolute.",
     );
   }
   const state = await loadProcessingState(identity);
@@ -353,6 +375,7 @@ export async function configureOpenSimRuntime(identity, input) {
     opensimRuntime: {
       pythonExecutable: path.resolve(input.pythonExecutable),
       sdkPythonPath: path.resolve(input.sdkPythonPath),
+      modelPath: input.modelPath ? path.resolve(input.modelPath) : "",
     },
     updatedAt: new Date().toISOString(),
   });

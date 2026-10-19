@@ -78,6 +78,20 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
   (`20261019T090234Z-adb7b99e`) with nine ordered protocol markers, 11,224 valid
   samples over 223.611 seconds, a matching SHA-256 checksum, no malformed rows,
   and no sensor-time gaps over 30 milliseconds.
+- Added full IMU9 orientation processing with x-io Fusion AHRS, calibrated
+  gyroscope bias, explicit magnetometer exclusion, quaternion normalization,
+  and endpoint-neutral drift closure.
+- Added a Rajagopal OpenSense two-coordinate path that maps NWU world axes to
+  OpenSim ground, calibrates `radius_l_imu`, locks the full model, and unlocks
+  only `elbow_flex_l` and `pro_sup_l`.
+- Ran all 11,157 samples from the saved calibration start through final neutral
+  using the corrected combined interval of 150.000 to 210.939 seconds.
+- Verified quaternion norm to within 3.4e-16, final-neutral closure within
+  0.782 degrees, and unintended-coordinate motion below 0.00001 degrees.
+- Rejected the result as validated kinematics because the OpenSense orientation
+  residual reached 61.2 degrees with 26.4 degrees RMS, while `pro_sup_l`
+  remained within 0.1 degrees of its 90-degree upper limit for approximately
+  31 percent of processed samples.
 
 ### Technical findings
 
@@ -85,10 +99,17 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
   rate of approximately 50.190 Hz, despite requesting `/Meas/IMU9/52`.
 - Repeated host receipt timestamps occur in four-sample BLE packet batches and
   must not be treated as repeated sensor timestamps.
-- General multi-axis orientation fusion remains unimplemented pending
-  calibration-interval review, magnetic-field interpretation, and explicit
-  sensor-to-model frame mapping; the constrained one-DOF OpenSense export is
-  implemented and validated.
+- The recorded magnetic-field magnitude averaged approximately 538 microtesla
+  during calibration, outside the expected 20 to 100 microtesla Earth-field
+  range, so it was not used for heading.
+- Six-axis fusion accumulated 28.3 degrees of initial-to-final neutral
+  orientation difference before endpoint closure. The final-neutral protocol
+  constraint reduced the reported closure error to 0.782 degrees, but does not
+  independently validate the intervening orientation trajectory.
+- The full-orientation and frame-mapping pipeline is now implemented, but this
+  recording does not meet the initial 15-degree maximum orientation-residual
+  threshold. Coordinate saturation and phase cross-talk require investigation
+  before scientific interpretation or a three-dimensional viewer is warranted.
 
 ### Decisions
 

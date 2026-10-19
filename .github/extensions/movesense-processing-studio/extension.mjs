@@ -182,7 +182,7 @@ const canvas = createCanvas({
     },
     {
       name: "get-opensense-result",
-      description: "Read and checksum-verify the generated one-DOF OpenSense artifacts.",
+      description: "Read and checksum-verify generated one- or two-DOF OpenSense artifacts.",
       handler: async () => {
         const state = await loadProcessingState(identity);
         try {
@@ -201,10 +201,11 @@ const canvas = createCanvas({
       inputSchema: {
         type: "object",
         additionalProperties: false,
-        required: ["pythonExecutable", "sdkPythonPath"],
+        required: ["pythonExecutable", "sdkPythonPath", "modelPath"],
         properties: {
           pythonExecutable: { type: "string", minLength: 1, maxLength: 2000 },
           sdkPythonPath: { type: "string", minLength: 1, maxLength: 2000 },
+          modelPath: { type: "string", maxLength: 2000 },
         },
       },
       handler: async (context) => configureOpenSimRuntime(identity, context.input),

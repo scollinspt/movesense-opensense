@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { access } from "node:fs/promises";
+import { access, readFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -27,7 +27,124 @@ function recordingPaths(state) {
       state.recordingId,
       "opensense-one-dof",
     ),
+    twoDofOutputDirectory: path.join(
+      state.governedRoot,
+      "derived",
+      dateFolder,
+      state.recordingId,
+      "opensense-two-dof",
+    ),
   };
+}
+
+async function runTwoDofPipeline(workspaceRoot, state, paths, manifest) {
+  const { pythonExecutable, sdkPythonPath, modelPath } = state.opensimRuntime;
+  if (!modelPath) {
+    throw new CanvasError(
+      "OPENSIM_MODEL_NOT_CONFIGURED",
+      "Configure the Rajagopal OpenSense model path before running two-DOF processing.",
+    );
+  }
+  const fusionPython = path.join(
+    workspaceRoot,
+    ".venv",
+    process.platform === "win32" ? "Scripts/python.exe" : "bin/python",
+  );
+  try {
+    await Promise.all([
+      access(fusionPython),
+      access(pythonExecutable),
+      access(sdkPythonPath),
+      access(modelPath),
+    ]);
+  } catch (error) {
+    throw new CanvasError(
+      "TWO_DOF_RUNTIME_NOT_FOUND",
+      `The fusion or OpenSim runtime is unavailable: ${error.message}`,
+    );
+  }
+  const firstSensorMs = manifest.acquisition.firstSensorTimestampMs;
+  const eventTime = (label) => {
+    const event = manifest.events?.find((candidate) => candidate.label === label);
+    if (!event) {
+      throw new CanvasError(
+        "PHASE_MARKER_NOT_FOUND",
+        `The recording has no ${label} phase marker.`,
+      );
+    }
+    return (event.nearestSensorTimestampMs - firstSensorMs) / 1000;
+  };
+  const combinedCorrection = state.annotations.find(
+    (annotation) => annotation.label === "phase correction: combined_elbow_forearm",
+  );
+  const combinedStart = combinedCorrection?.startSeconds
+    ?? eventTime("combined_elbow_forearm");
+  const finalNeutralStart = eventTime("return_to_neutral");
+  const finalNeutralEnd =
+    (manifest.acquisition.lastSensorTimestampMs - firstSensorMs) / 1000;
+  const commonArgs = [
+    "--manifest", paths.manifest,
+    "--output-directory", paths.twoDofOutputDirectory,
+    "--calibration-start", String(state.calibration.startSeconds),
+    "--calibration-end", String(state.calibration.endSeconds),
+    "--combined-start", String(combinedStart),
+    "--final-neutral-start", String(finalNeutralStart),
+    "--final-neutral-end", String(finalNeutralEnd),
+  ];
+  await unlink(
+    path.join(paths.twoDofOutputDirectory, "processing-manifest.json"),
+  ).catch((error) => {
+    if (error.code !== "ENOENT") throw error;
+  });
+  try {
+    await execFileAsync(
+      fusionPython,
+      ["-m", "movesense_opensense.opensense.two_dof", "fuse", ...commonArgs],
+      {
+        cwd: workspaceRoot,
+        env: {
+          ...process.env,
+          PYTHONPATH: [path.join(workspaceRoot, "src"), process.env.PYTHONPATH]
+            .filter(Boolean)
+            .join(path.delimiter),
+        },
+        maxBuffer: 16 * 1024 * 1024,
+        timeout: 5 * 60 * 1000,
+      },
+    );
+    const { stdout, stderr } = await execFileAsync(
+      pythonExecutable,
+      [
+        "-m", "movesense_opensense.opensense.two_dof", "opensim",
+        ...commonArgs,
+        "--model", modelPath,
+      ],
+      {
+        cwd: workspaceRoot,
+        env: {
+          ...process.env,
+          PYTHONPATH: [
+            path.join(workspaceRoot, "src"),
+            sdkPythonPath,
+            process.env.PYTHONPATH,
+          ].filter(Boolean).join(path.delimiter),
+        },
+        maxBuffer: 16 * 1024 * 1024,
+        timeout: 10 * 60 * 1000,
+      },
+    );
+    return {
+      outputDirectory: paths.twoDofOutputDirectory,
+      stdout: stdout.trim(),
+      stderr: stderr.trim(),
+    };
+  } catch (error) {
+    const detail = error.stderr?.trim() || error.stdout?.trim() || error.message;
+    throw new CanvasError(
+      "TWO_DOF_OPENSENSE_RUN_FAILED",
+      `Two-DOF OpenSense processing failed: ${detail}`,
+    );
+  }
 }
 
 export async function runOpenSensePipeline(workspaceRoot, state) {
@@ -37,6 +154,11 @@ export async function runOpenSensePipeline(workspaceRoot, state) {
       "OPENSIM_NOT_CONFIGURED",
       "Configure the private OpenSim Python runtime before running the pipeline.",
     );
+  }
+  const paths = recordingPaths(state);
+  const manifest = JSON.parse(await readFile(paths.manifest, "utf8"));
+  if (manifest.protocol?.movement === "combined_elbow_forearm") {
+    return runTwoDofPipeline(workspaceRoot, state, paths, manifest);
   }
   if (state.oneDofMapping.firstMovement === "unassigned") {
     throw new CanvasError(
@@ -59,7 +181,6 @@ export async function runOpenSensePipeline(workspaceRoot, state) {
       `The configured OpenSim runtime is unavailable: ${error.message}`,
     );
   }
-  const paths = recordingPaths(state);
   const args = [
     "-m",
     "movesense_opensense.opensense.one_dof",

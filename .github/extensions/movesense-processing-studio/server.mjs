@@ -531,6 +531,7 @@ function page() {
         body: JSON.stringify({
           pythonExecutable: document.getElementById("opensim-python").value,
           sdkPythonPath: document.getElementById("opensim-sdk").value,
+          modelPath: document.getElementById("opensim-model").value,
         }),
       });
       await load();
@@ -579,6 +580,7 @@ function page() {
       const calibrationComplete = Boolean(report.calibration?.sampleCount);
       const mappingComplete = Boolean(oneDof?.mappingAssigned);
       const opensenseComplete = Boolean(opensense?.validation?.passed);
+      const opensenseAvailable = Boolean(opensense);
       stopViewer();
       if (!selection) selection = { ...state.calibration };
       const annotations = state.annotations.length
@@ -610,9 +612,9 @@ function page() {
           \${isMultiDofProtocol ? \`
             <div class="stage complete"><strong>1 · Integrity</strong><small>Verified raw input</small></div>
             <div class="stage \${report.phases.length ? "complete" : "active"}"><strong>2 · Phases</strong><small>\${report.phases.length} acquired markers</small></div>
-            <div class="stage active"><strong>3 · 3-D orientation</strong><small>Fusion implementation required</small></div>
-            <div class="stage locked"><strong>4 · Frame mapping</strong><small>Calibrate wrist IMU to model</small></div>
-            <div class="stage locked"><strong>5 · 2-DOF OpenSense</strong><small>Elbow flexion plus forearm rotation</small></div>\`
+            <div class="stage \${opensenseAvailable ? "complete" : "active"}"><strong>3 · 3-D orientation</strong><small>\${opensenseAvailable ? "Six-axis AHRS complete" : "Ready for six-axis AHRS"}</small></div>
+            <div class="stage \${opensenseAvailable ? "complete" : "locked"}"><strong>4 · Frame mapping</strong><small>\${opensenseAvailable ? "NWU mapped and radius IMU calibrated" : "Calibrate wrist IMU to model"}</small></div>
+            <div class="stage \${opensenseComplete ? "complete" : opensenseAvailable ? "active" : "locked"}"><strong>5 · 2-DOF OpenSense</strong><small>\${opensenseComplete ? "Validation passed" : opensenseAvailable ? "Result requires review" : "Elbow flexion plus forearm rotation"}</small></div>\`
           : \`
             <div class="stage complete"><strong>1 · Integrity</strong><small>Verified raw input</small></div>
             <div class="stage \${calibrationComplete ? "complete" : "active"}"><strong>2 · Calibrate</strong><small>\${calibrationComplete ? fixed(state.calibration.startSeconds,3) + "–" + fixed(state.calibration.endSeconds,3) + " s saved" : "Select static pose"}</small></div>
@@ -710,7 +712,28 @@ function page() {
         <section class="panel wide">
           <h2>OpenSense export and inverse kinematics</h2>
           \${isMultiDofProtocol
-            ? \`<div class="empty">The validated one-DOF runner is intentionally unavailable for this recording. Build and validate the full-orientation, two-coordinate pipeline before running OpenSense.</div>\`
+            ? opensenseAvailable ? \`
+            <div class="instruction"><strong>\${opensenseComplete ? "Validated" : "Exploratory result — validation did not pass"}:</strong> six-axis AHRS orientations were mapped from NWU to OpenSim, calibrated to <code>radius_l_imu</code>, and fit with only <code>elbow_flex_l</code> and <code>pro_sup_l</code> unlocked.</div>
+            <div class="metrics">
+              <div class="metric"><strong class="\${opensenseComplete ? "ok" : "bad"}">\${opensenseComplete ? "Passed" : "Review"}</strong><span>IK validation</span></div>
+              <div class="metric"><strong>\${opensense.validation.sampleCount}</strong><span>Samples</span></div>
+              <div class="metric"><strong>\${fixed(opensense.validation.maximumOrientationErrorDegrees,2)}°</strong><span>Maximum orientation error</span></div>
+              <div class="metric"><strong>\${fixed(opensense.validation.rmsOrientationErrorDegrees,2)}°</strong><span>RMS orientation error</span></div>
+            </div>
+            <p class="muted">Magnetometer excluded: \${escapeHtml(opensense.estimator.magnetometerUsed ? "no" : "yes")}. Neutral closure error \${fixed(opensense.validation.neutralClosureErrorDegrees,3)}°. Locked-coordinate numerical range \${fixed(opensense.validation.lockedCoordinateMaximumRangeDegrees,6)}°. <code>pro_sup_l</code> is within 0.1° of its 90° maximum for \${fixed(opensense.validation.coordinateLimitFractions.pro_sup_l.nearMaximumFraction * 100,1)}% of processed samples.</p>
+            <div class="phase-grid">\${opensense.validation.phaseDiagnostics.map(phase => \`
+              <div class="phase"><strong>\${escapeHtml(phase.label.replaceAll("_", " "))}</strong>
+                <span class="muted">Elbow \${fixed(phase.coordinates.elbow_flex_l.minimumDegrees,1)}–\${fixed(phase.coordinates.elbow_flex_l.maximumDegrees,1)}°<br>Forearm \${fixed(phase.coordinates.pro_sup_l.minimumDegrees,1)}–\${fixed(phase.coordinates.pro_sup_l.maximumDegrees,1)}°</span>
+              </div>\`).join("")}</div>
+            <div class="artifact-links">
+              <a href="/api/artifact?kind=orientationsSto" target="_blank">Quaternion STO</a>
+              <a href="/api/artifact?kind=model" target="_blank">Rajagopal two-DOF model</a>
+              <a href="/api/artifact?kind=inverseKinematicsMotion" target="_blank">IK motion</a>
+              <a href="/api/artifact?kind=orientationErrors" target="_blank">Orientation errors</a>
+              <a href="/api/artifact?kind=fusionDiagnostics" target="_blank">Fusion diagnostics</a>
+              <a href="/api/artifact?kind=processingManifest" target="_blank">Processing manifest</a>
+            </div>\`
+            : \`<div class="empty">No checksum-verified two-DOF OpenSense result is available yet. Configure the runtime and Rajagopal model, then run the pipeline.</div>\`
             : opensenseComplete ? \`
             <div class="instruction"><strong>Validated:</strong> OpenSim 4.6 tracked the generated <code>forearm_\${opensense.estimator.side === "left" ? "l" : "r"}_imu</code> quaternions with the project-owned one-DOF model across the full movement interval.</div>
             <div class="metrics">
@@ -747,7 +770,7 @@ function page() {
             </div>\`
             : \`<div class="empty">No checksum-verified OpenSense result is available for this recording yet.</div>\`}
           <div style="margin-top:16px">
-            <button id="run-opensense" type="button" \${!isMultiDofProtocol && state.opensimRuntime.pythonExecutable && mappingComplete && state.annotations.length ? "" : "disabled"}>\${opensenseComplete ? "Re-run OpenSense" : "Run OpenSense"}</button>
+            <button id="run-opensense" type="button" \${state.opensimRuntime.pythonExecutable && (isMultiDofProtocol ? state.opensimRuntime.modelPath && calibrationComplete && report.phases.length : mappingComplete && state.annotations.length) ? "" : "disabled"}>\${opensenseAvailable ? "Re-run OpenSense" : "Run OpenSense"}</button>
             <span id="opensense-status" class="muted" role="status" aria-live="polite"></span>
           </div>
           <details style="margin-top:14px">
@@ -756,6 +779,7 @@ function page() {
             <div class="fields">
               <label style="grid-column:span 2">Python executable<input id="opensim-python" value="\${escapeHtml(state.opensimRuntime.pythonExecutable)}"></label>
               <label style="grid-column:span 2">OpenSim SDK Python folder<input id="opensim-sdk" value="\${escapeHtml(state.opensimRuntime.sdkPythonPath)}"></label>
+              <label style="grid-column:span 2">Rajagopal OpenSense model<input id="opensim-model" value="\${escapeHtml(state.opensimRuntime.modelPath)}" placeholder="Required for two-DOF processing"></label>
               <button id="save-runtime" type="button">Save runtime</button>
             </div>
           </details>
@@ -795,7 +819,7 @@ function page() {
       }
       redraw();
       if (oneDof) drawAngle(document.getElementById("chart-one-dof"), oneDof);
-      if (opensenseComplete) renderMotionFrame(0);
+      if (!isMultiDofProtocol && opensenseComplete) renderMotionFrame(0);
     }
 
     function showError(error) {
@@ -855,9 +879,11 @@ export async function createProcessingServer(identity) {
           orientationsSto: result.outputs.orientationsSto.path,
           model: result.outputs.model.path,
           inverseKinematicsMotion: result.outputs.inverseKinematicsMotion.path,
+          orientationErrors: result.outputs.orientationErrors?.path,
+          fusionDiagnostics: result.outputs.fusionDiagnostics?.path,
           processingManifest: result.manifestPath,
         };
-        if (!kind || !(kind in artifacts)) {
+        if (!kind || !(kind in artifacts) || !artifacts[kind]) {
           throw new CanvasError("INVALID_ARTIFACT", "Requested OpenSense artifact is invalid.");
         }
         const contentType =

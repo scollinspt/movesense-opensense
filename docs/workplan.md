@@ -20,12 +20,14 @@ Completed engineering milestones:
 
 Next execution order:
 
-1. Run `upper-limb-next-sessions-v1` Session 1 to characterize one-sensor
-   repeatability and placement sensitivity.
-2. Generalize processing from one-axis integration to calibrated full 3-D
-   orientation, a two-coordinate fixed-humerus model, and a 3-D-capable viewer.
-3. Complete the staged one-sensor elbow-flexion plus forearm-rotation session.
-4. Reuse the full-orientation pipeline for a distal-humerus, three-DOF,
+1. Diagnose the failed two-coordinate validation using phase-trimmed residuals,
+   forearm-coordinate limits, attachment placement, and proximal-motion review.
+2. Decide whether the existing trial can support a corrected model
+   configuration or whether to repeat it with a dedicated magnetic calibration
+   and more explicit static holds between phases.
+3. Add a 3-D-capable viewer only after the two-coordinate result meets its
+   orientation-residual and cross-talk criteria.
+4. Reuse the validated full-orientation pipeline for a distal-humerus, three-DOF,
    fixed-trunk and fixed-scapula shoulder model and 3-D visualization.
 5. Complete the staged isolated and combined one-sensor shoulder session.
 6. Extend acquisition to two concurrent sensors and complete the rigid-fixture
@@ -118,7 +120,7 @@ Simultaneous BLE subscription is not evidence of synchronized sensing. Configura
 
 ## Milestone 3: Calibration and orientation estimation
 
-**Status: constrained one-DOF path implemented; general orientation remains.**
+**Status: full-orientation prototype implemented; first two-DOF trial failed validation.**
 
 The current gyroscope-only integrator is intentionally limited to isolated
 one-axis trials. The next processing milestone is a one-sensor, two-DOF wrist

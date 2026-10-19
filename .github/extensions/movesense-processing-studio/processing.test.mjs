@@ -9,6 +9,7 @@ import {
   analyzeRecording,
   listRecordings,
   parseOpenSenseVisualization,
+  parseTwoDofVisualization,
 } from "./processing.mjs";
 
 test("analyzes a governed IMU9 recording", async () => {
@@ -121,4 +122,23 @@ test("synchronizes OpenSense quaternions with OpenSim inverse kinematics", () =>
   assert.equal(result.frames[1].sourceAngleDegrees.toFixed(6), "45.000000");
   assert.equal(result.frames[1].ikAngleDegrees, 45);
   assert.equal(Math.abs(result.frames[1].errorDegrees) < 1e-8, true);
+});
+
+test("reads synchronized elbow and forearm coordinates", () => {
+  const motion = [
+    "inDegrees=yes",
+    "endheader",
+    "time\telbow_flex_l\tpro_sup_l",
+    "0\t0\t0",
+    "0.02\t45\t30",
+  ].join("\n");
+
+  const result = parseTwoDofVisualization(motion, {
+    side: "left",
+    coordinates: ["elbow_flex_l", "pro_sup_l"],
+  });
+
+  assert.equal(result.frames.length, 2);
+  assert.equal(result.frames[1].elbowFlexionDegrees, 45);
+  assert.equal(result.frames[1].pronationSupinationDegrees, 30);
 });
