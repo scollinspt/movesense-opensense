@@ -117,6 +117,7 @@ export class RecordingSession {
     this.sampleCount = 0;
     this.firstSensorTimestampMs = null;
     this.lastSensorTimestampMs = null;
+    this.events = [];
     this.closed = false;
   }
 
@@ -142,6 +143,27 @@ export class RecordingSession {
     this.sampleCount += 1;
     this.firstSensorTimestampMs ??= sample.sensor_timestamp_ms;
     this.lastSensorTimestampMs = sample.sensor_timestamp_ms;
+  }
+
+  markEvent(label) {
+    if (this.closed) throw new Error("Recording is already closed.");
+    if (typeof label !== "string" || !/^[a-z0-9_]{1,80}$/.test(label)) {
+      throw new Error("A valid phase-marker label is required.");
+    }
+    if (this.sampleCount === 0 || this.lastSensorTimestampMs === null) {
+      throw new Error("Wait for the first recorded sensor sample before marking a phase.");
+    }
+    const event = {
+      sequence: this.events.length + 1,
+      label,
+      markedAt: new Date().toISOString(),
+      hostMonotonicNs: process.hrtime.bigint().toString(),
+      hostTimeNs: (BigInt(Date.now()) * 1_000_000n).toString(),
+      nearestSensorTimestampMs: this.lastSensorTimestampMs,
+      sampleIndex: this.sampleCount - 1,
+    };
+    this.events.push(event);
+    return event;
   }
 
   async stop(status = "complete") {
@@ -185,6 +207,7 @@ export class RecordingSession {
         anatomicalStartConfirmed: this.anatomicalStartConfirmed === true,
         proximalControlConfirmed: this.proximalControlConfirmed === true,
       },
+      events: this.events,
       signals: {
         acceleration: { unit: "m/s^2", axes: ["x", "y", "z"] },
         angularVelocity: { unit: "deg/s", axes: ["x", "y", "z"] },

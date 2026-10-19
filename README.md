@@ -56,6 +56,12 @@ The dashboard provides start/stop recording controls when a sensor is connected.
 Sensor-native timestamps and host receipt times remain separate in every decoded
 sample. Recordings are written under the configured governed data root:
 
+During a multi-phase recording, the operator can add named phase markers. Each
+marker retains its sequence, nearest sensor timestamp, sample index, host
+monotonic timestamp, and host wall-clock timestamp in the recording manifest.
+Static pauses around markers allow boundaries to be checked and refined during
+processing without modifying the raw CSV.
+
 ```text
 MOVESENSE_DATA_ROOT/
 ├── raw/YYYY-MM-DD/<recording-id>/imu9.csv

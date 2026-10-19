@@ -71,6 +71,13 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
   rotation, and then combined motion using a fixed-trunk and fixed-scapula
   model. The fixed scapula remains an explicit modeling assumption because
   trunk control alone does not measure or eliminate scapulothoracic motion.
+- Added live phase markers to the Acquisition Studio and retained each marker's
+  sequence, nearest sensor timestamp, sample index, host monotonic timestamp,
+  and wall-clock timestamp in the recording manifest.
+- Captured one continuous left-wrist elbow-plus-forearm session
+  (`20261019T090234Z-adb7b99e`) with nine ordered protocol markers, 11,224 valid
+  samples over 223.611 seconds, a matching SHA-256 checksum, no malformed rows,
+  and no sensor-time gaps over 30 milliseconds.
 
 ### Technical findings
 

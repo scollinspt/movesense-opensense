@@ -35,6 +35,7 @@ test("writes immutable raw data and a checksummed manifest", async (context) => 
     magnetic_field_y: 8,
     magnetic_field_z: 9,
   });
+  const marker = recording.markEvent("calibration_neutral");
 
   const result = await recording.stop();
   const manifest = JSON.parse(await readFile(result.manifestPath, "utf8"));
@@ -45,6 +46,10 @@ test("writes immutable raw data and a checksummed manifest", async (context) => 
   assert.equal(manifest.protocol.protocolId, "single-wrist-feasibility-v1");
   assert.match(manifest.protocol.orientationDefinition, /M end distal/);
   assert.equal(manifest.protocol.anatomicalStartConfirmed, true);
+  assert.equal(marker.nearestSensorTimestampMs, 100);
+  assert.equal(manifest.events.length, 1);
+  assert.equal(manifest.events[0].label, "calibration_neutral");
+  assert.equal(manifest.events[0].sampleIndex, 0);
   assert.equal(manifest.dataFile.sha256, result.sha256);
   assert.match(csv, /sensor_timestamp_ms/);
   assert.match(csv, /Movesense test,100,200,300/);

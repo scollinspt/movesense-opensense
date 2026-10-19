@@ -134,6 +134,9 @@ function page() {
     .recording-controls { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
     .recording-controls .full { grid-column:1/-1; }
     .recording-actions { display:flex; gap:10px; align-items:center; }
+    .marker-controls { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:end; padding:12px; border:1px solid var(--line); border-radius:12px; background:rgba(5,15,12,.35); }
+    .marker-list { display:flex; flex-wrap:wrap; gap:7px; margin:0; padding:0; list-style:none; }
+    .marker-list li { padding:5px 9px; color:var(--mint); border:1px solid rgba(112,225,178,.3); border-radius:999px; font-size:12px; }
     @media (max-width: 780px) {
       main { grid-template-columns: 1fr; }
       .fields { grid-template-columns: 1fr; }
@@ -144,6 +147,7 @@ function page() {
       .charts { grid-template-columns: 1fr; }
       .recording-controls { grid-template-columns:1fr; }
       .recording-controls .full { grid-column:auto; }
+      .marker-controls { grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -219,6 +223,26 @@ function page() {
           <button id="stop-recording" class="danger" type="button" hidden>Stop recording</button>
           <span id="recording-status" class="status" role="status" aria-live="polite"></span>
         </div>
+        <div id="marker-controls" class="marker-controls full" hidden>
+          <label>Phase beginning now
+            <select id="phase-marker">
+              <option value="calibration_neutral">Calibration: anatomical neutral</option>
+              <option value="elbow_flex_supinated">Elbow flexion/extension: forearm supinated</option>
+              <option value="elbow_flex_neutral">Elbow flexion/extension: forearm neutral</option>
+              <option value="elbow_flex_pronated">Elbow flexion/extension: forearm pronated</option>
+              <option value="forearm_rotation_extended">Pronation/supination: elbow extended</option>
+              <option value="forearm_rotation_45">Pronation/supination: elbow approximately 45°</option>
+              <option value="forearm_rotation_90">Pronation/supination: elbow approximately 90°</option>
+              <option value="combined_elbow_forearm">Combined elbow and forearm motion</option>
+              <option value="return_to_neutral">Final return to anatomical neutral</option>
+            </select>
+          </label>
+          <button id="mark-phase" class="secondary" type="button">Mark phase</button>
+          <div class="full">
+            <strong>Recorded markers</strong>
+            <ol id="marker-list" class="marker-list" aria-live="polite"></ol>
+          </div>
+        </div>
       </div>
       <p class="notice">Raw CSV and a checksummed provenance manifest are written outside Git under the governed data root.</p>
       <div id="live-status" class="status" role="status" aria-live="polite"></div>
@@ -280,6 +304,9 @@ function page() {
     const startRecordingButton = document.querySelector("#start-recording");
     const stopRecordingButton = document.querySelector("#stop-recording");
     const recordingStatus = document.querySelector("#recording-status");
+    const markerControls = document.querySelector("#marker-controls");
+    const markPhaseButton = document.querySelector("#mark-phase");
+    const markerList = document.querySelector("#marker-list");
     const anatomicalStartCheckbox = document.querySelector("#confirm-anatomical-start");
     const proximalControlCheckbox = document.querySelector("#confirm-proximal-control");
     let streamConnected = false;
@@ -413,7 +440,16 @@ function page() {
       if (event.event === "recording-started") {
         startRecordingButton.hidden = true;
         stopRecordingButton.hidden = false;
+        markerControls.hidden = false;
+        markerList.replaceChildren();
         recordingStatus.textContent = "Recording " + event.recordingId + "…";
+      }
+      if (event.event === "recording-marker") {
+        const item = document.createElement("li");
+        item.textContent = event.marker.sequence + " · " + event.marker.label.replaceAll("_", " ") +
+          " · sensor " + event.marker.nearestSensorTimestampMs + " ms";
+        markerList.append(item);
+        recordingStatus.textContent = "Marked " + event.marker.label.replaceAll("_", " ") + ".";
       }
       if (event.event === "recording-stopped") {
         startRecordingButton.hidden = false;
@@ -421,6 +457,7 @@ function page() {
         proximalControlCheckbox.checked = false;
         updateRecordingReadiness();
         stopRecordingButton.hidden = true;
+        markerControls.hidden = true;
         recordingStatus.textContent = "Saved " + event.sampleCount + " samples. Manifest: " + event.manifestPath;
       }
       if (event.event === "recording-error") {
@@ -564,6 +601,23 @@ function page() {
       }
     });
 
+    markPhaseButton.addEventListener("click", async () => {
+      markPhaseButton.disabled = true;
+      try {
+        const response = await fetch("/api/live/recording/marker", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ label: document.querySelector("#phase-marker").value }),
+        });
+        const value = await response.json();
+        if (!response.ok) throw new Error(value.error || "Could not mark the phase.");
+      } catch (error) {
+        recordingStatus.textContent = error.message;
+      } finally {
+        markPhaseButton.disabled = false;
+      }
+    });
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       status.textContent = "Saving…";
@@ -670,6 +724,14 @@ export async function createStudioServer({ acquisition, initialState, onSave }) 
       }
       if (request.method === "POST" && url.pathname === "/api/live/recording/stop") {
         sendJson(response, 200, await acquisition.stopRecording());
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/api/live/recording/marker") {
+        const input = await readJson(request);
+        if (typeof input?.label !== "string" || !/^[a-z0-9_]{1,80}$/.test(input.label)) {
+          throw new CanvasError("INVALID_INPUT", "A valid phase-marker label is required.");
+        }
+        sendJson(response, 201, acquisition.markRecordingEvent(input));
         return;
       }
       if (request.method === "PATCH" && url.pathname === "/api/state") {

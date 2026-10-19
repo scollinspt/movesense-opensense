@@ -217,4 +217,17 @@ export class AcquisitionManager {
       throw new CanvasError("RECORDING_STOP_FAILED", error.message);
     }
   }
+
+  markRecordingEvent(input) {
+    if (!this.recording) {
+      throw new CanvasError("RECORDING_INACTIVE", "Start a recording before marking a phase.");
+    }
+    try {
+      const marker = this.recording.markEvent(input?.label);
+      this.broadcast({ event: "recording-marker", marker });
+      return marker;
+    } catch (error) {
+      throw new CanvasError("RECORDING_MARKER_FAILED", error.message);
+    }
+  }
 }
