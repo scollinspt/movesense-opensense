@@ -584,8 +584,19 @@ function page() {
       const annotations = state.annotations.length
         ? state.annotations.map(annotation => \`<div class="annotation"><div><strong>\${escapeHtml(annotation.label)}</strong><div class="muted">\${fixed(annotation.startSeconds,3)}–\${fixed(annotation.endSeconds,3)} s</div></div><button class="danger remove-annotation" data-id="\${escapeHtml(annotation.id)}" type="button">Remove</button></div>\`).join("")
         : \`<div class="empty">No movement intervals annotated yet.</div>\`;
+      const phaseCorrections = new Map(
+        state.annotations
+          .filter(annotation => annotation.label.startsWith("phase correction: "))
+          .map(annotation => [annotation.label.slice("phase correction: ".length), annotation]),
+      );
       const phaseCards = report.phases.length
-        ? report.phases.map(phase => \`<div class="phase"><strong>\${phase.sequence} · \${escapeHtml(phase.label.replaceAll("_", " "))}</strong><span class="muted">\${fixed(phase.timeSeconds,3)}–\${fixed(phase.endTimeSeconds,3)} s · sample \${phase.sampleIndex.toLocaleString()}</span></div>\`).join("")
+        ? report.phases.map(phase => {
+            const correction = phaseCorrections.get(phase.label);
+            const timing = correction
+              ? \`<span class="muted"><s>\${fixed(phase.timeSeconds,3)}–\${fixed(phase.endTimeSeconds,3)} s acquired</s><br><strong class="ok">\${fixed(correction.startSeconds,3)}–\${fixed(correction.endSeconds,3)} s processing interval</strong> · acquired sample \${phase.sampleIndex.toLocaleString()}</span>\`
+              : \`<span class="muted">\${fixed(phase.timeSeconds,3)}–\${fixed(phase.endTimeSeconds,3)} s · sample \${phase.sampleIndex.toLocaleString()}</span>\`;
+            return \`<div class="phase"><strong>\${phase.sequence} · \${escapeHtml(phase.label.replaceAll("_", " "))}</strong>\${timing}</div>\`;
+          }).join("")
         : \`<div class="empty">This recording has no acquired phase markers.</div>\`;
       content.innerHTML = \`
         <section class="panel wide">
@@ -655,7 +666,7 @@ function page() {
         </section>
         <section class="panel wide">
           <h2>Acquired protocol phases</h2>
-          <p class="muted">These markers were written during acquisition. Check their boundaries against the traces without changing the raw recording.</p>
+          <p class="muted">These markers preserve what was written during acquisition. When a processing correction exists, the acquired time remains visible but is struck through and the effective interval is shown beneath it.</p>
           <div class="phase-grid">\${phaseCards}</div>
         </section>
         <section class="panel wide">
