@@ -107,6 +107,9 @@ function page() {
     .instruction { padding:12px 14px; margin-bottom:12px; color:#cbefff; background:#0d2a3b; border-left:3px solid var(--cyan); border-radius:8px; }
     .annotations { display:grid; gap:8px; margin-top:12px; }
     .annotation { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; padding:10px 12px; border:1px solid var(--line); border-radius:10px; }
+    .phase-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+    .phase { padding:10px 12px; border:1px solid rgba(191,139,255,.35); border-radius:10px; background:rgba(191,139,255,.07); }
+    .phase strong { display:block; }
     .artifact-links { display:flex; flex-wrap:wrap; gap:9px; margin-top:14px; }
     .artifact-links a { padding:8px 12px; color:var(--cyan); border:1px solid var(--line); border-radius:999px; text-decoration:none; }
     .artifact-links a:hover { background:#183144; }
@@ -117,7 +120,7 @@ function page() {
     .pipeline { display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin:0 0 12px; color:var(--muted); }
     .pipeline span { padding:5px 10px; border:1px solid var(--line); border-radius:999px; }
     .pipeline b { color:var(--cyan); }
-    @media(max-width:760px){ main{grid-template-columns:1fr}.wide{grid-column:auto}.metrics{grid-template-columns:repeat(2,1fr)}.fields,.toolbar{grid-template-columns:1fr}.workflow{grid-template-columns:1fr 1fr} }
+    @media(max-width:760px){ main{grid-template-columns:1fr}.wide{grid-column:auto}.metrics{grid-template-columns:repeat(2,1fr)}.fields,.toolbar{grid-template-columns:1fr}.workflow{grid-template-columns:1fr 1fr}.phase-grid{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
@@ -175,6 +178,17 @@ function page() {
       };
       shade(state.calibration.startSeconds, state.calibration.endSeconds, "rgba(108,227,161,.12)");
       state.annotations.forEach(annotation => shade(annotation.startSeconds, annotation.endSeconds, "rgba(255,201,107,.09)"));
+      (current?.report?.phases || []).forEach(phase => {
+        const x = xForTime(phase.timeSeconds, width, duration, padding);
+        context.save();
+        context.strokeStyle = "#bf8bff";
+        context.setLineDash([4, 3]);
+        context.beginPath();
+        context.moveTo(x, padding);
+        context.lineTo(x, height - padding);
+        context.stroke();
+        context.restore();
+      });
       if (selection) shade(selection.startSeconds, selection.endSeconds, "rgba(98,216,255,.18)");
       context.strokeStyle = "#203646";
       context.beginPath();
@@ -554,6 +568,7 @@ function page() {
       const integrity = report.integrity;
       const timing = report.timing;
       const protocol = report.manifest.protocol;
+      const isMultiDofProtocol = protocol.movement === "combined_elbow_forearm";
       const isElbowProtocol = protocol.movement === "isolated_elbow_flexion_extension";
       const positiveDirectionLabel = isElbowProtocol ? "Flexion" : "Pronation";
       const negativeDirectionLabel = isElbowProtocol ? "Extension" : "Supination";
@@ -569,6 +584,9 @@ function page() {
       const annotations = state.annotations.length
         ? state.annotations.map(annotation => \`<div class="annotation"><div><strong>\${escapeHtml(annotation.label)}</strong><div class="muted">\${fixed(annotation.startSeconds,3)}–\${fixed(annotation.endSeconds,3)} s</div></div><button class="danger remove-annotation" data-id="\${escapeHtml(annotation.id)}" type="button">Remove</button></div>\`).join("")
         : \`<div class="empty">No movement intervals annotated yet.</div>\`;
+      const phaseCards = report.phases.length
+        ? report.phases.map(phase => \`<div class="phase"><strong>\${phase.sequence} · \${escapeHtml(phase.label.replaceAll("_", " "))}</strong><span class="muted">\${fixed(phase.timeSeconds,3)}–\${fixed(phase.endTimeSeconds,3)} s · sample \${phase.sampleIndex.toLocaleString()}</span></div>\`).join("")
+        : \`<div class="empty">This recording has no acquired phase markers.</div>\`;
       content.innerHTML = \`
         <section class="panel wide">
           <div class="toolbar">
@@ -578,11 +596,18 @@ function page() {
           </div>
         </section>
         <section class="panel wide workflow" aria-label="Processing stages">
-          <div class="stage complete"><strong>1 · Integrity</strong><small>Verified raw input</small></div>
-          <div class="stage \${calibrationComplete ? "complete" : "active"}"><strong>2 · Calibrate</strong><small>\${calibrationComplete ? fixed(state.calibration.startSeconds,3) + "–" + fixed(state.calibration.endSeconds,3) + " s saved" : "Select static pose"}</small></div>
-          <div class="stage \${oneDof ? "complete" : "active"}"><strong>3 · 1-DOF estimate</strong><small>\${oneDof ? "Sensor " + oneDof.dominantAxis.toUpperCase() + " · " + fixed(oneDof.axisEnergyFraction * 100,2) + "% energy" : "Estimate rotation axis"}</small></div>
-          <div class="stage \${mappingComplete ? "complete" : "active"}"><strong>4 · Sign mapping</strong><small>\${mappingComplete ? positiveDirectionLabel + "-positive assigned" : "Confirm first movement"}</small></div>
-          <div class="stage \${opensenseComplete ? "complete" : mappingComplete ? "active" : "locked"}"><strong>5 · Quaternion/OpenSense</strong><small>\${opensenseComplete ? opensense.validation.sampleCount + " samples validated" : mappingComplete ? "Next: neutral-referenced export" : "Complete sign mapping first"}</small></div>
+          \${isMultiDofProtocol ? \`
+            <div class="stage complete"><strong>1 · Integrity</strong><small>Verified raw input</small></div>
+            <div class="stage \${report.phases.length ? "complete" : "active"}"><strong>2 · Phases</strong><small>\${report.phases.length} acquired markers</small></div>
+            <div class="stage active"><strong>3 · 3-D orientation</strong><small>Fusion implementation required</small></div>
+            <div class="stage locked"><strong>4 · Frame mapping</strong><small>Calibrate wrist IMU to model</small></div>
+            <div class="stage locked"><strong>5 · 2-DOF OpenSense</strong><small>Elbow flexion plus forearm rotation</small></div>\`
+          : \`
+            <div class="stage complete"><strong>1 · Integrity</strong><small>Verified raw input</small></div>
+            <div class="stage \${calibrationComplete ? "complete" : "active"}"><strong>2 · Calibrate</strong><small>\${calibrationComplete ? fixed(state.calibration.startSeconds,3) + "–" + fixed(state.calibration.endSeconds,3) + " s saved" : "Select static pose"}</small></div>
+            <div class="stage \${oneDof ? "complete" : "active"}"><strong>3 · 1-DOF estimate</strong><small>\${oneDof ? "Sensor " + oneDof.dominantAxis.toUpperCase() + " · " + fixed(oneDof.axisEnergyFraction * 100,2) + "% energy" : "Estimate rotation axis"}</small></div>
+            <div class="stage \${mappingComplete ? "complete" : "active"}"><strong>4 · Sign mapping</strong><small>\${mappingComplete ? positiveDirectionLabel + "-positive assigned" : "Confirm first movement"}</small></div>
+            <div class="stage \${opensenseComplete ? "complete" : mappingComplete ? "active" : "locked"}"><strong>5 · Quaternion/OpenSense</strong><small>\${opensenseComplete ? opensense.validation.sampleCount + " samples validated" : mappingComplete ? "Next: neutral-referenced export" : "Complete sign mapping first"}</small></div>\`}
         </section>
         <section class="panel wide">
           <h2>Recording integrity</h2>
@@ -621,6 +646,7 @@ function page() {
               <label><input class="axis-toggle" data-axis="1" type="checkbox" checked> Y axis</label>
               <label><input class="axis-toggle" data-axis="2" type="checkbox" checked> Z axis</label>
               <span class="muted">Green = saved calibration · Amber = annotation · Blue = current selection</span>
+              <span class="muted">Purple lines = acquired phase markers</span>
             </div>
           </div>
           \${chart("Acceleration", "acceleration", "m/s²")}
@@ -628,8 +654,15 @@ function page() {
           \${chart("Magnetic field", "magneticField", "µT")}
         </section>
         <section class="panel wide">
-          <h2>Constrained one-DOF \${motionLabel} estimate</h2>
-          \${oneDof ? \`
+          <h2>Acquired protocol phases</h2>
+          <p class="muted">These markers were written during acquisition. Check their boundaries against the traces without changing the raw recording.</p>
+          <div class="phase-grid">\${phaseCards}</div>
+        </section>
+        <section class="panel wide">
+          <h2>\${isMultiDofProtocol ? "Two-DOF processing readiness" : "Constrained one-DOF " + motionLabel + " estimate"}</h2>
+          \${isMultiDofProtocol
+            ? \`<div class="instruction"><strong>Correctly gated:</strong> this recording changes elbow flexion and forearm rotation across moving reference frames. The one-axis estimator is disabled. Full 3-D orientation, wrist-to-model calibration, and a two-coordinate OpenSim model are required next.</div>\`
+            : oneDof ? \`
             <p class="muted">After subtracting static gyroscope bias, sensor <strong>\${oneDof.dominantAxis.toUpperCase()}</strong> accounts for <strong>\${fixed(oneDof.axisEnergyFraction * 100,2)}%</strong> of rotational energy. This supports a constrained one-axis estimator for this trial; it is not a general orientation solution.</p>
             <div class="metrics">
               <div class="metric"><strong>\${oneDof.dominantAxis.toUpperCase()}</strong><span>Dominant sensor axis</span></div>
@@ -651,7 +684,7 @@ function page() {
               </label>
               <button id="save-mapping" type="button">Save sign mapping</button>
             </div>\`
-          : \`<div class="empty">Save a calibration interval and movement annotation to calculate the constrained estimator.</div>\`}
+            : \`<div class="empty">Save a calibration interval and movement annotation to calculate the constrained estimator.</div>\`}
         </section>
         <section class="panel wide">
           <h2>Selected interval</h2>
@@ -665,7 +698,9 @@ function page() {
         </section>
         <section class="panel wide">
           <h2>OpenSense export and inverse kinematics</h2>
-          \${opensenseComplete ? \`
+          \${isMultiDofProtocol
+            ? \`<div class="empty">The validated one-DOF runner is intentionally unavailable for this recording. Build and validate the full-orientation, two-coordinate pipeline before running OpenSense.</div>\`
+            : opensenseComplete ? \`
             <div class="instruction"><strong>Validated:</strong> OpenSim 4.6 tracked the generated <code>forearm_\${opensense.estimator.side === "left" ? "l" : "r"}_imu</code> quaternions with the project-owned one-DOF model across the full movement interval.</div>
             <div class="metrics">
               <div class="metric"><strong class="ok">Passed</strong><span>IK validation</span></div>
@@ -699,9 +734,9 @@ function page() {
               <a href="/api/artifact?kind=inverseKinematicsMotion" target="_blank">IK motion</a>
               <a href="/api/artifact?kind=processingManifest" target="_blank">Processing manifest</a>
             </div>\`
-          : \`<div class="empty">No checksum-verified OpenSense result is available for this recording yet.</div>\`}
+            : \`<div class="empty">No checksum-verified OpenSense result is available for this recording yet.</div>\`}
           <div style="margin-top:16px">
-            <button id="run-opensense" type="button" \${state.opensimRuntime.pythonExecutable && mappingComplete && state.annotations.length ? "" : "disabled"}>\${opensenseComplete ? "Re-run OpenSense" : "Run OpenSense"}</button>
+            <button id="run-opensense" type="button" \${!isMultiDofProtocol && state.opensimRuntime.pythonExecutable && mappingComplete && state.annotations.length ? "" : "disabled"}>\${opensenseComplete ? "Re-run OpenSense" : "Run OpenSense"}</button>
             <span id="opensense-status" class="muted" role="status" aria-live="polite"></span>
           </div>
           <details style="margin-top:14px">

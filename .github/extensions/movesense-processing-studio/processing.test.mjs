@@ -39,6 +39,12 @@ test("analyzes a governed IMU9 recording", async () => {
     recordingId,
     acquisition: { sampleCount: 3 },
     protocol: { movement: "isolated_forearm_rotation" },
+    events: [{
+      sequence: 1,
+      label: "calibration_neutral",
+      nearestSensorTimestampMs: 1000,
+      sampleIndex: 0,
+    }],
     dataFile: {
       path: dataPath,
       sha256: createHash("sha256").update(csv).digest("hex"),
@@ -70,8 +76,22 @@ test("analyzes a governed IMU9 recording", async () => {
   assert.equal(report.calibration.sampleCount, 2);
   assert.equal(report.oneDof.dominantAxis, "x");
   assert.equal(report.oneDof.mappingAssigned, true);
+  assert.equal(report.phases.length, 1);
+  assert.equal(report.phases[0].label, "calibration_neutral");
+  assert.equal(report.phases[0].endTimeSeconds, 0.04);
   assert.equal(recordings.length, 1);
   assert.equal(recordings[0].recordingId, recordingId);
+
+  manifest.protocol.movement = "combined_elbow_forearm";
+  await writeFile(
+    path.join(manifestDirectory, `${recordingId}.json`),
+    JSON.stringify(manifest),
+  );
+  const combinedReport = await analyzeRecording(root, recordingId, {
+    startSeconds: 0,
+    endSeconds: 0.02,
+  });
+  assert.equal(combinedReport.oneDof, null);
 });
 
 test("synchronizes OpenSense quaternions with OpenSim inverse kinematics", () => {

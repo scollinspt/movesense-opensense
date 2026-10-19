@@ -242,6 +242,49 @@ function summarizeCalibration(rows, firstSensorMs, calibration) {
   };
 }
 
+function normalizePhaseMarkers(events, firstSensorMs, spanSeconds) {
+  if (events === undefined) return [];
+  if (!Array.isArray(events)) {
+    throw new ProcessingError("INVALID_MANIFEST", "Recording phase markers must be an array.");
+  }
+  const phases = events.map((event) => {
+    if (
+      !event ||
+      !Number.isInteger(event.sequence) ||
+      typeof event.label !== "string" ||
+      !Number.isFinite(event.nearestSensorTimestampMs) ||
+      !Number.isInteger(event.sampleIndex)
+    ) {
+      throw new ProcessingError("INVALID_MANIFEST", "A recording phase marker is invalid.");
+    }
+    return {
+      sequence: event.sequence,
+      label: event.label,
+      timeSeconds: (event.nearestSensorTimestampMs - firstSensorMs) / 1000,
+      sampleIndex: event.sampleIndex,
+    };
+  });
+  phases.sort((left, right) => left.sequence - right.sequence);
+  if (
+    phases.some(
+      (phase, index) =>
+        phase.sequence !== index + 1 ||
+        phase.timeSeconds < 0 ||
+        phase.timeSeconds > spanSeconds ||
+        (index > 0 && phase.timeSeconds <= phases[index - 1].timeSeconds),
+    )
+  ) {
+    throw new ProcessingError(
+      "INVALID_MANIFEST",
+      "Recording phase markers are not ordered within the recording interval.",
+    );
+  }
+  return phases.map((phase, index) => ({
+    ...phase,
+    endTimeSeconds: phases[index + 1]?.timeSeconds ?? spanSeconds,
+  }));
+}
+
 function summarizeOneDof(rows, firstSensorMs, calibration, annotations, mapping) {
   const calibrationRows = rows.filter((row) => {
     const seconds = (row.sensorTimestampMs - firstSensorMs) / 1000;
@@ -539,6 +582,7 @@ export async function analyzeRecording(
   const steps = rows.slice(1).map((row, index) => row.sensorTimestampMs - rows[index].sensorTimestampMs);
   const sortedSteps = [...steps].sort((left, right) => left - right);
   const spanSeconds = (rows.at(-1).sensorTimestampMs - firstSensorMs) / 1000;
+  const phases = normalizePhaseMarkers(manifest.events, firstSensorMs, spanSeconds);
   const plotted = downsample(rows).map((row) => ({
     timeSeconds: (row.sensorTimestampMs - firstSensorMs) / 1000,
     acceleration: row.acceleration,
@@ -550,6 +594,7 @@ export async function analyzeRecording(
     manifestPath: selectedManifestPath,
     dataPath: manifest.dataFile.path,
     manifest,
+    phases,
     integrity: {
       checksumMatches:
         createHash("sha256").update(csvBuffer).digest("hex") === manifest.dataFile.sha256,
@@ -575,7 +620,12 @@ export async function analyzeRecording(
         ? summarizeCalibration(rows, firstSensorMs, calibration)
         : null,
     oneDof:
-      calibration && Number.isFinite(calibration.startSeconds) && Number.isFinite(calibration.endSeconds)
+      calibration &&
+      Number.isFinite(calibration.startSeconds) &&
+      Number.isFinite(calibration.endSeconds) &&
+      ["isolated_forearm_rotation", "isolated_elbow_flexion_extension"].includes(
+        manifest.protocol.movement,
+      )
         ? summarizeOneDof(rows, firstSensorMs, calibration, annotations, oneDofMapping)
         : null,
     plot: {
