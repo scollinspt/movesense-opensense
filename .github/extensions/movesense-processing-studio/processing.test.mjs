@@ -9,6 +9,7 @@ import {
   analyzeRecording,
   listRecordings,
   parseOpenSenseVisualization,
+  parseTwoDofSimulation,
   parseTwoDofVisualization,
 } from "./processing.mjs";
 
@@ -141,4 +142,32 @@ test("reads synchronized elbow and forearm coordinates", () => {
   assert.equal(result.frames.length, 2);
   assert.equal(result.frames[1].elbowFlexionDegrees, 45);
   assert.equal(result.frames[1].pronationSupinationDegrees, 30);
+});
+
+test("validates Rajagopal simulation frames", () => {
+  const point = [0, 1, 2];
+  const simulation = {
+    format: "movesense-opensense-two-dof-simulation",
+    version: 1,
+    frames: [0, 0.02].map((timeSeconds) => ({
+      timeSeconds,
+      elbowFlexionDegrees: 45,
+      pronationSupinationDegrees: 30,
+      orientationErrorDegrees: 5,
+      points: {
+        shoulder: point,
+        elbow: point,
+        wrist: point,
+        imu: point,
+        imuX: point,
+        imuY: point,
+        imuZ: point,
+      },
+    })),
+  };
+
+  const result = parseTwoDofSimulation(JSON.stringify(simulation));
+
+  assert.equal(result.frames.length, 2);
+  assert.equal(result.frames[0].orientationErrorDegrees, 5);
 });

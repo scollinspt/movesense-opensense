@@ -92,6 +92,10 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
   residual reached 61.2 degrees with 26.4 degrees RMS, while `pro_sup_l`
   remained within 0.1 degrees of its 90-degree upper limit for approximately
   31 percent of processed samples.
+- Added an interactive Processing Studio simulation generated from downsampled
+  Rajagopal body and calibrated `radius_l_imu` frame positions. The viewer
+  supports playback, scrubbing, drag-to-rotate inspection, IMU-axis display,
+  and green/amber/red forearm coloring by orientation residual.
 
 ### Technical findings
 

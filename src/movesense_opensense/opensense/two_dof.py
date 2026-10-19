@@ -355,6 +355,87 @@ def _phase_diagnostics(
     return diagnostics
 
 
+def _point(frame: Any, state: Any, location: Any) -> list[float]:
+    point = frame.findStationLocationInGround(state, location)
+    return [point.get(index) for index in range(3)]
+
+
+def _write_simulation(
+    path: Path,
+    model: Any,
+    motion_rows: Sequence[dict[str, str]],
+    orientation_errors_degrees: Sequence[float],
+    opensim: Any,
+) -> None:
+    state = model.initSystem()
+    coordinate_set = model.updCoordinateSet()
+    humerus = model.getBodySet().get("humerus_l")
+    ulna = model.getBodySet().get("ulna_l")
+    hand = model.getBodySet().get("hand_l")
+    imu_frame = opensim.PhysicalFrame.safeDownCast(
+        model.getComponent("/bodyset/radius_l/radius_l_imu")
+    )
+    frame_count = min(700, len(motion_rows))
+    indices = sorted(
+        {
+            round(index * (len(motion_rows) - 1) / (frame_count - 1))
+            for index in range(frame_count)
+        }
+    )
+    frames = []
+    for index in indices:
+        row = motion_rows[index]
+        for coordinate_name in COORDINATES:
+            coordinate_set.get(coordinate_name).setValue(
+                state,
+                math.radians(float(row[coordinate_name])),
+                False,
+            )
+        model.realizePosition(state)
+        imu_origin = _point(imu_frame, state, opensim.Vec3(0))
+        axis_length = 0.08
+        frames.append(
+            {
+                "timeSeconds": float(row["time"]),
+                "elbowFlexionDegrees": float(row["elbow_flex_l"]),
+                "pronationSupinationDegrees": float(row["pro_sup_l"]),
+                "orientationErrorDegrees": orientation_errors_degrees[index],
+                "points": {
+                    "shoulder": _point(humerus, state, opensim.Vec3(0)),
+                    "elbow": _point(ulna, state, opensim.Vec3(0)),
+                    "wrist": _point(hand, state, opensim.Vec3(0)),
+                    "imu": imu_origin,
+                    "imuX": _point(
+                        imu_frame,
+                        state,
+                        opensim.Vec3(axis_length, 0, 0),
+                    ),
+                    "imuY": _point(
+                        imu_frame,
+                        state,
+                        opensim.Vec3(0, axis_length, 0),
+                    ),
+                    "imuZ": _point(
+                        imu_frame,
+                        state,
+                        opensim.Vec3(0, 0, axis_length),
+                    ),
+                },
+            }
+        )
+    payload = {
+        "format": "movesense-opensense-two-dof-simulation",
+        "version": 1,
+        "model": "Rajagopal2015_left_arm_two_dof.osim",
+        "description": (
+            "Downsampled Rajagopal body and calibrated IMU-frame positions "
+            "driven by the OpenSense inverse-kinematics motion."
+        ),
+        "frames": frames,
+    }
+    path.write_text(f"{json.dumps(payload, indent=2)}\n", encoding="utf-8")
+
+
 def run_opensim(args: argparse.Namespace) -> None:
     try:
         import opensim
@@ -371,6 +452,7 @@ def run_opensim(args: argparse.Namespace) -> None:
     model_path = output_directory / "Rajagopal2015_left_arm_two_dof.osim"
     motion_path = output_directory / "left_arm_two_dof_ik.mot"
     orientation_errors_path = output_directory / "left_arm_two_dof_ik.mot_orientationErrors.sto"
+    simulation_path = output_directory / "left_arm_two_dof_simulation.json"
 
     calibration_model = opensim.Model(str(source_model))
     coordinates = calibration_model.updCoordinateSet()
@@ -465,6 +547,13 @@ def run_opensim(args: argparse.Namespace) -> None:
         / len(orientation_errors_degrees)
     )
     orientation_error_tolerance = 15.0
+    _write_simulation(
+        simulation_path,
+        model,
+        motion_rows,
+        orientation_errors_degrees,
+        opensim,
+    )
     coordinate_bounds = {
         "elbow_flex_l": (0.0, 150.0),
         "pro_sup_l": (0.0, 90.0),
@@ -542,6 +631,10 @@ def run_opensim(args: argparse.Namespace) -> None:
             "orientationErrors": {
                 "path": str(orientation_errors_path),
                 "sha256": _sha256(orientation_errors_path),
+            },
+            "simulation": {
+                "path": str(simulation_path),
+                "sha256": _sha256(simulation_path),
             },
         },
         "validation": {

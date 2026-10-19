@@ -114,7 +114,8 @@ function page() {
     .artifact-links a { padding:8px 12px; color:var(--cyan); border:1px solid var(--line); border-radius:999px; text-decoration:none; }
     .artifact-links a:hover { background:#183144; }
     .motion-viewer { margin-top:16px; padding:16px; border:1px solid var(--line); border-radius:12px; background:#071018; }
-    .motion-viewer canvas { height:360px; cursor:default; }
+    .motion-viewer canvas { height:420px; cursor:grab; }
+    .motion-viewer canvas:active { cursor:grabbing; }
     .playback { display:grid; grid-template-columns:auto minmax(120px,1fr) auto; gap:12px; align-items:center; margin-top:12px; }
     .playback input { padding:0; }
     .pipeline { display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin:0 0 12px; color:var(--muted); }
@@ -137,6 +138,8 @@ function page() {
     let current = null;
     let selection = null;
     let viewerPlayback = null;
+    let simulationYaw = -0.55;
+    let simulationPitch = -0.18;
     const enabledAxes = [true, true, true];
 
     async function request(url, options = {}) {
@@ -338,6 +341,10 @@ function page() {
       if (!visualization || !canvas) return;
       const frameIndex = Math.max(0, Math.min(visualization.frames.length - 1, Number(index)));
       const frame = visualization.frames[frameIndex];
+      if (visualization.motionType === "elbow_flexion_and_forearm_rotation") {
+        renderTwoDofFrame(canvas, frame, frameIndex, visualization);
+        return;
+      }
       const ratio = window.devicePixelRatio || 1;
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
@@ -360,6 +367,102 @@ function page() {
       document.getElementById("viewer-ik-angle").textContent = fixed(frame.ikAngleDegrees, 3) + "°";
       document.getElementById("viewer-error").textContent = fixed(frame.errorDegrees, 6) + "°";
       document.getElementById("viewer-slider").value = String(frameIndex);
+    }
+
+    function projectSimulationPoint(point, origin, width, height) {
+      const x = point[0] - origin[0];
+      const y = point[1] - origin[1];
+      const z = point[2] - origin[2];
+      const yawX = Math.cos(simulationYaw) * x + Math.sin(simulationYaw) * z;
+      const yawZ = -Math.sin(simulationYaw) * x + Math.cos(simulationYaw) * z;
+      const pitchY = Math.cos(simulationPitch) * y - Math.sin(simulationPitch) * yawZ;
+      const scale = Math.min(width, height) * 0.82;
+      return [width / 2 + yawX * scale, height * 0.2 - pitchY * scale];
+    }
+
+    function renderTwoDofFrame(canvas, frame, frameIndex, visualization) {
+      const ratio = window.devicePixelRatio || 1;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      const context = canvas.getContext("2d");
+      context.scale(ratio, ratio);
+      context.clearRect(0, 0, width, height);
+      const origin = frame.points.shoulder;
+      const projected = Object.fromEntries(
+        Object.entries(frame.points).map(([name, point]) => [
+          name,
+          projectSimulationPoint(point, origin, width, height),
+        ]),
+      );
+      const residualColor =
+        frame.orientationErrorDegrees <= 15
+          ? "#6ce3a1"
+          : frame.orientationErrorDegrees <= 30
+            ? "#ffc96b"
+            : "#ff8174";
+      context.lineCap = "round";
+      context.strokeStyle = "#4a83ad";
+      context.lineWidth = 20;
+      context.beginPath();
+      context.moveTo(...projected.shoulder);
+      context.lineTo(...projected.elbow);
+      context.stroke();
+      context.strokeStyle = residualColor;
+      context.lineWidth = 16;
+      context.beginPath();
+      context.moveTo(...projected.elbow);
+      context.lineTo(...projected.wrist);
+      context.stroke();
+      for (const point of [projected.shoulder, projected.elbow, projected.wrist]) {
+        context.fillStyle = "#edf7ff";
+        context.beginPath();
+        context.arc(point[0], point[1], 7, 0, Math.PI * 2);
+        context.fill();
+      }
+      for (const [axis, color] of [["imuX", "#ff8174"], ["imuY", "#6ce3a1"], ["imuZ", "#62d8ff"]]) {
+        context.strokeStyle = color;
+        context.lineWidth = 4;
+        context.beginPath();
+        context.moveTo(...projected.imu);
+        context.lineTo(...projected[axis]);
+        context.stroke();
+      }
+      context.fillStyle = "#9bb1c2";
+      context.font = "12px ui-sans-serif, system-ui";
+      context.textAlign = "left";
+      context.fillText("Drag to rotate · IMU axes: X red, Y green, Z cyan", 14, height - 16);
+      context.fillStyle = residualColor;
+      context.textAlign = "right";
+      context.fillText(
+        "orientation residual " + fixed(frame.orientationErrorDegrees, 1) + "°",
+        width - 14,
+        24,
+      );
+      document.getElementById("viewer-time").textContent = fixed(frame.timeSeconds, 3) + " s";
+      document.getElementById("viewer-source-angle").textContent = fixed(frame.elbowFlexionDegrees, 2) + "°";
+      document.getElementById("viewer-ik-angle").textContent = fixed(frame.pronationSupinationDegrees, 2) + "°";
+      document.getElementById("viewer-error").textContent = fixed(frame.orientationErrorDegrees, 2) + "°";
+      document.getElementById("viewer-error").className = frame.orientationErrorDegrees <= 15 ? "ok" : frame.orientationErrorDegrees <= 30 ? "warn" : "bad";
+      document.getElementById("viewer-slider").value = String(frameIndex);
+    }
+
+    function attachSimulationRotation(canvas) {
+      let drag = null;
+      canvas.addEventListener("pointerdown", event => {
+        drag = { x: event.clientX, y: event.clientY, yaw: simulationYaw, pitch: simulationPitch };
+        canvas.setPointerCapture(event.pointerId);
+      });
+      canvas.addEventListener("pointermove", event => {
+        if (!drag) return;
+        simulationYaw = drag.yaw + (event.clientX - drag.x) * 0.01;
+        simulationPitch = Math.max(-1.2, Math.min(1.2, drag.pitch + (event.clientY - drag.y) * 0.01));
+        renderMotionFrame(Number(document.getElementById("viewer-slider").value));
+      });
+      canvas.addEventListener("pointerup", () => {
+        drag = null;
+      });
     }
 
     function stopViewer() {
@@ -725,12 +828,31 @@ function page() {
               <div class="phase"><strong>\${escapeHtml(phase.label.replaceAll("_", " "))}</strong>
                 <span class="muted">Elbow \${fixed(phase.coordinates.elbow_flex_l.minimumDegrees,1)}–\${fixed(phase.coordinates.elbow_flex_l.maximumDegrees,1)}°<br>Forearm \${fixed(phase.coordinates.pro_sup_l.minimumDegrees,1)}–\${fixed(phase.coordinates.pro_sup_l.maximumDegrees,1)}°</span>
               </div>\`).join("")}</div>
+            <div class="motion-viewer">
+              <div class="pipeline" aria-label="Simulation data flow">
+                <span><b>Movesense</b> IMU9</span><span>→</span><span><b>AHRS</b> orientation</span><span>→</span><span><b>OpenSense</b> IK</span><span>→</span><span><b>Rajagopal</b> state</span>
+              </div>
+              <p class="muted">Diagnostic simulation of the actual constrained Rajagopal body and calibrated IMU frames. Forearm color shows orientation residual: green ≤15°, amber ≤30°, red &gt;30°. This helps locate mismatch; it is not independent validation.</p>
+              <canvas id="opensense-motion-viewer" aria-label="Interactive three-dimensional diagnostic simulation of the Rajagopal left arm"></canvas>
+              <div class="metrics" style="margin-top:12px">
+                <div class="metric"><strong id="viewer-time">0.000 s</strong><span>Recording time</span></div>
+                <div class="metric"><strong id="viewer-source-angle">0.00°</strong><span>Elbow flexion</span></div>
+                <div class="metric"><strong id="viewer-ik-angle">0.00°</strong><span>Forearm rotation</span></div>
+                <div class="metric"><strong id="viewer-error">0.00°</strong><span>Orientation residual</span></div>
+              </div>
+              <div class="playback">
+                <button id="viewer-play" type="button">Play</button>
+                <label>Playback position<input id="viewer-slider" type="range" min="0" max="\${opensense.visualization.frames.length - 1}" value="0" step="1"></label>
+                <label>Speed<select id="viewer-speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+              </div>
+            </div>
             <div class="artifact-links">
               <a href="/api/artifact?kind=orientationsSto" target="_blank">Quaternion STO</a>
               <a href="/api/artifact?kind=model" target="_blank">Rajagopal two-DOF model</a>
               <a href="/api/artifact?kind=inverseKinematicsMotion" target="_blank">IK motion</a>
               <a href="/api/artifact?kind=orientationErrors" target="_blank">Orientation errors</a>
               <a href="/api/artifact?kind=fusionDiagnostics" target="_blank">Fusion diagnostics</a>
+              <a href="/api/artifact?kind=simulation" target="_blank">Simulation states</a>
               <a href="/api/artifact?kind=processingManifest" target="_blank">Processing manifest</a>
             </div>\`
             : \`<div class="empty">No checksum-verified two-DOF OpenSense result is available yet. Configure the runtime and Rajagopal model, then run the pipeline.</div>\`
@@ -819,7 +941,11 @@ function page() {
       }
       redraw();
       if (oneDof) drawAngle(document.getElementById("chart-one-dof"), oneDof);
-      if (!isMultiDofProtocol && opensenseComplete) renderMotionFrame(0);
+      const motionCanvas = document.getElementById("opensense-motion-viewer");
+      if (motionCanvas) {
+        if (isMultiDofProtocol) attachSimulationRotation(motionCanvas);
+        renderMotionFrame(0);
+      }
     }
 
     function showError(error) {
@@ -881,6 +1007,7 @@ export async function createProcessingServer(identity) {
           inverseKinematicsMotion: result.outputs.inverseKinematicsMotion.path,
           orientationErrors: result.outputs.orientationErrors?.path,
           fusionDiagnostics: result.outputs.fusionDiagnostics?.path,
+          simulation: result.outputs.simulation?.path,
           processingManifest: result.manifestPath,
         };
         if (!kind || !(kind in artifacts) || !artifacts[kind]) {

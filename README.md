@@ -125,7 +125,11 @@ Generated artifacts are stored separately under
 reports magnetic-field exclusion, neutral closure, orientation residuals,
 coordinate-limit occupancy, and phase-specific coordinate ranges. A completed
 IK run is not reported as validated when these diagnostics exceed their
-acceptance thresholds.
+acceptance thresholds. The studio also provides an interactive diagnostic
+simulation generated from the actual Rajagopal body and calibrated IMU-frame
+states. Playback, scrubbing, and drag-to-rotate controls show elbow flexion,
+forearm rotation, and a residual-coded forearm; the simulation is explicitly
+diagnostic rather than an independent validation reference.
 
 The constrained estimator does not replace general orientation fusion for
 arbitrary three-dimensional motion or multi-segment trials.

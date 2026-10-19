@@ -199,6 +199,7 @@ export function parseTwoDofVisualization(motionText, estimator) {
       "Two-DOF IK motion is missing a configured coordinate.",
     );
   }
+
   const frames = lines.map((line) => {
     const fields = line.trim().split(/\s+/).map(Number);
     return {
@@ -222,6 +223,46 @@ export function parseTwoDofVisualization(motionText, estimator) {
     coordinateNames: estimator.coordinates,
     durationSeconds: frames.at(-1).timeSeconds,
     frames: downsample(frames, 700),
+  };
+}
+
+export function parseTwoDofSimulation(text) {
+  let simulation;
+  try {
+    simulation = JSON.parse(text);
+  } catch {
+    throw new ProcessingError(
+      "INVALID_OPENSENSE_ARTIFACT",
+      "The two-DOF simulation is not valid JSON.",
+    );
+  }
+  const pointNames = ["shoulder", "elbow", "wrist", "imu", "imuX", "imuY", "imuZ"];
+  if (
+    simulation?.format !== "movesense-opensense-two-dof-simulation" ||
+    simulation.version !== 1 ||
+    !Array.isArray(simulation.frames) ||
+    simulation.frames.length < 2 ||
+    simulation.frames.some((frame) =>
+      !Number.isFinite(frame.timeSeconds) ||
+      !Number.isFinite(frame.elbowFlexionDegrees) ||
+      !Number.isFinite(frame.pronationSupinationDegrees) ||
+      !Number.isFinite(frame.orientationErrorDegrees) ||
+      pointNames.some((name) =>
+        !Array.isArray(frame.points?.[name]) ||
+        frame.points[name].length !== 3 ||
+        !frame.points[name].every(Number.isFinite)
+      )
+    )
+  ) {
+    throw new ProcessingError(
+      "INVALID_OPENSENSE_ARTIFACT",
+      "The two-DOF simulation contains invalid frames.",
+    );
+  }
+  return {
+    motionType: "elbow_flexion_and_forearm_rotation",
+    durationSeconds: simulation.frames.at(-1).timeSeconds,
+    frames: simulation.frames,
   };
 }
 
@@ -543,10 +584,7 @@ export async function loadOpenSenseResult(governedRoot, recordingId) {
       artifactContents[name] = bytes;
     }
     const visualization = isTwoDof
-      ? parseTwoDofVisualization(
-          artifactContents.inverseKinematicsMotion.toString("utf8"),
-          manifest.estimator,
-        )
+      ? parseTwoDofSimulation(artifactContents.simulation.toString("utf8"))
       : parseOpenSenseVisualization(
           artifactContents.orientationsSto.toString("utf8"),
           artifactContents.inverseKinematicsMotion.toString("utf8"),
