@@ -4,6 +4,11 @@
 
 Build an open, reproducible pipeline that acquires Movesense IMU measurements and produces synchronized, convention-documented orientation data suitable for OpenSense/OpenSim. Interoperability milestones do not establish scientific or clinical validity.
 
+The active application objective is ambulatory monitoring of movement
+dynamics and the effects of fatigue on coordination and motor control. See the
+[ambulatory movement R&D strategy](ambulatory-movement-rd-strategy.md) for the
+current scientific and sensor-allocation priorities.
+
 ## Current state and next execution order
 
 Completed engineering milestones:
@@ -20,23 +25,22 @@ Completed engineering milestones:
 
 Next execution order:
 
-1. Diagnose the failed two-coordinate validation using phase-trimmed residuals,
-   forearm-coordinate limits, attachment placement, and proximal-motion review.
-2. Decide whether the existing trial can support a corrected model
-   configuration or whether to repeat it with a dedicated magnetic calibration
-   and more explicit static holds between phases.
-3. Add a 3-D-capable viewer only after the two-coordinate result meets its
-   orientation-residual and cross-talk criteria.
-4. Reuse the validated full-orientation pipeline for a distal-humerus, three-DOF,
-   fixed-trunk and fixed-scapula shoulder model and 3-D visualization.
-5. Complete the staged isolated and combined one-sensor shoulder session.
-6. Extend acquisition to two concurrent sensors and complete the rigid-fixture
-   timing session.
-7. Add explicit inter-sensor synchronization diagnostics and acceptance output.
-8. Complete isolated and combined two-sensor elbow and forearm sessions using
-   relative segment orientation.
-9. Defer unconstrained shoulder-girdle interpretation and larger sensor counts
-   until the two-sensor path is measured and reproducible.
+1. Extend acquisition to two concurrent sensors and complete a rigid-fixture
+   synchronization trial.
+2. Add explicit inter-sensor timing, offset, drift, loss, and residual
+   alignment diagnostics.
+3. Validate humerus-to-proximal-forearm relative orientation for elbow
+   flexion/extension while forearm rotation is controlled rather than treated
+   as a primary outcome.
+4. Add a thorax sensor for shoulder motion relative to the trunk, followed by
+   combined shoulder-elbow movement.
+5. Validate pelvis-thorax-head relative orientation for axial coordination.
+6. Validate pelvis-thigh-shank relative orientation for hip and knee.
+7. Add a foot sensor only for a defined ankle or foot outcome.
+8. Combine validated segment pairs in an ambulatory task.
+9. Add fatigue exposure only after the corresponding non-fatigued task has
+   acceptable timing, attachment, repeatability, residual, and cross-talk
+   performance.
 
 ## Milestone 1: Inventory and single-sensor feasibility
 
@@ -57,12 +61,11 @@ Establish what the available sensors and acquisition path actually provide befor
 9. Obtain and record the institutional governance determination required before any human activity.
 10. If permitted, complete one simple one-sensor human feasibility session to assess attachment, tolerability, workflow, recording continuity, and data quality without making validity or clinical claims.
 
-### Constrained single-wrist movement progression
+### Historical constrained single-wrist movement progression
 
-Use the versioned `single-wrist-feasibility-v1` mounting and protocol before
-adding multi-joint or shoulder motion. Require explicit confirmation of the
-anatomical starting position and control of the trunk and non-target joints
-before every recording.
+This progression was completed as an engineering and decision experiment. It
+is retained for provenance and regression testing but is no longer the active
+application sequence.
 
 1. Capture a static anatomical-position reference.
 2. Capture isolated forearm supination/pronation as one DOF while the trunk,
@@ -109,8 +112,9 @@ validated model constraints.
    loss, jitter, start and stop behavior, and residual alignment error.
 4. Add a synchronized two-sensor recording manifest and Processing Studio
    diagnostics before interpreting joint motion.
-5. Complete isolated two-sensor elbow and forearm researcher self-experiments,
-   followed by the defined combined-motion session.
+5. Complete a two-sensor humerus-to-proximal-forearm elbow experiment, with
+   forearm posture defined as a controlled condition rather than
+   pronation/supination as a primary outcome.
 6. Repeat non-human load tests with 3, 5, and 10 sensors only after the
    two-sensor path meets its timing and reliability criteria.
 7. Make sensor count a versioned configuration option rather than a code
@@ -120,25 +124,20 @@ Simultaneous BLE subscription is not evidence of synchronized sensing. Configura
 
 ## Milestone 3: Calibration and orientation estimation
 
-**Status: full-orientation prototype implemented; first two-DOF trial failed validation.**
+**Status: full-orientation prototype implemented; focus shifted to synchronized relative segment orientation.**
 
-The current gyroscope-only integrator is intentionally limited to isolated
-one-axis trials. The next processing milestone is a one-sensor, two-DOF wrist
-trial with a fixed humerus. Select a maintained, license-compatible
-sensor-fusion implementation; document initialization, magnetic-field handling,
-quaternion conventions, and sensor-to-model coordinate frames; then solve
-elbow flexion and forearm rotation with a two-coordinate constrained model. The
-staged protocol includes isolated phases before combined motion so coordinate
-cross-talk can be inspected.
+The wrist two-DOF experiment implemented full-orientation fusion, frame
+mapping, constrained OpenSense IK, residual reporting, and diagnostic
+simulation. It did not pass its kinematic acceptance threshold and showed that
+pronation/supination would demand disproportionate R&D effort for the current
+ambulatory-monitoring objective.
 
-After that milestone, two-sensor segment processing must calculate relative
-orientation rather than assigning a distal sensor angle directly to a joint
-coordinate. Before two-sensor work, reuse the same full-orientation foundation
-for a distal-humerus sensor and a three-coordinate shoulder model. Stage
-flexion/extension, abduction/adduction, and internal/external rotation
-separately before combined shoulder motion. Treat the fixed scapula as an
-explicit model constraint, not an observed anatomical fact. An encoded gimbal
-may be considered later if quantitative orientation validation requires it.
+The next processing milestone is synchronized relative orientation for the
+segments bounding a high-value target. Begin with humerus and proximal forearm
+for elbow flexion/extension, then add thorax-to-humerus shoulder processing.
+The same pattern will be used for pelvis-thorax-head and
+pelvis-thigh-shank-foot chains. Forearm rotation may be controlled or reported
+as uncertainty without remaining a primary modeled outcome.
 
 ## Milestone 4: Minimal OpenSense integration
 
@@ -150,15 +149,13 @@ side-aware fixed-humerus forearm and elbow models, runs
 coordinate trajectory against the source constrained angle. The Processing
 Studio visualizes the OpenSense orientation and OpenSim IK result together.
 
-Next, add a two-coordinate fixed-humerus model and a 3-D-capable synchronized
-viewer for the one-sensor elbow-plus-forearm trial. Preserve the existing
-one-DOF path as a regression fixture rather than applying its dominant-axis
-estimator to combined motion. Then add a three-coordinate, fixed-trunk and
-fixed-scapula shoulder model driven by a distal-humerus sensor and verify it in
-the same 3-D viewer. After both one-sensor multi-DOF stages, add synchronized
-humerus and forearm IMU frames, a reproducible static calibration transform,
-and relative segment orientation. The custom lower-extremity
-teaching-apparatus path remains a later, separate multi-segment application.
+Preserve the one-DOF and wrist two-DOF paths as regression and decision
+fixtures. The next OpenSense integration must support synchronized segment
+pairs, reproducible static frame calibration, and relative orientation.
+Prioritize thorax-humerus-forearm, pelvis-thorax-head, and
+pelvis-thigh-shank chains. Add a foot frame only when ankle or foot behavior is
+an explicit outcome. Select or configure models according to each target
+rather than forcing every protocol into one model.
 
 ## Milestone 5: External and task-specific validation
 
@@ -173,7 +170,9 @@ engineering development without making participant-study or clinical claims.
 Any activity involving someone other than the researcher/developer requires a
 separate study protocol, governance determination, consent process, privacy
 plan, and approved data storage. The planned sensor-count progression is one
-sensor, two sensors, and then 3, 5, and 10 sensors.
+sensor, two sensors, and then the minimum segment set required by each target.
+Three-, five-, and ten-sensor acquisition load tests remain useful engineering
+checks but do not justify adding sensors to a scientific protocol.
 
 ## Cross-cutting requirements
 

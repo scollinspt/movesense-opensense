@@ -2,6 +2,47 @@
 
 Maintain this as a chronological record of completed work, evidence, decisions, and blockers. Planned work belongs in the workplan; this log records what actually happened.
 
+## 2026-10-19
+
+### Decisions
+
+- Shifted the primary R&D objective from distal upper-extremity
+  pronation/supination to ambulatory monitoring of proximal, axial, and
+  lower-extremity movement dynamics, coordination, motor control, and fatigue.
+- Distinguished controlling forearm posture from logging
+  pronation/supination as an outcome. Future elbow and shoulder protocols may
+  define and control forearm posture without organizing the processing
+  pipeline around a forearm-rotation coordinate.
+- Retained a proximal-forearm sensor as necessary when elbow motion must be
+  calculated relative to the humerus. Its role is an elbow segment sensor, not
+  a wrist-centered outcome sensor.
+- Adopted an observability-driven sensor plan: thorax-humerus for shoulder,
+  humerus-forearm for elbow, pelvis-thorax for trunk, thorax-head for aggregate
+  cervical motion, pelvis-thigh for hip, thigh-shank for knee, and shank-foot
+  only when ankle or foot behavior is a defined outcome.
+- Prioritized three R&D tracks: proximal upper extremity, trunk and head, and
+  pelvis/lower extremity. Integrated ambulatory and fatigue protocols will
+  follow only after the component segment pairs pass synchronization,
+  repeatability, residual, cross-talk, and attachment checks.
+- Preserved the wrist and pronation/supination work as a reproducible decision
+  experiment and regression path rather than deleting or retroactively
+  redefining it.
+
+### Rationale
+
+- The two-DOF wrist trial required substantial heading, frame-mapping,
+  coordinate-limit, and cross-talk work but did not produce an acceptable
+  solution: 61.2 degrees maximum orientation residual, 26.4 degrees RMS
+  residual, and approximately 31 percent occupancy near the
+  `pro_sup_l` upper limit.
+- No currently anticipated major use scenario for this program hinges on
+  pronation/supination. Its expected scientific value is low relative to the
+  proximal, axial, and lower-extremity signals likely to matter for ambulatory
+  coordination and fatigue.
+- The experiment nevertheless achieved its R&D purpose by identifying a
+  low-return technical direction before multi-sensor acquisition and larger
+  protocols were organized around it.
+
 ## 2026-10-18
 
 ### Completed

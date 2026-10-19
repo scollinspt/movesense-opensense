@@ -21,8 +21,12 @@ The direct launch phrases are:
 - **Open Movesense Processing Studio**
 - **Open Movesense Firmware Update Studio**
 
-See [`configs/protocols/upper-limb-next-sessions-v1.md`](configs/protocols/upper-limb-next-sessions-v1.md)
-before the next collection session.
+See the current
+[ambulatory movement R&D strategy](docs/ambulatory-movement-rd-strategy.md)
+before planning the next collection session. The existing
+[`upper-limb-next-sessions-v1`](configs/protocols/upper-limb-next-sessions-v1.md)
+protocol remains a historical record of the distal upper-extremity development
+stage rather than the active R&D priority.
 
 ## Data boundary
 
