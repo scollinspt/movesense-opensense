@@ -108,6 +108,7 @@ export class PanTompkinsDetector {
     this.lastAcceptedPeak = 0;
     this.recentAbsolute = [];
     this.recentIntegrated = [];
+    this.filteredHistory = [];
   }
 
   addSample(timeMs, rawValue) {
@@ -133,6 +134,13 @@ export class PanTompkinsDetector {
       * (this.highPass + rawValue - this.previousRaw);
     this.previousRaw = rawValue;
     this.lowPass += this.lowPassAlpha * (this.highPass - this.lowPass);
+    this.filteredHistory.push({ timeMs, value: this.lowPass });
+    while (
+      this.filteredHistory.length
+      && timeMs - this.filteredHistory[0].timeMs > 300
+    ) {
+      this.filteredHistory.shift();
+    }
     const derivative = (this.lowPass - this.previousFiltered) * this.sampleRateHz;
     this.previousFiltered = this.lowPass;
     const squared = derivative * derivative;
@@ -171,13 +179,25 @@ export class PanTompkinsDetector {
       const outsideRefractory =
         this.previousTime1 - this.lastRWaveMs >= this.refractoryMs;
       if (warmedUp && candidate > this.threshold && outsideRefractory) {
+        const refinementWindowStart = this.previousTime1 - 250;
+        const refinedPeak = this.filteredHistory
+          .filter((sample) => (
+            sample.timeMs >= refinementWindowStart
+            && sample.timeMs <= this.previousTime1
+          ))
+          .reduce(
+            (best, sample) => (
+              Math.abs(sample.value) > Math.abs(best.value) ? sample : best
+            ),
+            { timeMs: this.previousTime1, value: 0 },
+          );
         this.signalPeak = this.signalPeak
           ? 0.125 * candidate + 0.875 * this.signalPeak
           : candidate;
-        this.lastRWaveMs = this.previousTime1;
+        this.lastRWaveMs = refinedPeak.timeMs;
         this.lastAcceptedPeak = candidate;
         rWave = true;
-        rWaveTimeMs = this.previousTime1;
+        rWaveTimeMs = refinedPeak.timeMs;
       } else {
         this.noisePeak = this.noisePeak
           ? 0.125 * candidate + 0.875 * this.noisePeak

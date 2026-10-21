@@ -82,6 +82,24 @@ test("detector recovers after a large startup artifact", () => {
   assert.ok(Math.abs(estimates.at(-1).bpm - 72) < 1);
 });
 
+test("detector supports 512 Hz HRV-oriented acquisition", () => {
+  const detector = new PanTompkinsDetector(512);
+  const heartRate = new FiveWaveHeartRate();
+  const estimates = [];
+
+  for (let index = 0; index < 512 * 20; index += 1) {
+    const timeMs = index * 1000 / 512;
+    const result = detector.addSample(timeMs, ecgValue(timeMs / 1000));
+    if (result.rWave) {
+      const estimate = heartRate.addRWave(result.rWaveTimeMs);
+      if (estimate?.accepted) estimates.push(estimate);
+    }
+  }
+
+  assert.ok(estimates.length >= 3);
+  assert.ok(estimates.every((estimate) => Math.abs(estimate.bpm - 72) < 0.25));
+});
+
 test("requires stable gravity before zero and reports known tilt", () => {
   const estimator = new TiltEstimator({ timeConstantSeconds: 0.05 });
   let result;

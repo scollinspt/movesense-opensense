@@ -108,7 +108,9 @@ Bleak GSP bridge. The implemented ECG contract is `/Meas/ECG/{rate}` with a
 little-endian device-uptime timestamp followed by raw `int32` ADC samples.
 ECG and IMU use distinct GSP references and independent continuation buffers.
 
-The default live configuration requests ECG at 125 Hz and IMU9 at 52 Hz. The
+The current live configuration requests ECG at 512 Hz and IMU9 at 26 Hz. This
+provides approximately 1.95 ms ECG timing resolution for derived HRV while
+retaining approximately 38 ms orientation sampling for slow table motion. The
 application reports a connection error when no samples arrive within ten
 seconds, but it does not yet query `/Meas/ECG/Info`. Confirm that the installed
 sensor application advertises the requested ECG rate and validate simultaneous

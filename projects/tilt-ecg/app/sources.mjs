@@ -137,7 +137,7 @@ export class SyntheticSource extends EventEmitter {
 }
 
 export class MovesenseBridgeSource extends EventEmitter {
-  constructor({ address, pythonExecutable = null, ecgRateHz = 125, imuRateHz = 52 }) {
+  constructor({ address, pythonExecutable = null, ecgRateHz = 512, imuRateHz = 26 }) {
     super();
     this.address = address;
     this.pythonExecutable =

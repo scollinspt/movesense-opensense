@@ -116,7 +116,7 @@ export class TiltSessionManager extends EventEmitter {
     return this.state;
   }
 
-  async connectHardware({ address, ecgRateHz = 125, imuRateHz = 52 }) {
+  async connectHardware({ address, ecgRateHz = 512, imuRateHz = 26 }) {
     if (typeof address !== "string" || !address.trim()) {
       throw new Error("A Movesense address is required.");
     }
@@ -343,6 +343,8 @@ export class TiltSessionManager extends EventEmitter {
     this.latestTilt = null;
     this.latestHeartRate = null;
     this.previousEcgQuality = "unavailable";
+    this.heartRate = new FiveWaveHeartRate();
+    this.detector = null;
     this.phaseTracker.reset();
     this.ecgBatch = [];
     return this.state;

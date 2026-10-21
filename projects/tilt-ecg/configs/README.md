@@ -15,3 +15,9 @@ Each configuration must identify:
 
 Do not store participant identifiers, recordings, credentials, private device
 inventories, or host-specific paths here.
+
+Current configurations:
+
+- `live-v1.json` — historical 125 Hz ECG and 52 Hz IMU9 development baseline.
+- `live-v2.json` — current 512 Hz ECG and 26 Hz IMU9 configuration for
+  HRV-oriented tilt-table acquisition.

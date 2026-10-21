@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "tilt-ecg-live-config-v1",
+  "configId": "tilt-ecg-live-v2",
+  "projectId": "hms-lab-tilt-ecg",
+  "mode": "live",
+  "placement": {
+    "sensor": "midline chest on Suunto electrode strap",
+    "supineZeroRequiresOperatorAcceptance": true
+  },
+  "resources": {
+    "ecg": {
+      "pathTemplate": "/Meas/ECG/{rate}",
+      "requestedRateHz": 512,
+      "sampleType": "little-endian int32",
+      "unit": "raw_adc_count",
+      "purpose": "R-wave timing and derived HRV",
+      "verifyRateAgainstSensorInfoBeforeParticipantUse": true
+    },
+    "imu": {
+      "pathTemplate": "/Meas/IMU9/{rate}",
+      "requestedRateHz": 26,
+      "accelerationUnit": "m/s^2",
+      "angularVelocityUnit": "deg/s",
+      "magneticFieldUnit": "uT",
+      "purpose": "quasi-static tilt and transition quality"
+    }
+  },
+  "processing": {
+    "ecgDetector": "pan-tompkins-streaming-v1",
+    "heartRateEstimator": "five-consecutive-r-waves-v1",
+    "tiltEstimator": "low-pass-gravity-pitch-roll-v1"
+  },
+  "output": {
+    "recordingSchemaVersion": "tilt-ecg-recording-v1",
+    "summarySchemaVersion": "tilt-ecg-five-second-summary-v1"
+  }
+}

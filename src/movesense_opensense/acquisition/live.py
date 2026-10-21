@@ -118,8 +118,8 @@ def parser() -> argparse.ArgumentParser:
         help="Stream concurrent ECG and IMU9 data as JSON lines",
     )
     tilt_parser.add_argument("--address", required=True)
-    tilt_parser.add_argument("--ecg-rate", type=int, default=125)
-    tilt_parser.add_argument("--imu-rate", type=int, default=52)
+    tilt_parser.add_argument("--ecg-rate", type=int, default=512)
+    tilt_parser.add_argument("--imu-rate", type=int, default=26)
     return result
 
 

@@ -78,7 +78,10 @@ function renderState(state) {
     state.connectionState,
   );
   const recording = Boolean(state.recording);
-  elements.connectionState.textContent = state.connectionState.replaceAll("_", " ");
+  elements.connectionState.textContent =
+    connected && state.sensor
+      ? `connected · ECG ${state.sensor.ecgRateHz} Hz · IMU ${state.sensor.imuRateHz} Hz`
+      : state.connectionState.replaceAll("_", " ");
   elements.connect.disabled = !elements.sensorSelect.value || connected || recording;
   elements.demo.disabled = connected || recording;
   elements.scan.disabled = connected || recording;
