@@ -25,6 +25,7 @@ const elements = {
   startTest: byId("start-test"),
   setupControls: byId("setup-controls"),
   operatorControls: byId("operator-controls"),
+  operatorGuidance: byId("operator-guidance"),
   recordingBadge: byId("recording-badge"),
   operatorStatus: byId("operator-status"),
   testClock: byId("test-clock"),
@@ -93,7 +94,12 @@ function renderState(state) {
   elements.startTest.disabled = !connected || !state.zero || recording;
   elements.recordingBadge.hidden = !recording;
   elements.setupControls.hidden = recording;
-  elements.operatorControls.hidden = !recording;
+  elements.operatorControls.classList.toggle("inactive", !recording);
+  elements.operatorControls.setAttribute("aria-disabled", String(!recording));
+  elements.operatorGuidance.hidden = recording;
+  elements.operatorControls.querySelectorAll("button, input").forEach((control) => {
+    control.disabled = !recording;
+  });
 
   const quality = state.ecgQuality ?? "unavailable";
   elements.ecgQuality.textContent = quality;

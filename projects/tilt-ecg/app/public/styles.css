@@ -108,6 +108,19 @@ main { display: grid; gap: 18px; max-width: 1500px; margin: 0 auto; padding: 22p
 .clock { font-size: 1.6rem; color: var(--forest); font-variant-numeric: tabular-nums; font-weight: 800; }
 .setup-grid { display: grid; grid-template-columns: 2fr repeat(3, minmax(110px, .5fr)) auto; gap: 12px; align-items: end; }
 .setup-grid .wide { min-width: 260px; }
+.operator-controls { margin-top: 18px; }
+.operator-controls.inactive .control-section,
+.operator-controls.inactive .observations-grid,
+.operator-controls.inactive .final-actions { opacity: .58; }
+.operator-guidance {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-deep);
+  color: var(--deep-forest);
+  font-weight: 700;
+}
 .control-section { padding: 18px 0; border-top: 1px solid var(--line); }
 .control-section h3 { margin-bottom: 10px; }
 .control-section h3 span { color: var(--muted); font-size: .75rem; font-family: inherit; font-weight: 500; }

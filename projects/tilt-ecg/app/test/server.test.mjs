@@ -9,7 +9,10 @@ test("serves the operational interface and starts synthetic acquisition", async 
 
   const page = await fetch(application.url);
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /Tilt ECG Acquisition/);
+  const pageText = await page.text();
+  assert.match(pageText, /Tilt ECG Acquisition/);
+  assert.match(pageText, /Presyncope \/ lightheadedness/);
+  assert.match(pageText, /Annotation controls are shown for protocol review/);
 
   const demo = await fetch(new URL("/api/connect/demo", application.url), {
     method: "POST",

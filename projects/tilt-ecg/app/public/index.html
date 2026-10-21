@@ -125,7 +125,11 @@
         <button id="start-test" type="button" disabled>Start recording</button>
       </div>
 
-      <div id="operator-controls" hidden>
+      <div id="operator-controls" class="operator-controls inactive" aria-disabled="true">
+        <p id="operator-guidance" class="operator-guidance">
+          Annotation controls are shown for protocol review and activate when
+          recording begins.
+        </p>
         <div class="control-section">
           <h3>Test phase</h3>
           <div class="button-grid phases">
