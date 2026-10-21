@@ -5,9 +5,7 @@
 Extend the current one-sensor feasibility result into repeatable recordings, a
 one-sensor two-DOF wrist recording, a one-sensor three-DOF humerus recording,
 and then a two-sensor upper-limb pipeline. These are researcher
-self-experiments for engineering development. They do not establish anatomical,
-scientific, or clinical validity and are not a protocol for enrolling other
-participants.
+self-experiments for engineering development. 
 
 ## Shared recording rules
 
