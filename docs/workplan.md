@@ -23,17 +23,20 @@ infrastructure but does not use OpenSense.
 2. Define versioned live ECG-plus-IMU schemas and synthetic fixtures.
 3. Measure sustainable simultaneous live ECG and inertial streaming rates,
    timing, packet continuity, and reconnect behavior.
-4. Implement governed live recording, phase markers, ECG display, and chest
-   tilt relative to gravity.
-5. Validate chest angle against a bench or table reference and distinguish it
+4. Implement a localhost full-screen browser application with live ECG,
+   Pan-Tompkins R-wave detection, five-beat HR updates, explicit supine-zero
+   confirmation, phase markers, and chest tilt relative to gravity.
+5. Write native-rate ECG, IMU, exact events, and metadata to one recoverable
+   SQLite container; derive a provenance-linked five-second summary CSV.
+6. Validate chest angle against a bench or table reference and distinguish it
    from table angle.
-6. Establish the required governance and operational approval before use in a
+7. Establish the required governance and operational approval before use in a
    clinical tilt-table context.
-7. Bench-test Flash start, stop, inventory, capacity, retrieval, checksum, and
+8. Bench-test Flash start, stop, inventory, capacity, retrieval, checksum, and
    interrupted-log recovery.
-8. Calculate and measure achievable ambulatory duration before defining a
+9. Calculate and measure achievable ambulatory duration before defining a
    long-duration protocol.
-9. Develop posture, activity, and ECG-derived outputs as provenance-tracked
+10. Develop posture, activity, and ECG-derived outputs as provenance-tracked
    artifacts rather than modifying raw logs.
 
 ## Current state and next execution order

@@ -27,6 +27,17 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
   repository, including independent releases, mobile or firmware build
   systems, different collaborators or access controls, incompatible CI, or
   clinical governance requirements.
+- Selected a localhost browser application rather than a VS Code canvas for
+  the operational tilt-table interface. It will bind to loopback, open in the
+  system browser, and provide an operator-initiated full-screen mode.
+- Defined live HR as a five-beat batch estimate. Each update uses five valid
+  consecutive R waves and the four bounded R-R intervals, with the next display
+  update occurring after the next five accepted waves.
+- Selected a single SQLite raw-signal container with separate native-rate ECG
+  and IMU tables plus exact events and recording metadata.
+- Defined a separate derived CSV with fixed five-second rows. Each row retains
+  the latest completed five-beat HR and its age, tilt mean/final/range,
+  quality state, and annotations occurring in the interval.
 
 ### Boundaries
 

@@ -14,8 +14,13 @@ This project reuses Movesense acquisition, firmware-inventory, recording,
 checksum, and governance infrastructure from this repository. It does not
 require OpenSense or OpenSim integration.
 
-See the [project charter](docs/project-charter.md) for scope, architecture,
-phases, governance, and repository-extraction criteria.
+See:
+
+- The [project charter](docs/project-charter.md) for scope, architecture,
+  phases, governance, and repository-extraction criteria.
+- The [live tilt-table requirements](docs/live-tilt-table-requirements.md) for
+  the confirmed local-web interface, five-beat HR estimator, SQLite recording,
+  five-second summary, and operator workflow.
 
 ## Project boundary
 

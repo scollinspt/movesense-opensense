@@ -30,6 +30,10 @@ requirements from being coupled to OpenSense.
 
 ## Phase 1: Live tilt-table acquisition
 
+The operational interface will be a locally hosted full-screen browser
+application rather than a VS Code canvas. See the
+[live tilt-table requirements](live-tilt-table-requirements.md).
+
 ### Intended configuration
 
 - One Movesense sensor on the chest.
@@ -39,13 +43,21 @@ requirements from being coupled to OpenSense.
 
 ### Primary outputs
 
-- Raw ECG samples in sensor units with documented conversion and calibration.
-- Raw inertial samples required for orientation and quality checks.
+- One SQLite raw-signal container with native-rate ECG, native-rate inertial
+  samples, exact events, and recording metadata.
+- One derived CSV with fixed five-second rows containing the latest completed
+  five-R-wave HR estimate, tilt summaries, quality state, and annotations.
+- A checksum and provenance manifest for both artifacts.
 - Chest tilt relative to gravity.
 - Sensor-native timestamps and separate host receipt timestamps.
 - Recording events and protocol phases.
 - Immutable manifest, checksums, hardware identity, firmware version, resource
   routes, requested rates, and effective rates.
+
+Heart rate updates every five accepted consecutive R waves using the four
+R-R intervals bounded by those waves. The five-beat estimator and fixed
+five-second summary windows are independent; summary rows retain the source
+time and age of any carried-forward HR estimate.
 
 ### Required protocol events
 
