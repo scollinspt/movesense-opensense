@@ -8,7 +8,8 @@ hosted by VS Code, Copilot Canvas, or the VS Code shared browser.
 - Server URL: `http://127.0.0.1:4174/`
 - Bind address: `127.0.0.1`
 - Application entry point: `projects/tilt-ecg/app/server.mjs`
-- Validated implementation commit: `639e284`
+- Validated acquisition implementation commit: `639e284`
+- macOS launcher commit: `24aba75`
 - Current live configuration: `projects/tilt-ecg/configs/live-v2.json`
 - ECG rate: 512 Hz
 - IMU9 rate: nominal 26 Hz
@@ -66,10 +67,30 @@ remained uninvolved in the workflow completed successfully:
 - Ordered phases, symptom onset/resolution, BP, and etCO2 events persisted.
 - Normal finalization and BLE disconnect.
 
-This validates the localhost browser workflow independently of the VS Code
-presentation. The next validation is to close VS Code completely, retain the
-already-running detached server, complete a Firefox trial, reopen VS Code, and
-audit the newest manifest.
+This validated the localhost browser workflow independently of the VS Code
+presentation.
+
+A second hardware trial was then completed with VS Code fully closed. The
+original detached server remained active throughout:
+
+- Recording ID `20261021T093613Z-fde5440e`.
+- 120.56 seconds.
+- 61,728 ECG samples at an effective 512.002 Hz.
+- 3,024 IMU samples at an effective 25.091 Hz.
+- No missing ECG or IMU packet sequences.
+- No non-monotonic sensor timestamps.
+- Maximum ECG timestamp gap 3 milliseconds.
+- Maximum IMU timestamp gap 43 milliseconds.
+- ECG and tilt quality good in every five-second window.
+- Heart rate available in all 25 five-second rows.
+- A substantial mock tilt range from approximately -8.0 to 49.4 degrees.
+- Complete ordered phase progression.
+- Dizziness, presyncope, and pallor onset/resolution pairs.
+- SQLite integrity and both checksums verified.
+- Normal finalization, BLE disconnect, and return to idle.
+
+This confirms that VS Code is not required for server operation, acquisition,
+finalization, or governed output.
 
 ## Governed output
 
@@ -100,7 +121,30 @@ node projects/tilt-ecg/app/recover.mjs \
 Recovered data are marked interrupted/incomplete and are not presented as
 normally finalized.
 
-## Before closing VS Code
+## macOS launcher
+
+The executable launcher is:
+
+```text
+projects/tilt-ecg/launch-tilt-ecg.command
+```
+
+Double-clicking it in Finder opens an existing server or starts a new server on
+port 4174 and opens the browser. If it starts the server, its Terminal window
+must remain open during acquisition.
+
+The launcher has been validated against an existing server. The next handoff
+test is its cold-start path:
+
+1. Confirm no server is listening on port 4174.
+2. Close VS Code.
+3. Double-click `launch-tilt-ecg.command`.
+4. Confirm the Terminal window reports server startup.
+5. Confirm the browser opens the Tilt ECG application.
+6. No sensor trial is required.
+7. Press Control-C in the launcher Terminal window when finished.
+
+## Before acquisition with VS Code closed
 
 1. Confirm `/api/state` reports `recording: null`.
 2. Confirm `connectionState` is `idle`.
