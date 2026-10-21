@@ -14,6 +14,15 @@ function standardDeviation(values) {
   return Math.sqrt(mean(values.map((value) => (value - average) ** 2)));
 }
 
+function percentile(values, fraction) {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((left, right) => left - right);
+  return sorted[Math.min(
+    sorted.length - 1,
+    Math.max(0, Math.floor(fraction * (sorted.length - 1))),
+  )];
+}
+
 export class FiveWaveHeartRate {
   constructor({ minimumBpm = 25, maximumBpm = 240 } = {}) {
     this.minimumBpm = minimumBpm;
@@ -98,6 +107,7 @@ export class PanTompkinsDetector {
     this.lastRWaveMs = Number.NEGATIVE_INFINITY;
     this.lastAcceptedPeak = 0;
     this.recentAbsolute = [];
+    this.recentIntegrated = [];
   }
 
   addSample(timeMs, rawValue) {
@@ -105,6 +115,20 @@ export class PanTompkinsDetector {
       throw new TypeError("ECG sample time and value must be finite.");
     }
     this.sampleCount += 1;
+    if (this.sampleCount === 1) {
+      this.previousRaw = rawValue;
+      this.previousTime1 = timeMs;
+      return {
+        timeMs,
+        rawValue,
+        filteredValue: 0,
+        integratedValue: 0,
+        rWave: false,
+        rWaveTimeMs: null,
+        quality: "warming",
+        threshold: 0,
+      };
+    }
     this.highPass = this.highPassAlpha
       * (this.highPass + rawValue - this.previousRaw);
     this.previousRaw = rawValue;
@@ -118,6 +142,10 @@ export class PanTompkinsDetector {
       this.integrationSum -= this.integrationValues.shift();
     }
     const integrated = this.integrationSum / this.integrationValues.length;
+    this.recentIntegrated.push(integrated);
+    if (this.recentIntegrated.length > this.sampleRateHz * 8) {
+      this.recentIntegrated.shift();
+    }
     this.recentAbsolute.push(Math.abs(this.lowPass));
     if (this.recentAbsolute.length > this.sampleRateHz * 2) {
       this.recentAbsolute.shift();
@@ -131,6 +159,15 @@ export class PanTompkinsDetector {
     if (candidateIsPeak && this.previousTime1 !== null) {
       const candidate = this.previousIntegrated1;
       const warmedUp = this.sampleCount > this.warmupSamples;
+      const timeSinceAcceptedWave = this.previousTime1 - this.lastRWaveMs;
+      if (warmedUp && timeSinceAcceptedWave > 3000) {
+        const recentHigh = percentile(this.recentIntegrated, 0.95);
+        const recentMedian = percentile(this.recentIntegrated, 0.5);
+        this.signalPeak = Math.min(this.signalPeak, recentHigh * 2);
+        this.noisePeak = Math.min(this.noisePeak, recentMedian);
+        this.threshold =
+          this.noisePeak + 0.25 * (this.signalPeak - this.noisePeak);
+      }
       const outsideRefractory =
         this.previousTime1 - this.lastRWaveMs >= this.refractoryMs;
       if (warmedUp && candidate > this.threshold && outsideRefractory) {
@@ -162,7 +199,7 @@ export class PanTompkinsDetector {
     const quality =
       this.sampleCount <= this.warmupSamples
         ? "warming"
-        : amplitude < 0.02 || timeMs - this.lastRWaveMs > 3000
+        : amplitude <= Number.EPSILON || timeMs - this.lastRWaveMs > 3000
           ? "poor"
           : "good";
     return {

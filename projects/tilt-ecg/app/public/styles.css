@@ -91,6 +91,7 @@ main { display: grid; gap: 18px; max-width: 1500px; margin: 0 auto; padding: 22p
 .zero-row > :first-child { display: grid; min-width: 170px; }
 .metric-label { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
 .status { min-height: 1.3em; margin: 10px 0 0; color: var(--muted); }
+.connection-note { margin: 12px 0 0; }
 .live-grid { display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(210px, .65fr)); gap: 18px; }
 .ecg-panel canvas { display: block; width: 100%; height: 245px; border-radius: 8px; background: #fbfdfb; border: 1px solid var(--paper-deep); }
 .ecg-footer { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-top: 12px; }
@@ -123,11 +124,15 @@ main { display: grid; gap: 18px; max-width: 1500px; margin: 0 auto; padding: 22p
 }
 .control-section { padding: 18px 0; border-top: 1px solid var(--line); }
 .control-section h3 { margin-bottom: 10px; }
+.phase-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.phase-heading p { margin: 0; color: var(--muted); }
 .control-section h3 span { color: var(--muted); font-size: .75rem; font-family: inherit; font-weight: 500; }
 .button-grid { display: grid; gap: 9px; }
 .button-grid.phases { grid-template-columns: repeat(6, minmax(130px, 1fr)); }
 .button-grid.symptoms { grid-template-columns: repeat(6, minmax(130px, 1fr)); }
 .button-grid button { min-height: 58px; }
+.button-grid button.completed { border-color: var(--light-green); background: var(--paper-deep); color: var(--forest); opacity: 1; }
+.button-grid button.current { border-color: var(--teal); background: var(--light-green); color: var(--deep-forest); opacity: 1; }
 .observations-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
 .observation { padding: 18px; border: 1px solid var(--line); border-radius: 10px; }
 .number-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

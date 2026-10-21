@@ -53,6 +53,10 @@
         <button id="accept-zero" type="button" disabled>Accept supine as 0°</button>
         <span id="zero-status" class="status" role="status" aria-live="polite"></span>
       </div>
+      <p class="hint connection-note">
+        The local server owns the BLE connection. Closing this tab or browser
+        does not end an active recording or disconnect the sensor.
+      </p>
     </section>
 
     <section class="live-grid" aria-label="Live physiological and orientation data">
@@ -131,7 +135,10 @@
           recording begins.
         </p>
         <div class="control-section">
-          <h3>Test phase</h3>
+          <div class="phase-heading">
+            <h3>Test phase</h3>
+            <p>Current: <strong id="current-phase">Not started</strong></p>
+          </div>
           <div class="button-grid phases">
             <button data-phase="begin_tilt" type="button">Begin tilt</button>
             <button data-phase="target_angle_reached" type="button">Target angle reached</button>
@@ -200,12 +207,9 @@
       <h2>End this test?</h2>
       <p>This checkpoints and closes the SQLite recording, generates the five-second
         summary, and writes checksums. It cannot be resumed.</p>
-      <label>Type <strong>END TEST</strong> to confirm
-        <input id="end-confirmation" type="text" autocomplete="off">
-      </label>
       <div class="dialog-actions">
         <button value="cancel" class="secondary">Cancel</button>
-        <button id="confirm-end" value="confirm" class="danger" disabled>Finalize test</button>
+        <button id="confirm-end" value="confirm" class="danger">Finalize test</button>
       </div>
     </form>
   </dialog>

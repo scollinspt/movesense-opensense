@@ -50,6 +50,13 @@ baseline observations and start recording. The simulator uses the same signal
 processing, annotations, SQLite writer, five-second summary, checksums, and
 manifest as hardware acquisition.
 
+During recording, the interface displays the current protocol phase and
+enables only the next valid progression step: baseline supine, begin tilt,
+target angle reached, begin return, then supine recovery. Completed/current
+steps remain visible but cannot be logged twice. **Undo last annotation**
+restores the preceding phase when the latest eligible event was a phase.
+Technical interruption and strap/sensor adjustment remain repeatable.
+
 ## Recording output
 
 Each finalized test writes:

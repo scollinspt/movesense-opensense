@@ -26,6 +26,7 @@ const elements = {
   setupControls: byId("setup-controls"),
   operatorControls: byId("operator-controls"),
   operatorGuidance: byId("operator-guidance"),
+  currentPhase: byId("current-phase"),
   recordingBadge: byId("recording-badge"),
   operatorStatus: byId("operator-status"),
   testClock: byId("test-clock"),
@@ -37,7 +38,6 @@ const elements = {
   undo: byId("undo"),
   endTest: byId("end-test"),
   endDialog: byId("end-dialog"),
-  endConfirmation: byId("end-confirmation"),
   confirmEnd: byId("confirm-end"),
   fullscreen: byId("fullscreen"),
   ecgChart: byId("ecg-chart"),
@@ -74,12 +74,15 @@ function formatAngle(value) {
 function renderState(state) {
   applicationState = state;
   const connected = state.connectionState === "connected";
+  const connectionCanStop = ["connected", "connecting", "error"].includes(
+    state.connectionState,
+  );
   const recording = Boolean(state.recording);
   elements.connectionState.textContent = state.connectionState.replaceAll("_", " ");
   elements.connect.disabled = !elements.sensorSelect.value || connected || recording;
   elements.demo.disabled = connected || recording;
   elements.scan.disabled = connected || recording;
-  elements.disconnect.disabled = !connected || recording;
+  elements.disconnect.disabled = !connectionCanStop || recording;
   elements.acceptZero.disabled = !connected || !state.zeroReady || recording;
   elements.zeroReadiness.textContent = state.zero
     ? "Accepted at 0°"
@@ -99,6 +102,26 @@ function renderState(state) {
   elements.operatorGuidance.hidden = recording;
   elements.operatorControls.querySelectorAll("button, input").forEach((control) => {
     control.disabled = !recording;
+  });
+  const protocolPhase = state.protocolPhase;
+  elements.currentPhase.textContent = protocolPhase?.current
+    ? protocolPhase.current.replaceAll("_", " ")
+    : "Not started";
+  document.querySelectorAll("[data-phase]").forEach((button) => {
+    const label = button.dataset.phase;
+    const primary = [
+      "begin_tilt",
+      "target_angle_reached",
+      "begin_return",
+      "supine_recovery",
+    ].includes(label);
+    const completed = protocolPhase?.completed.includes(label) ?? false;
+    const current = protocolPhase?.current === label;
+    button.classList.toggle("completed", completed);
+    button.classList.toggle("current", current);
+    if (primary) {
+      button.disabled = !recording || protocolPhase?.next !== label;
+    }
   });
 
   const quality = state.ecgQuality ?? "unavailable";
@@ -367,21 +390,18 @@ elements.undo.addEventListener("click", async () => {
 });
 
 elements.endTest.addEventListener("click", () => {
-  elements.endConfirmation.value = "";
-  elements.confirmEnd.disabled = true;
   elements.endDialog.showModal();
-  elements.endConfirmation.focus();
-});
-elements.endConfirmation.addEventListener("input", () => {
-  elements.confirmEnd.disabled = elements.endConfirmation.value !== "END TEST";
+  elements.confirmEnd.focus();
 });
 elements.endDialog.addEventListener("close", async () => {
   if (elements.endDialog.returnValue !== "confirm") return;
   try {
+    setStatus("Finalizing SQLite, summary, and checksums…");
     const result = await api("/api/recording/stop", {
       method: "POST",
-      body: JSON.stringify({ confirmation: elements.endConfirmation.value }),
+      body: JSON.stringify({ confirmation: "END TEST" }),
     });
+    renderState(await api("/api/state"));
     activeSymptoms.clear();
     document.querySelectorAll("[data-symptom]").forEach((button) => {
       button.classList.remove("active");
@@ -389,8 +409,14 @@ elements.endDialog.addEventListener("close", async () => {
     });
     setStatus(`Test finalized: ${result.recordingId}. Checksums and summary saved.`);
   } catch (error) {
-    setStatus(error.message, true);
+    setStatus(`The test is still recording: ${error.message}`, true);
   }
+});
+
+window.addEventListener("beforeunload", (event) => {
+  if (!applicationState?.recording) return;
+  event.preventDefault();
+  event.returnValue = "";
 });
 
 elements.fullscreen.addEventListener("click", async () => {

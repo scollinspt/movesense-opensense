@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
 
 import { TiltRecordingSession } from "./recording.mjs";
+import { ProtocolPhaseTracker } from "./protocol-state.mjs";
 import {
   FiveWaveHeartRate,
   PanTompkinsDetector,
@@ -49,6 +50,8 @@ export class TiltSessionManager extends EventEmitter {
     this.latestEcg = null;
     this.latestTilt = null;
     this.latestHeartRate = null;
+    this.previousEcgQuality = "unavailable";
+    this.phaseTracker = new ProtocolPhaseTracker();
     this.connectionState = "idle";
     this.errorMessage = null;
     this.ecgBatch = [];
@@ -66,6 +69,7 @@ export class TiltSessionManager extends EventEmitter {
       latestHeartRate: this.latestHeartRate,
       fiveWaveProgress: this.heartRate.progress,
       ecgQuality: this.latestEcg?.quality ?? "unavailable",
+      protocolPhase: this.recording ? this.phaseTracker.state : null,
       recording: this.recording
         ? {
             recordingId: this.recording.recordingId,
@@ -135,6 +139,7 @@ export class TiltSessionManager extends EventEmitter {
     this.heartRate = new FiveWaveHeartRate();
     this.tilt = new TiltEstimator();
     this.zero = null;
+    this.previousEcgQuality = "unavailable";
     source.on("ecg", (sample) => this.#handleEcg(sample));
     source.on("imu", (sample) => this.#handleImu(sample));
     source.on("status", (status) => {
@@ -157,9 +162,10 @@ export class TiltSessionManager extends EventEmitter {
     this.latestEcg = result;
     if (this.recording) this.recording.appendEcg(sample);
     let hrEstimate = null;
-    if (result.quality === "poor") {
+    if (result.quality === "poor" && this.previousEcgQuality !== "poor") {
       this.heartRate.reset();
-    } else if (result.rWave) {
+    }
+    if (result.rWave) {
       const completed = this.heartRate.addRWave(result.rWaveTimeMs);
       if (completed?.accepted) {
         hrEstimate = { ...completed, quality: result.quality };
@@ -167,6 +173,7 @@ export class TiltSessionManager extends EventEmitter {
         if (this.recording) this.recording.addHrEstimate(hrEstimate);
       }
     }
+    this.previousEcgQuality = result.quality;
     this.ecgBatch.push({
       timeMs: result.timeMs,
       value: result.rawValue,
@@ -229,6 +236,7 @@ export class TiltSessionManager extends EventEmitter {
       baselineEtco2: etco2,
       softwareVersion: "tilt-ecg-app-v0.1.0",
     });
+    this.phaseTracker.reset();
     this.recording.recordEvent({
       type: "phase",
       label: "baseline_supine",
@@ -241,26 +249,27 @@ export class TiltSessionManager extends EventEmitter {
   recordEvent(input) {
     if (!this.recording) throw new Error("Start the test before adding annotations.");
     const type = input?.type;
+    let event;
     if (type === "phase") {
       if (!PHASES.has(input.label)) throw new Error("Unknown test phase.");
-      return this.recording.recordEvent({
+      this.phaseTracker.assertNext(input.label);
+      event = this.recording.recordEvent({
         type,
         label: input.label,
         semantics: "point",
       });
-    }
-    if (type === "symptom") {
+      this.phaseTracker.advance(input.label);
+    } else if (type === "symptom") {
       if (!SYMPTOMS.has(input.label)) throw new Error("Unknown symptom.");
       if (!["onset", "resolution"].includes(input.semantics)) {
         throw new Error("Symptom semantics must be onset or resolution.");
       }
-      return this.recording.recordEvent({
+      event = this.recording.recordEvent({
         type,
         label: input.label,
         semantics: input.semantics,
       });
-    }
-    if (type === "blood_pressure") {
+    } else if (type === "blood_pressure") {
       const systolic = Number(input.systolic);
       const diastolic = Number(input.diastolic);
       if (
@@ -270,41 +279,44 @@ export class TiltSessionManager extends EventEmitter {
       ) {
         throw new Error("Enter a valid systolic and diastolic blood pressure.");
       }
-      return this.recording.recordEvent({
+      event = this.recording.recordEvent({
         type,
         label: "blood_pressure_observation",
         data: { systolic, diastolic, unit: "mmHg" },
       });
-    }
-    if (type === "etco2") {
+    } else if (type === "etco2") {
       const value = Number(input.value);
       if (!Number.isFinite(value) || value < 5 || value > 100) {
         throw new Error("Enter a valid end-tidal CO2 observation.");
       }
-      return this.recording.recordEvent({
+      event = this.recording.recordEvent({
         type,
         label: "etco2_observation",
         data: { value, unit: "mmHg" },
       });
-    }
-    if (type === "undo") {
+    } else if (type === "undo") {
       const target = [...this.recording.events]
         .reverse()
         .find((event) => (
           event.type !== "annotation_undo"
+          && !(event.type === "phase" && event.label === "baseline_supine")
           && !this.recording.events.some(
             (candidate) => candidate.type === "annotation_undo"
               && candidate.data.targetEventId === event.id,
           )
         ));
       if (!target) throw new Error("There is no eligible annotation to undo.");
-      return this.recording.recordEvent({
+      event = this.recording.recordEvent({
         type: "annotation_undo",
         label: "undo",
         data: { targetEventId: target.id },
       });
+      this.phaseTracker.rebuild(this.recording.events);
+    } else {
+      throw new Error("Unknown annotation type.");
     }
-    throw new Error("Unknown annotation type.");
+    this.#broadcast("state", this.state);
+    return event;
   }
 
   async stopRecording() {
@@ -330,6 +342,8 @@ export class TiltSessionManager extends EventEmitter {
     this.latestEcg = null;
     this.latestTilt = null;
     this.latestHeartRate = null;
+    this.previousEcgQuality = "unavailable";
+    this.phaseTracker.reset();
     this.ecgBatch = [];
     return this.state;
   }

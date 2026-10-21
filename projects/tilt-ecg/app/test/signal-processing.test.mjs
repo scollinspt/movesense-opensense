@@ -56,6 +56,32 @@ test("streaming Pan-Tompkins detector recovers synthetic heart rate", () => {
   assert.ok(estimates.every((estimate) => Math.abs(estimate.bpm - 72) < 0.25));
 });
 
+test("detector recovers after a large startup artifact", () => {
+  const detector = new PanTompkinsDetector(125);
+  const heartRate = new FiveWaveHeartRate();
+  const estimates = [];
+
+  for (let index = 0; index < 2500; index += 1) {
+    const timeMs = index * 8;
+    const timeSeconds = timeMs / 1000;
+    const startupArtifact =
+      timeSeconds >= 1 && timeSeconds < 1.25
+        ? 100 * Math.sin(2 * Math.PI * 12 * timeSeconds)
+        : 0;
+    const result = detector.addSample(
+      timeMs,
+      ecgValue(timeSeconds) + startupArtifact,
+    );
+    if (result.rWave) {
+      const estimate = heartRate.addRWave(result.rWaveTimeMs);
+      if (estimate?.accepted) estimates.push(estimate);
+    }
+  }
+
+  assert.ok(estimates.length >= 2);
+  assert.ok(Math.abs(estimates.at(-1).bpm - 72) < 1);
+});
+
 test("requires stable gravity before zero and reports known tilt", () => {
   const estimator = new TiltEstimator({ timeConstantSeconds: 0.05 });
   let result;
