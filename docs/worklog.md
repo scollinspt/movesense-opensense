@@ -2,6 +2,43 @@
 
 Maintain this as a chronological record of completed work, evidence, decisions, and blockers. Planned work belongs in the workplan; this log records what actually happened.
 
+## 2026-10-21
+
+### Decisions
+
+- Added an incubating Movesense tilt-ECG project under
+  `projects/tilt-ecg/` with a working slug rather than creating a separate
+  repository immediately.
+- Kept ECG and Flash implementation outside the OpenSense package while
+  allowing reuse of BLE/GSP transport, sensor inventory, recording,
+  checksumming, event, and governed-storage patterns.
+- Defined Phase 1 as synchronized live ECG and chest-orientation acquisition
+  during tilt-table testing using a Movesense sensor and Suunto electrode
+  strap.
+- Defined Phase 2 as on-sensor Flash logging of ECG and inertial data for later
+  ambulatory retrieval, posture/activity derivation, and ECG processing.
+- Treated the previously used sensor as a Flash candidate, not a confirmed
+  capability. Model, hardware, firmware, APIs, capacity, concurrency, clock,
+  full-storage, power-loss, and recovery behavior must be inventoried and
+  measured.
+- Assigned the project a distinct governed-storage namespace under
+  `raw/tilt-ecg`, `manifests/tilt-ecg`, and `derived/tilt-ecg`.
+- Defined explicit triggers for extracting the project into a separate
+  repository, including independent releases, mobile or firmware build
+  systems, different collaborators or access controls, incompatible CI, or
+  clinical governance requirements.
+
+### Boundaries
+
+- Chest tilt relative to gravity is the initial orientation outcome; OpenSense
+  is not required.
+- Chest orientation is not assumed to equal table angle. Placement, breathing,
+  torso motion, strap motion, and calibration remain measurement concerns.
+- The project is not a diagnostic ECG monitor or a replacement for approved
+  tilt-table equipment, monitoring, alarms, or procedures.
+- ECG, activity, posture, symptoms, and clinical observations remain governed
+  physiological data and must not enter the public repository.
+
 ## 2026-10-19
 
 ### Decisions

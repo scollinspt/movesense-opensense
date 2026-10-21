@@ -4,6 +4,15 @@ An open, reproducible pipeline for acquiring Movesense IMU data and preparing sy
 
 The project is in its initial interoperability phase. It does not yet establish scientific or clinical validity.
 
+## Repository projects
+
+- The root OpenSense work develops governed IMU acquisition, orientation
+  processing, OpenSense integration, and ambulatory movement methods.
+- [`projects/tilt-ecg/`](projects/tilt-ecg/) incubates synchronized ECG and
+  chest-orientation acquisition for live tilt-table testing and later
+  ambulatory on-sensor Flash logging. It reuses Movesense infrastructure but
+  has no OpenSense dependency.
+
 ## Open the canvas studios
 
 In Copilot Chat, enter:
