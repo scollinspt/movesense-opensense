@@ -18,6 +18,25 @@ No web-package installation or internet connection is required.
 
 ## Start
 
+### Double-click on macOS
+
+In Finder, double-click:
+
+```text
+projects/tilt-ecg/launch-tilt-ecg.command
+```
+
+The launcher opens the existing server when one is already running. Otherwise,
+it starts the server and opens the application in the default browser. Keep the
+launcher Terminal window open during acquisition; closing it stops a server
+that was started by the launcher.
+
+For easier access, create a Finder alias for the launcher and move the alias to
+the Desktop or Dock. Keep the original launcher in the repository so it
+continues to resolve the application correctly.
+
+### Start from Terminal
+
 From the repository root:
 
 ```bash

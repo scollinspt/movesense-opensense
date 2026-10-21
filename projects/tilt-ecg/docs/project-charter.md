@@ -135,6 +135,34 @@ Duration must be calculated from measured encoded bytes per sample, metadata
 overhead, usable Flash capacity, and actual logging behavior. It must not be
 estimated only from nominal sample rates.
 
+## Deferred processing, analysis, and report application
+
+A separate localhost browser application will process finalized tilt-table
+recordings and export a report for the student or clinician who brought the
+participant. Development is gated on at least one representative recording
+from the actual tilt table so that phase segmentation, angle behavior, ECG
+quality, event projections, and report content are grounded in real workflow
+evidence.
+
+The processing application must:
+
+- Read finalized, checksum-verified Tilt ECG artifacts without modifying raw
+  data.
+- Never request, store, infer, embed, or export a participant name, medical
+  record number, date of birth, address, or other direct identifier.
+- Use only a non-identifying recording ID in application state and reports.
+- Keep any manual connection between a report and a person outside this
+  repository and outside the acquisition or processing artifacts.
+- Produce an export suitable for manual review and, when appropriate, manual
+  upload into the applicable record system.
+- Preserve algorithm, configuration, source-checksum, review, correction, and
+  export provenance.
+- Remain a development/research analysis tool unless and until its governance,
+  validation, intended use, and operational status are formally changed.
+
+One actual tilt-table trial is sufficient to begin designing the application,
+not to validate its clinical interpretation or reporting conclusions.
+
 ### Phase 2 advancement criteria
 
 - Complete a hardware and firmware capability inventory.
