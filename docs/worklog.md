@@ -4,6 +4,31 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
 
 ## 2026-10-21
 
+### Tilt ECG implementation and continuity
+
+- Built and browser-validated the standalone localhost Tilt ECG application
+  under `projects/tilt-ecg/app/`.
+- Confirmed that the detached Node server continues to serve Firefox
+  independently of the VS Code shared browser. Both browsers are clients of
+  the same server-owned BLE and recording session.
+- Raised the live configuration to 512 Hz ECG for HRV-oriented R-wave timing
+  and reduced IMU9 to nominal 26 Hz for quasi-static table tilt.
+- Corrected 512 Hz R-wave localization by refining integrated-envelope
+  detections against the filtered QRS deflection.
+- Added ordered protocol-phase enforcement, visible current/next state,
+  duplicate rejection, and phase rollback through Undo.
+- Validated a shared-browser hardware trial and a separate Firefox hardware
+  trial at 512 Hz ECG and nominal 26 Hz IMU9. Both had valid SQLite databases,
+  verified raw/summary checksums, no missing packet sequences, no
+  non-monotonic sensor timestamps, ECG gaps no greater than 3 milliseconds,
+  and IMU gaps no greater than 43 milliseconds.
+- The Firefox-only trial recorded 36,304 ECG samples and 1,778 IMU samples
+  across 70.91 seconds, generated HR in every five-second row, finalized
+  normally, disconnected, and left the server idle.
+- Recorded the restart, review, recovery, governed-storage, and
+  VS-Code-independent operating state in
+  `projects/tilt-ecg/docs/development-continuity.md`.
+
 ### Decisions
 
 - Added an incubating Movesense tilt-ECG project under

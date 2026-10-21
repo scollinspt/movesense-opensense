@@ -39,6 +39,7 @@ application rather than a VS Code canvas. See the
 - One Movesense sensor on the chest.
 - Suunto chest strap with biopotential electrodes.
 - Simultaneous live ECG and inertial streaming to a computer.
+- Current development rates of 512 Hz ECG and nominal 26 Hz IMU9.
 - Live waveform, signal-quality, orientation, timing, and recording status.
 
 ### Primary outputs
