@@ -16,6 +16,8 @@ require OpenSense or OpenSim integration.
 
 See:
 
+- The [local application](app/README.md) for launch, synthetic validation,
+  governed output, and tests.
 - The [project charter](docs/project-charter.md) for scope, architecture,
   phases, governance, and repository-extraction criteria.
 - The [live tilt-table requirements](docs/live-tilt-table-requirements.md) for
@@ -60,6 +62,5 @@ must never write human recordings into this public project directory.
 - `docs/` — project charter, architecture, decisions, and validation evidence.
 - `configs/` — versioned live-streaming and Flash-logging configurations.
 - `schemas/` — recording and artifact data contracts.
-
-Implementation directories will be added only when their runtime boundaries
-are known.
+- `app/` — localhost Node application, deterministic simulator, live signal
+  processing, SQLite recorder, browser UI, and automated tests.

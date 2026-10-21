@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HMS Lab Tilt ECG</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Human Movement System Laboratory</p>
+      <h1>Tilt ECG Acquisition</h1>
+    </div>
+    <div class="header-actions">
+      <span id="recording-badge" class="badge" hidden>Recording</span>
+      <button id="fullscreen" class="quiet" type="button">Full screen</button>
+    </div>
+  </header>
+
+  <aside class="safety" role="note">
+    <strong>Research acquisition only.</strong>
+    Not a diagnostic monitor, alarm, or substitute for approved ECG, blood-pressure,
+    end-tidal CO₂, tilt-table safety, stop criteria, or emergency procedures.
+  </aside>
+
+  <main>
+    <section class="panel connection-panel" aria-labelledby="connection-heading">
+      <div class="section-heading">
+        <div>
+          <p class="step">1 · Prepare</p>
+          <h2 id="connection-heading">Sensor and supine zero</h2>
+        </div>
+        <strong id="connection-state" class="state">Idle</strong>
+      </div>
+      <div class="connection-row">
+        <label>Nearby Movesense
+          <select id="sensor-select">
+            <option value="">Scan to find a sensor</option>
+          </select>
+        </label>
+        <button id="scan" class="secondary" type="button">Scan</button>
+        <button id="connect" type="button" disabled>Connect</button>
+        <button id="demo" class="secondary" type="button">Run simulator</button>
+        <button id="disconnect" class="danger" type="button" disabled>Disconnect</button>
+      </div>
+      <div class="zero-row">
+        <div>
+          <span class="metric-label">Supine stability</span>
+          <strong id="zero-readiness">Waiting for data</strong>
+        </div>
+        <button id="accept-zero" type="button" disabled>Accept supine as 0°</button>
+        <span id="zero-status" class="status" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="live-grid" aria-label="Live physiological and orientation data">
+      <article class="panel ecg-panel">
+        <div class="section-heading">
+          <div>
+            <p class="step">Live signal</p>
+            <h2>Electrocardiogram</h2>
+          </div>
+          <span id="ecg-quality" class="quality unavailable">Unavailable</span>
+        </div>
+        <canvas id="ecg-chart" width="1000" height="280" aria-label="Live ECG waveform"></canvas>
+        <div class="ecg-footer">
+          <div>
+            <span class="metric-label">Five-wave group</span>
+            <div id="beat-progress" class="beats" aria-label="R waves accepted in current group">
+              <i></i><i></i><i></i><i></i><i></i>
+            </div>
+          </div>
+          <p class="hint">HR updates after five valid consecutive R waves.</p>
+        </div>
+      </article>
+
+      <article class="panel vital-panel">
+        <p class="step">Derived every five beats</p>
+        <h2>Heart rate</h2>
+        <div class="hero-metric">
+          <strong id="heart-rate">—</strong>
+          <span>bpm</span>
+        </div>
+        <p id="heart-rate-age" class="hint">No valid estimate yet</p>
+      </article>
+
+      <article class="panel vital-panel">
+        <p class="step">Chest orientation</p>
+        <h2>Tilt angle</h2>
+        <div class="hero-metric">
+          <strong id="tilt-angle">—</strong>
+          <span>degrees</span>
+        </div>
+        <div class="tilt-track" aria-hidden="true">
+          <div id="tilt-fill"></div>
+        </div>
+        <p>Off-axis roll <strong id="roll-angle">—</strong></p>
+        <p id="tilt-quality" class="hint">Accept supine zero to begin</p>
+      </article>
+    </section>
+
+    <section class="panel" aria-labelledby="test-heading">
+      <div class="section-heading">
+        <div>
+          <p class="step">2 · Record</p>
+          <h2 id="test-heading">Tilt-table test</h2>
+        </div>
+        <span id="test-clock" class="clock">00:00</span>
+      </div>
+      <div id="setup-controls" class="setup-grid">
+        <label class="wide">Governed data root
+          <input id="data-root" type="text" autocomplete="off">
+        </label>
+        <label>Baseline SBP
+          <input id="baseline-sbp" type="number" min="40" max="260" value="120">
+        </label>
+        <label>Baseline DBP
+          <input id="baseline-dbp" type="number" min="20" max="180" value="80">
+        </label>
+        <label>Baseline etCO₂
+          <input id="baseline-etco2" type="number" min="5" max="100" value="40">
+        </label>
+        <button id="start-test" type="button" disabled>Start recording</button>
+      </div>
+
+      <div id="operator-controls" hidden>
+        <div class="control-section">
+          <h3>Test phase</h3>
+          <div class="button-grid phases">
+            <button data-phase="begin_tilt" type="button">Begin tilt</button>
+            <button data-phase="target_angle_reached" type="button">Target angle reached</button>
+            <button data-phase="begin_return" type="button">Begin return</button>
+            <button data-phase="supine_recovery" type="button">Supine recovery</button>
+            <button data-phase="technical_interruption" class="secondary" type="button">Technical interruption</button>
+            <button data-phase="strap_sensor_adjustment" class="secondary" type="button">Strap / sensor adjustment</button>
+          </div>
+        </div>
+
+        <div class="control-section">
+          <h3>Symptoms</h3>
+          <p class="hint">First press records onset; the active press records resolution.</p>
+          <div id="symptom-grid" class="button-grid symptoms">
+            <button data-symptom="presyncope" type="button">Presyncope / lightheadedness</button>
+            <button data-symptom="dizziness" type="button">Dizziness</button>
+            <button data-symptom="vertigo" type="button">Vertigo</button>
+            <button data-symptom="palpitations" type="button">Palpitations</button>
+            <button data-symptom="pallor" type="button">Pallor</button>
+            <button data-symptom="flushing" type="button">Flushing</button>
+            <button data-symptom="cyanosis" type="button">Cyanosis</button>
+            <button data-symptom="diaphoresis" type="button">Diaphoresis</button>
+            <button data-symptom="nausea" type="button">Nausea</button>
+            <button data-symptom="visual_disturbance" type="button">Visual disturbance</button>
+            <button data-symptom="other" type="button">Other symptom</button>
+          </div>
+        </div>
+
+        <div class="observations-grid">
+          <div class="control-section observation">
+            <h3>Blood pressure <span>mmHg</span></h3>
+            <div class="number-pair">
+              <label>SBP <input id="sbp" type="number" min="40" max="260"></label>
+              <label>DBP <input id="dbp" type="number" min="20" max="180"></label>
+            </div>
+            <div class="bp-step-buttons">
+              <button data-bp-target="sbp" data-bp-step="-5" class="quiet" type="button">SBP −5</button>
+              <button data-bp-target="sbp" data-bp-step="5" class="quiet" type="button">SBP +5</button>
+              <button data-bp-target="dbp" data-bp-step="-5" class="quiet" type="button">DBP −5</button>
+              <button data-bp-target="dbp" data-bp-step="5" class="quiet" type="button">DBP +5</button>
+            </div>
+            <button id="log-bp" class="wide-action" type="button">Log BP</button>
+          </div>
+          <div class="control-section observation">
+            <h3>End-tidal CO₂ <span>mmHg</span></h3>
+            <label>Observed value <input id="etco2" type="number" min="5" max="100"></label>
+            <div class="step-buttons">
+              <button data-etco2-step="-5" class="quiet" type="button">−5</button>
+              <button id="log-etco2" type="button">Log etCO₂</button>
+              <button data-etco2-step="5" class="quiet" type="button">+5</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="final-actions">
+          <button id="undo" class="secondary" type="button">Undo last annotation</button>
+          <button id="end-test" class="danger" type="button">End and finalize test</button>
+        </div>
+      </div>
+      <p id="operator-status" class="status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <dialog id="end-dialog">
+    <form method="dialog">
+      <h2>End this test?</h2>
+      <p>This checkpoints and closes the SQLite recording, generates the five-second
+        summary, and writes checksums. It cannot be resumed.</p>
+      <label>Type <strong>END TEST</strong> to confirm
+        <input id="end-confirmation" type="text" autocomplete="off">
+      </label>
+      <div class="dialog-actions">
+        <button value="cancel" class="secondary">Cancel</button>
+        <button id="confirm-end" value="confirm" class="danger" disabled>Finalize test</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>
