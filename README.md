@@ -1,17 +1,90 @@
 # Movesense OpenSense
 
-An open, reproducible pipeline for acquiring Movesense IMU data and preparing synchronized orientation data for OpenSense/OpenSim.
+An open development repository for governed Movesense measurement workflows:
 
-The project is in its initial interoperability phase. It does not yet establish scientific or clinical validity.
+1. IMU acquisition and synchronized orientation processing for
+   OpenSense/OpenSim.
+2. ECG and chest-angle acquisition, physiology review, and de-identified
+   reporting during tilt-table testing.
+
+Working software and engineering validation do not establish scientific
+validity, diagnostic validity, normative reference values, or readiness for
+clinical distribution.
+
+The Human Movement Systems Laboratory public project page describes the current
+[Tilt ECG Measurement and Physiology Review](https://movementsystems.org/hms-lab/projects/tilt-ecg-measurement-review/)
+work, its boundaries, and its future directions.
 
 ## Repository projects
 
 - The root OpenSense work develops governed IMU acquisition, orientation
   processing, OpenSense integration, and ambulatory movement methods.
-- [`projects/tilt-ecg/`](projects/tilt-ecg/) incubates synchronized ECG and
-  chest-orientation acquisition for live tilt-table testing and later
-  ambulatory on-sensor Flash logging. It reuses Movesense infrastructure but
-  has no OpenSense dependency.
+- [`projects/tilt-ecg/`](projects/tilt-ecg/) contains the operational
+  acquisition and processing/report applications for synchronized ECG and
+  chest orientation during tilt-table testing. Later work may investigate
+  ambulatory on-sensor Flash logging. The project reuses Movesense
+  infrastructure but has no OpenSense dependency.
+
+## Tilt ECG measurement and physiology review
+
+The Tilt ECG project currently provides two separate localhost browser
+applications:
+
+- **Acquisition:** live 512 Hz ECG and nominal 26 Hz IMU, five-beat heart rate,
+  accepted supine zero, target-angle and early-return workflow, symptoms, BP,
+  end-tidal CO2, native-rate SQLite storage, five-second summaries, checksums,
+  and manifests.
+- **Processing and report:** source-integrity verification, reviewed
+  table-angle calibration, native R–R intervals, beat-to-beat HR, angle-response
+  regression, time-aligned observations, segment-specific HRV, Poincare
+  analysis, configurable frequency-domain eligibility, immutable review
+  provenance, and portrait PDF export.
+
+Neither application requests a name, medical record number, date of birth, or
+other direct identifier. Any authorized connection between a recording,
+report, and person remains outside the application artifacts. Clinical
+recordings and derived reports remain governed data even when direct
+identifiers are absent.
+
+### Launch on macOS
+
+From Finder, double-click:
+
+```text
+projects/tilt-ecg/launch-tilt-ecg.command
+```
+
+The launcher starts acquisition at `http://127.0.0.1:4174/`. Keep its Terminal
+window open throughout acquisition.
+
+To review a finalized recording and prepare a report, double-click:
+
+```text
+projects/tilt-ecg/launch-tilt-ecg-processing.command
+```
+
+The processing application opens at `http://127.0.0.1:4175/`. It reads
+finalized source artifacts without modifying them and writes approved review
+provenance as a new derived artifact.
+
+See the [Tilt ECG project documentation](projects/tilt-ecg/), the
+[acquisition application](projects/tilt-ecg/app/), and the
+[processing/report application](projects/tilt-ecg/processing-app/) for
+requirements, operating workflow, validation evidence, tests, schemas, and
+governance boundaries.
+
+After further workflow refinement, two separate questions will be evaluated:
+
+1. How the system could be packaged, installed, validated, documented, and
+   supported for other qualified users.
+2. Whether a prospective study should compare active orthostatic stress with
+   passive head-up tilt in individuals without signs, symptoms, or a diagnosis
+   of dysautonomia.
+
+The proposed comparison requires its own protocol, outcomes, sample-size
+rationale, ethics/governance review, consent, and analysis plan. Clinical
+development recordings do not become research data without specific
+authorization.
 
 ## Open the canvas studios
 
