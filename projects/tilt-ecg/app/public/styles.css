@@ -110,8 +110,12 @@ main { display: grid; gap: 18px; max-width: 1500px; margin: 0 auto; padding: 22p
 .setup-grid { display: grid; grid-template-columns: 2fr repeat(4, minmax(110px, .5fr)) auto; gap: 12px; align-items: end; }
 .setup-grid[hidden] { display: none; }
 .setup-grid .wide { min-width: 260px; }
-.target-angle-control .step-buttons { align-items: center; }
-.target-angle-control .step-buttons span { text-align: center; color: var(--muted); font-size: .75rem; }
+.target-angle-control .step-buttons {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+}
+.target-angle-control .step-buttons button { min-width: 0; padding-inline: 8px; }
+.target-angle-control .step-buttons span { display: none; }
 .operator-controls { margin-top: 18px; }
 .operator-controls.inactive .control-section,
 .operator-controls.inactive .observations-grid,
