@@ -3,8 +3,18 @@ export const PRIMARY_PHASES = [
   "begin_tilt",
   "target_angle_reached",
   "begin_return",
+  "begin_return_early",
   "supine_recovery",
 ];
+
+const ALLOWED_TRANSITIONS = {
+  baseline_supine: ["begin_tilt"],
+  begin_tilt: ["target_angle_reached", "begin_return_early"],
+  target_angle_reached: ["begin_return"],
+  begin_return: ["supine_recovery"],
+  begin_return_early: ["supine_recovery"],
+  supine_recovery: [],
+};
 
 export class ProtocolPhaseTracker {
   constructor() {
@@ -12,29 +22,32 @@ export class ProtocolPhaseTracker {
   }
 
   reset() {
-    this.index = 0;
+    this.history = ["baseline_supine"];
   }
 
   get state() {
+    const current = this.history.at(-1);
     return {
-      current: PRIMARY_PHASES[this.index],
-      completed: PRIMARY_PHASES.slice(0, this.index),
-      next: PRIMARY_PHASES[this.index + 1] ?? null,
+      current,
+      completed: this.history.slice(0, -1),
+      allowedNext: [...ALLOWED_TRANSITIONS[current]],
     };
   }
 
   assertNext(label) {
     if (!PRIMARY_PHASES.includes(label)) return;
-    const expected = PRIMARY_PHASES[this.index + 1] ?? null;
-    if (label !== expected) {
-      const readable = expected?.replaceAll("_", " ") ?? "test completion";
+    const allowed = ALLOWED_TRANSITIONS[this.history.at(-1)];
+    if (!allowed.includes(label)) {
+      const readable = allowed.length
+        ? allowed.map((value) => value.replaceAll("_", " ")).join(" or ")
+        : "test completion";
       throw new Error(`The next protocol phase must be ${readable}.`);
     }
   }
 
   advance(label) {
     this.assertNext(label);
-    if (PRIMARY_PHASES.includes(label)) this.index += 1;
+    if (PRIMARY_PHASES.includes(label)) this.history.push(label);
   }
 
   rebuild(events) {
@@ -43,21 +56,17 @@ export class ProtocolPhaseTracker {
         .filter((event) => event.type === "annotation_undo")
         .map((event) => event.data.targetEventId),
     );
-    const activeLabels = new Set(
-      events
-        .filter((event) => (
-          event.type === "phase"
-          && PRIMARY_PHASES.includes(event.label)
-          && !undone.has(event.id)
-        ))
-        .map((event) => event.label),
-    );
-    this.index = 0;
-    while (
-      this.index + 1 < PRIMARY_PHASES.length
-      && activeLabels.has(PRIMARY_PHASES[this.index + 1])
-    ) {
-      this.index += 1;
+    const activeLabels = events
+      .filter((event) => (
+        event.type === "phase"
+        && PRIMARY_PHASES.includes(event.label)
+        && !undone.has(event.id)
+      ))
+      .map((event) => event.label);
+    this.reset();
+    for (const label of activeLabels) {
+      if (label === "baseline_supine") continue;
+      this.advance(label);
     }
   }
 }

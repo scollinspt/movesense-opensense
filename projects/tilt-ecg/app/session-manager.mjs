@@ -18,6 +18,7 @@ const PHASES = new Set([
   "begin_tilt",
   "target_angle_reached",
   "begin_return",
+  "begin_return_early",
   "supine_recovery",
   "technical_interruption",
   "strap_sensor_adjustment",
@@ -76,6 +77,8 @@ export class TiltSessionManager extends EventEmitter {
             startedAt: this.recording.startedAt.toISOString(),
             ecgCount: this.recording.ecgCount,
             imuCount: this.recording.imuCount,
+            commandedTargetAngleDegrees:
+              this.recording.commandedTargetAngleDegrees,
           }
         : null,
       errorMessage: this.errorMessage,
@@ -210,23 +213,34 @@ export class TiltSessionManager extends EventEmitter {
     baselineSystolic,
     baselineDiastolic,
     baselineEtco2,
+    targetAngleDegrees,
   }) {
     if (!this.source || this.connectionState !== "connected") {
       throw new Error("Connect a data source before starting the test.");
     }
     if (!this.zero) throw new Error("Accept the stable supine zero first.");
     if (this.recording) throw new Error("A test is already being recorded.");
-    const numeric = [baselineSystolic, baselineDiastolic, baselineEtco2].map(Number);
+    const numeric = [
+      baselineSystolic,
+      baselineDiastolic,
+      baselineEtco2,
+      targetAngleDegrees,
+    ].map(Number);
     if (!numeric.every(Number.isFinite)) {
-      throw new Error("Baseline systolic, diastolic, and etCO2 values are required.");
+      throw new Error(
+        "Baseline systolic, diastolic, etCO2, and target table angle values are required.",
+      );
     }
-    const [systolic, diastolic, etco2] = numeric;
+    const [systolic, diastolic, etco2, targetAngle] = numeric;
     if (
       systolic < 40 || systolic > 260
       || diastolic < 20 || diastolic > 180
       || etco2 < 5 || etco2 > 100
+      || targetAngle < 5 || targetAngle > 90
     ) {
-      throw new Error("One or more baseline observations are outside the allowed range.");
+      throw new Error(
+        "Baseline observations or target table angle are outside the allowed range.",
+      );
     }
     this.recording = await TiltRecordingSession.create({
       dataRoot,
@@ -234,6 +248,7 @@ export class TiltSessionManager extends EventEmitter {
       zero: this.zero,
       baselineBloodPressure: { systolic, diastolic },
       baselineEtco2: etco2,
+      commandedTargetAngleDegrees: targetAngle,
       softwareVersion: "tilt-ecg-app-v0.1.0",
     });
     this.phaseTracker.reset();
@@ -253,10 +268,52 @@ export class TiltSessionManager extends EventEmitter {
     if (type === "phase") {
       if (!PHASES.has(input.label)) throw new Error("Unknown test phase.");
       this.phaseTracker.assertNext(input.label);
+      let data = {};
+      if (input.label === "target_angle_reached") {
+        data = {
+          commandedTargetAngleDegrees:
+            this.recording.commandedTargetAngleDegrees,
+        };
+      } else if (input.label === "begin_return_early") {
+        const achievedAngle =
+          input.achievedAngleDegrees === null
+          || input.achievedAngleDegrees === undefined
+          || input.achievedAngleDegrees === ""
+            ? null
+            : Number(input.achievedAngleDegrees);
+        if (
+          achievedAngle !== null
+          && (!Number.isFinite(achievedAngle)
+            || achievedAngle < 0
+            || achievedAngle > 90)
+        ) {
+          throw new Error("Achieved table angle must be between 0 and 90 degrees.");
+        }
+        const allowedReasons = new Set([
+          "symptoms",
+          "hemodynamic_change",
+          "ecg_concern",
+          "operator_decision",
+          "equipment_issue",
+          "other",
+          "not_recorded",
+        ]);
+        const reason = input.reason ?? "not_recorded";
+        if (!allowedReasons.has(reason)) {
+          throw new Error("Unknown early-return reason.");
+        }
+        data = {
+          commandedTargetAngleDegrees:
+            this.recording.commandedTargetAngleDegrees,
+          achievedAngleDegrees: achievedAngle,
+          reason,
+        };
+      }
       event = this.recording.recordEvent({
         type,
         label: input.label,
         semantics: "point",
+        data,
       });
       this.phaseTracker.advance(input.label);
     } else if (type === "symptom") {

@@ -50,9 +50,14 @@ distinguishable without relying on color alone.
 7. Present a candidate supine-zero state only after a stable window.
 8. Require the operator to select **Accept supine zero**.
 9. Enter baseline blood pressure and end-tidal carbon dioxide.
-10. Select **Start test** to begin the governed recording.
-11. Record phase transitions, symptoms, blood pressure, and etCO2 observations.
-12. Select **End test** to finalize, checkpoint, checksum, and manifest the
+10. Confirm the commanded target table angle, defaulting to 70 degrees, using
+    exact entry or 5-degree decrement/increment controls.
+11. Select **Start test** to begin the governed recording.
+12. Record phase transitions, symptoms, blood pressure, and etCO2 observations.
+13. If the target is reached, log **Target angle reached** and continue through
+    the normal return. If safety or symptoms require an earlier return, log
+    **Begin return early** without delaying the table return for data entry.
+14. Select **End test** to finalize, checkpoint, checksum, and manifest the
     recording.
 
 The application may detect readiness for zeroing but must not silently accept a
@@ -114,6 +119,20 @@ Placement, breathing, torso motion, strap motion, and calibration can separate
 chest angle from table angle. Validation should include a table-mounted
 reference sensor or another independent table-angle reference.
 
+The commanded target angle is acquisition metadata, not proof that the table
+reached that angle. A later reviewed table-angle series may use a two-point
+affine correction:
+
+```text
+corrected(t) = (raw(t) - baseline) × achieved / (plateau - baseline)
+```
+
+The raw chest-relative angle must remain preserved. The correction must also
+preserve its baseline window, plateau/reference window, achieved table angle,
+scale factor, quality, and review provenance. If the achieved table angle is
+unknown, the processing application must not fabricate a corrected table
+angle.
+
 ## Raw recording
 
 Each test produces one SQLite raw-signal container:
@@ -159,6 +178,10 @@ Minimum tables:
 - Sensor identity, hardware, firmware, resources, and requested rates.
 - Placement and strap configuration.
 - Accepted supine-zero transform.
+- Commanded target table angle.
+- Protocol outcome, including whether the target was reached or the test
+  returned early, the optional acquisition-entered achieved angle, and the
+  optional early-return reason.
 - Software and algorithm versions.
 
 ECG and IMU remain in separate tables because their native rates and packet
@@ -195,6 +218,7 @@ Minimum columns:
 
 - Recording ID.
 - Window index.
+- Commanded target table angle.
 - Window start and end in recording-relative seconds.
 - Window start and end host monotonic timestamps.
 - Latest valid five-beat HR available at the end of the window.
@@ -232,6 +256,7 @@ manifest.
 - Begin tilt.
 - Target angle reached.
 - Begin return.
+- Begin return early.
 - Supine recovery.
 - Test end.
 - Technical interruption.

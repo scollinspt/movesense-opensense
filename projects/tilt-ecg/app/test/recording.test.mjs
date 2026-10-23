@@ -42,6 +42,7 @@ test("projects asynchronous estimates and exact events into fixed windows", () =
     ],
     baselineBloodPressure: { systolic: 120, diastolic: 80 },
     baselineEtco2: 40,
+    commandedTargetAngleDegrees: 70,
   });
 
   assert.equal(rows.length, 3);
@@ -71,6 +72,7 @@ test("finalizes SQLite, summary, and checksum manifest", async (context) => {
     },
     baselineBloodPressure: { systolic: 120, diastolic: 80 },
     baselineEtco2: 40,
+    commandedTargetAngleDegrees: 70,
     softwareVersion: "test",
   });
   recording.appendEcg({
@@ -95,6 +97,20 @@ test("finalizes SQLite, summary, and checksum manifest", async (context) => {
     label: "presyncope",
     semantics: "onset",
   });
+  recording.recordEvent({
+    type: "phase",
+    label: "begin_tilt",
+    semantics: "phase",
+  });
+  recording.recordEvent({
+    type: "phase",
+    label: "begin_return_early",
+    semantics: "phase",
+    data: {
+      achievedAngleDegrees: 45,
+      reason: "symptoms",
+    },
+  });
 
   const result = await recording.stop();
   const manifest = JSON.parse(await readFile(result.manifestPath, "utf8"));
@@ -102,13 +118,27 @@ test("finalizes SQLite, summary, and checksum manifest", async (context) => {
   const database = new DatabaseSync(result.databasePath, { readOnly: true });
   const ecgCount = database.prepare("SELECT COUNT(*) AS count FROM ecg_samples").get();
   const eventCount = database.prepare("SELECT COUNT(*) AS count FROM events").get();
+  const targetMetadata = JSON.parse(
+    database
+      .prepare(
+        "SELECT value_json FROM recording_metadata WHERE key = 'commandedTargetAngleDegrees'",
+      )
+      .get().value_json,
+  );
   database.close();
 
   assert.equal(ecgCount.count, 1);
-  assert.equal(eventCount.count, 1);
+  assert.equal(eventCount.count, 3);
+  assert.equal(targetMetadata, 70);
   assert.equal(manifest.finalized, true);
+  assert.equal(manifest.protocol.commandedTargetAngleDegrees, 70);
+  assert.equal(manifest.protocol.targetAngleReached, false);
+  assert.equal(manifest.protocol.earlyReturn, true);
+  assert.equal(manifest.protocol.achievedAngleDegrees, 45);
+  assert.equal(manifest.protocol.earlyReturnReason, "symptoms");
   assert.equal(manifest.files.signals.sha256, result.databaseSha256);
   assert.equal((await stat(result.databasePath)).isFile(), true);
+  assert.match(summary, /commanded_target_angle_deg/);
   assert.match(summary, /hr_source_time_s/);
   assert.match(summary, /presyncope/);
 });
@@ -122,6 +152,7 @@ test("explicitly recovers an interrupted partial database", async (context) => {
     zero: { acceptedAtTimeMs: 3000, accelerationVector: [0, 0, 9.80665] },
     baselineBloodPressure: { systolic: 120, diastolic: 80 },
     baselineEtco2: 40,
+    commandedTargetAngleDegrees: 70,
     softwareVersion: "test",
   });
   recording.appendEcg({

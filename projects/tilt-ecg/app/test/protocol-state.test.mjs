@@ -8,20 +8,34 @@ test("enforces one-way protocol phase progression", () => {
   assert.deepEqual(tracker.state, {
     current: "baseline_supine",
     completed: [],
-    next: "begin_tilt",
+    allowedNext: ["begin_tilt"],
   });
 
   tracker.advance("begin_tilt");
   assert.equal(tracker.state.current, "begin_tilt");
-  assert.equal(tracker.state.next, "target_angle_reached");
+  assert.deepEqual(
+    tracker.state.allowedNext,
+    ["target_angle_reached", "begin_return_early"],
+  );
   assert.throws(
     () => tracker.advance("begin_tilt"),
-    /next protocol phase must be target angle reached/,
+    /next protocol phase must be target angle reached or begin return early/,
   );
+});
+
+test("allows early return without reaching the target", () => {
+  const tracker = new ProtocolPhaseTracker();
+  tracker.advance("begin_tilt");
+  tracker.advance("begin_return_early");
+
+  assert.equal(tracker.state.current, "begin_return_early");
+  assert.deepEqual(tracker.state.allowedNext, ["supine_recovery"]);
   assert.throws(
-    () => tracker.advance("begin_return"),
-    /next protocol phase must be target angle reached/,
+    () => tracker.advance("target_angle_reached"),
+    /next protocol phase must be supine recovery/,
   );
+  tracker.advance("supine_recovery");
+  assert.deepEqual(tracker.state.allowedNext, []);
 });
 
 test("rebuilds progression after undoing the latest phase", () => {
@@ -40,5 +54,5 @@ test("rebuilds progression after undoing the latest phase", () => {
   tracker.rebuild(events);
 
   assert.equal(tracker.state.current, "baseline_supine");
-  assert.equal(tracker.state.next, "begin_tilt");
+  assert.deepEqual(tracker.state.allowedNext, ["begin_tilt"]);
 });

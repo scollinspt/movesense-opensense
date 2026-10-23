@@ -31,7 +31,7 @@
     "tiltEstimator": "low-pass-gravity-pitch-roll-v1"
   },
   "output": {
-    "recordingSchemaVersion": "tilt-ecg-recording-v1",
-    "summarySchemaVersion": "tilt-ecg-five-second-summary-v1"
+    "recordingSchemaVersion": "tilt-ecg-recording-v2",
+    "summarySchemaVersion": "tilt-ecg-five-second-summary-v2"
   }
 }

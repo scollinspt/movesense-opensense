@@ -107,8 +107,11 @@ main { display: grid; gap: 18px; max-width: 1500px; margin: 0 auto; padding: 22p
 .tilt-track { height: 12px; margin: 16px 0; overflow: hidden; border-radius: 999px; background: var(--paper-deep); }
 .tilt-track div { width: 0; height: 100%; background: var(--teal); transition: width .2s ease; }
 .clock { font-size: 1.6rem; color: var(--forest); font-variant-numeric: tabular-nums; font-weight: 800; }
-.setup-grid { display: grid; grid-template-columns: 2fr repeat(3, minmax(110px, .5fr)) auto; gap: 12px; align-items: end; }
+.setup-grid { display: grid; grid-template-columns: 2fr repeat(4, minmax(110px, .5fr)) auto; gap: 12px; align-items: end; }
+.setup-grid[hidden] { display: none; }
 .setup-grid .wide { min-width: 260px; }
+.target-angle-control .step-buttons { align-items: center; }
+.target-angle-control .step-buttons span { text-align: center; color: var(--muted); font-size: .75rem; }
 .operator-controls { margin-top: 18px; }
 .operator-controls.inactive .control-section,
 .operator-controls.inactive .observations-grid,
@@ -128,11 +131,23 @@ main { display: grid; gap: 18px; max-width: 1500px; margin: 0 auto; padding: 22p
 .phase-heading p { margin: 0; color: var(--muted); }
 .control-section h3 span { color: var(--muted); font-size: .75rem; font-family: inherit; font-weight: 500; }
 .button-grid { display: grid; gap: 9px; }
-.button-grid.phases { grid-template-columns: repeat(6, minmax(130px, 1fr)); }
+.button-grid.phases { grid-template-columns: repeat(4, minmax(150px, 1fr)); }
 .button-grid.symptoms { grid-template-columns: repeat(6, minmax(130px, 1fr)); }
 .button-grid button { min-height: 58px; }
 .button-grid button.completed { border-color: var(--light-green); background: var(--paper-deep); color: var(--forest); opacity: 1; }
 .button-grid button.current { border-color: var(--teal); background: var(--light-green); color: var(--deep-forest); opacity: 1; }
+.early-return-details {
+  display: grid;
+  grid-template-columns: minmax(180px, .6fr) minmax(200px, .8fr) 2fr;
+  gap: 12px;
+  align-items: end;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+}
+.early-return-details .hint { margin: 0; }
 .observations-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
 .observation { padding: 18px; border: 1px solid var(--line); border-radius: 10px; }
 .number-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -150,10 +165,12 @@ dialog::backdrop { background: rgba(3, 28, 21, .7); }
   .setup-grid { grid-template-columns: repeat(3, 1fr); }
   .setup-grid .wide { grid-column: 1 / -1; }
   .button-grid.phases, .button-grid.symptoms { grid-template-columns: repeat(3, 1fr); }
+  .early-return-details { grid-template-columns: 1fr 1fr; }
+  .early-return-details .hint { grid-column: 1 / -1; }
 }
 @media (max-width: 720px) {
   .masthead, .section-heading, .zero-row, .ecg-footer { align-items: stretch; flex-direction: column; }
-  .connection-row, .live-grid, .setup-grid, .observations-grid { grid-template-columns: 1fr; }
+  .connection-row, .live-grid, .setup-grid, .observations-grid, .early-return-details { grid-template-columns: 1fr; }
   .button-grid.phases, .button-grid.symptoms { grid-template-columns: repeat(2, 1fr); }
   .header-actions { align-self: stretch; justify-content: space-between; }
 }

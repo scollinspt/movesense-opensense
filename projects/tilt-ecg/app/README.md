@@ -65,16 +65,27 @@ The deterministic source provides:
 - Stable supine data, a transition to 70 degrees, a hold, and return to zero.
 
 After approximately three stationary seconds, accept the supine zero. Enter
-baseline observations and start recording. The simulator uses the same signal
-processing, annotations, SQLite writer, five-second summary, checksums, and
-manifest as hardware acquisition.
+baseline observations, confirm the target table angle (70 degrees by default),
+and start recording. The simulator uses the same signal processing,
+annotations, SQLite writer, five-second summary, checksums, and manifest as
+hardware acquisition.
 
 During recording, the interface displays the current protocol phase and
-enables only the next valid progression step: baseline supine, begin tilt,
-target angle reached, begin return, then supine recovery. Completed/current
-steps remain visible but cannot be logged twice. **Undo last annotation**
-restores the preceding phase when the latest eligible event was a phase.
-Technical interruption and strap/sensor adjustment remain repeatable.
+enables only a valid progression step. The normal route is baseline supine,
+begin tilt, target angle reached, begin return, then supine recovery. If the
+test must stop before the target, select **Begin return early** immediately;
+an achieved angle and reason may be entered, but neither is required before
+the table returns. Completed/current steps remain visible but cannot be logged
+twice. **Undo last annotation** restores the preceding phase when the latest
+eligible event was a phase. Technical interruption and strap/sensor adjustment
+remain repeatable.
+
+The commanded target is preserved in recording metadata, every five-second
+summary row, and the manifest. Early-return outcome, reason, and any
+operator-observed achieved angle are also preserved. The raw chest angle is
+never overwritten by a corrected table angle. A later processing workflow may
+review or supply the achieved table angle while keeping the acquisition
+artifact immutable.
 
 ## Recording output
 
@@ -90,6 +101,8 @@ MOVESENSE_DATA_ROOT/
 The SQLite database preserves native-rate ECG and IMU samples in separate
 tables plus exact operator events and metadata. The CSV is a derived
 five-second projection. The manifest stores SHA-256 checksums for both files.
+Current outputs use raw recording schema `tilt-ecg-recording-v2` and summary
+schema `tilt-ecg-five-second-summary-v2`.
 
 During a recording, SQLite WAL sidecars can exist beside
 `signals.sqlite.partial`. Normal finalization checkpoints the WAL, closes the
@@ -117,8 +130,9 @@ npm test
 ```
 
 The test suite covers the five-wave HR formula, synthetic Pan-Tompkins
-detection, tilt zeroing, five-second projection, SQLite finalization, checksums,
-and local HTTP startup.
+detection, tilt zeroing, normal and early-return phase progression, target
+validation and provenance, five-second projection, SQLite finalization,
+checksums, and local HTTP startup.
 
 ## Current hardware boundary
 

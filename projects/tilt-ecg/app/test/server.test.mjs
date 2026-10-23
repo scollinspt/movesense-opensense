@@ -13,6 +13,11 @@ test("serves the operational interface and starts synthetic acquisition", async 
   assert.match(pageText, /Tilt ECG Acquisition/);
   assert.match(pageText, /Presyncope \/ lightheadedness/);
   assert.match(pageText, /Annotation controls are shown for protocol review/);
+  assert.match(pageText, /Target table angle/);
+  assert.match(pageText, /value="70"/);
+  assert.match(pageText, /Begin return early/);
+  assert.match(pageText, /Observed maximum table angle if known/);
+  assert.match(pageText, /Early-return reason/);
 
   const demo = await fetch(new URL("/api/connect/demo", application.url), {
     method: "POST",

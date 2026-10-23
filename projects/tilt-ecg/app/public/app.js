@@ -22,11 +22,15 @@ const elements = {
   baselineSbp: byId("baseline-sbp"),
   baselineDbp: byId("baseline-dbp"),
   baselineEtco2: byId("baseline-etco2"),
+  targetAngle: byId("target-angle"),
   startTest: byId("start-test"),
   setupControls: byId("setup-controls"),
   operatorControls: byId("operator-controls"),
   operatorGuidance: byId("operator-guidance"),
   currentPhase: byId("current-phase"),
+  plannedTargetAngle: byId("planned-target-angle"),
+  achievedAngle: byId("achieved-angle"),
+  earlyReturnReason: byId("early-return-reason"),
   recordingBadge: byId("recording-badge"),
   operatorStatus: byId("operator-status"),
   testClock: byId("test-clock"),
@@ -103,10 +107,21 @@ function renderState(state) {
   elements.operatorControls.classList.toggle("inactive", !recording);
   elements.operatorControls.setAttribute("aria-disabled", String(!recording));
   elements.operatorGuidance.hidden = recording;
-  elements.operatorControls.querySelectorAll("button, input").forEach((control) => {
+  elements.operatorControls.querySelectorAll("button, input, select").forEach((control) => {
     control.disabled = !recording;
   });
   const protocolPhase = state.protocolPhase;
+  const targetAngle =
+    state.recording?.commandedTargetAngleDegrees
+    ?? Number(elements.targetAngle.value);
+  elements.plannedTargetAngle.textContent =
+    Number.isFinite(targetAngle) ? `${targetAngle}°` : "—";
+  const targetButton = document.querySelector(
+    '[data-phase="target_angle_reached"]',
+  );
+  targetButton.textContent = Number.isFinite(targetAngle)
+    ? `Target ${targetAngle}° reached`
+    : "Target angle reached";
   elements.currentPhase.textContent = protocolPhase?.current
     ? protocolPhase.current.replaceAll("_", " ")
     : "Not started";
@@ -116,6 +131,7 @@ function renderState(state) {
       "begin_tilt",
       "target_angle_reached",
       "begin_return",
+      "begin_return_early",
       "supine_recovery",
     ].includes(label);
     const completed = protocolPhase?.completed.includes(label) ?? false;
@@ -123,7 +139,8 @@ function renderState(state) {
     button.classList.toggle("completed", completed);
     button.classList.toggle("current", current);
     if (primary) {
-      button.disabled = !recording || protocolPhase?.next !== label;
+      button.disabled =
+        !recording || !protocolPhase?.allowedNext?.includes(label);
     }
   });
 
@@ -308,6 +325,8 @@ elements.startTest.addEventListener("click", async () => {
     elements.sbp.value = elements.baselineSbp.value;
     elements.dbp.value = elements.baselineDbp.value;
     elements.etco2.value = elements.baselineEtco2.value;
+    elements.achievedAngle.value = "";
+    elements.earlyReturnReason.value = "not_recorded";
     await api("/api/recording/start", {
       method: "POST",
       body: JSON.stringify({
@@ -315,6 +334,7 @@ elements.startTest.addEventListener("click", async () => {
         baselineSystolic: Number(elements.baselineSbp.value),
         baselineDiastolic: Number(elements.baselineDbp.value),
         baselineEtco2: Number(elements.baselineEtco2.value),
+        targetAngleDegrees: Number(elements.targetAngle.value),
       }),
     });
     setStatus("Recording started. Baseline supine phase logged.");
@@ -326,12 +346,30 @@ elements.startTest.addEventListener("click", async () => {
 document.querySelectorAll("[data-phase]").forEach((button) => {
   button.addEventListener("click", async () => {
     try {
-      await postEvent({ type: "phase", label: button.dataset.phase });
+      const event = { type: "phase", label: button.dataset.phase };
+      if (button.dataset.phase === "begin_return_early") {
+        event.achievedAngleDegrees =
+          elements.achievedAngle.value === ""
+            ? null
+            : Number(elements.achievedAngle.value);
+        event.reason = elements.earlyReturnReason.value;
+      }
+      await postEvent(event);
     } catch (error) {
       setStatus(error.message, true);
     }
   });
 });
+
+document.querySelectorAll("[data-target-angle-step]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const next = Number(elements.targetAngle.value || 70)
+      + Number(button.dataset.targetAngleStep);
+    elements.targetAngle.value = Math.min(90, Math.max(5, next));
+    renderState(applicationState);
+  });
+});
+elements.targetAngle.addEventListener("input", () => renderState(applicationState));
 
 document.querySelectorAll("[data-symptom]").forEach((button) => {
   button.addEventListener("click", async () => {

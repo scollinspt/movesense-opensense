@@ -126,6 +126,16 @@
         <label>Baseline etCO₂
           <input id="baseline-etco2" type="number" min="5" max="100" value="40">
         </label>
+        <div class="target-angle-control">
+          <label>Target table angle
+            <input id="target-angle" type="number" min="5" max="90" value="70">
+          </label>
+          <div class="step-buttons">
+            <button data-target-angle-step="-5" class="quiet" type="button">−5°</button>
+            <span>degrees</span>
+            <button data-target-angle-step="5" class="quiet" type="button">+5°</button>
+          </div>
+        </div>
         <button id="start-test" type="button" disabled>Start recording</button>
       </div>
 
@@ -137,15 +147,39 @@
         <div class="control-section">
           <div class="phase-heading">
             <h3>Test phase</h3>
-            <p>Current: <strong id="current-phase">Not started</strong></p>
+            <p>
+              Current: <strong id="current-phase">Not started</strong>
+              · Target: <strong id="planned-target-angle">70°</strong>
+            </p>
           </div>
           <div class="button-grid phases">
             <button data-phase="begin_tilt" type="button">Begin tilt</button>
-            <button data-phase="target_angle_reached" type="button">Target angle reached</button>
+            <button data-phase="target_angle_reached" type="button">Target 70° reached</button>
             <button data-phase="begin_return" type="button">Begin return</button>
+            <button id="begin-return-early" data-phase="begin_return_early" class="danger" type="button">Begin return early</button>
             <button data-phase="supine_recovery" type="button">Supine recovery</button>
             <button data-phase="technical_interruption" class="secondary" type="button">Technical interruption</button>
             <button data-phase="strap_sensor_adjustment" class="secondary" type="button">Strap / sensor adjustment</button>
+          </div>
+          <div class="early-return-details">
+            <label>Observed maximum table angle if known
+              <input id="achieved-angle" type="number" min="0" max="90" placeholder="Optional">
+            </label>
+            <label>Early-return reason
+              <select id="early-return-reason">
+                <option value="not_recorded">Not recorded</option>
+                <option value="symptoms">Symptoms</option>
+                <option value="hemodynamic_change">Hemodynamic change</option>
+                <option value="ecg_concern">ECG concern</option>
+                <option value="operator_decision">Operator decision</option>
+                <option value="equipment_issue">Equipment issue</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <p class="hint">
+              These fields are optional and must never delay returning the table.
+              The achieved angle can be added or corrected during processing.
+            </p>
           </div>
         </div>
 

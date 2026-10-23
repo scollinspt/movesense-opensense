@@ -13,8 +13,16 @@ hosted by VS Code, Copilot Canvas, or the VS Code shared browser.
 - Current live configuration: `projects/tilt-ecg/configs/live-v2.json`
 - ECG rate: 512 Hz
 - IMU9 rate: nominal 26 Hz
-- Raw recording schema: `tilt-ecg-recording-v1`
-- Summary schema: `tilt-ecg-five-second-summary-v1`
+- Raw recording schema: `tilt-ecg-recording-v2`
+- Summary schema: `tilt-ecg-five-second-summary-v2`
+
+The current acquisition workflow requires a commanded target table angle
+before recording. It defaults to 70 degrees and supports exact entry or
+5-degree adjustments. After **Begin tilt**, the protocol branches to either
+**Target angle reached** or **Begin return early**. An achieved angle and
+early-return reason may be captured, but neither is required before returning
+the table. The commanded target and protocol outcome are preserved in SQLite,
+the five-second summary, and the manifest for later immutable review.
 
 Firefox and the VS Code shared browser are equivalent clients of one
 server-owned state. Opening two browser tabs does not create two BLE

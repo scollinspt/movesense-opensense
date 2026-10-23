@@ -3,8 +3,8 @@ import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-export const RECORDING_SCHEMA_VERSION = "tilt-ecg-recording-v1";
-export const SUMMARY_SCHEMA_VERSION = "tilt-ecg-five-second-summary-v1";
+export const RECORDING_SCHEMA_VERSION = "tilt-ecg-recording-v2";
+export const SUMMARY_SCHEMA_VERSION = "tilt-ecg-five-second-summary-v2";
 
 function compactUtcDate(date) {
   return date.toISOString().slice(0, 10);
@@ -124,6 +124,7 @@ function csvValue(value) {
 export function buildFiveSecondSummary({
   recordingId = "unknown",
   startedHostMonotonicNs = 0n,
+  commandedTargetAngleDegrees = null,
   durationSeconds,
   hrEstimates,
   tiltEstimates,
@@ -195,6 +196,7 @@ export function buildFiveSecondSummary({
     rows.push({
       recording_id: recordingId,
       window_index: index,
+      commanded_target_angle_deg: commandedTargetAngleDegrees,
       window_start_s: start,
       window_end_s: end,
       window_start_host_monotonic_ns: windowStartMonotonicNs.toString(),
@@ -279,6 +281,7 @@ export class TiltRecordingSession {
     zero,
     baselineBloodPressure,
     baselineEtco2,
+    commandedTargetAngleDegrees,
     softwareVersion,
   }) {
     if (!path.isAbsolute(dataRoot)) {
@@ -311,6 +314,7 @@ export class TiltRecordingSession {
       zero,
       baselineBloodPressure,
       baselineEtco2,
+      commandedTargetAngleDegrees,
       softwareVersion,
     });
   }
@@ -408,6 +412,7 @@ export class TiltRecordingSession {
       acceptedSupineZero: this.zero,
       baselineBloodPressure: this.baselineBloodPressure,
       baselineEtco2: this.baselineEtco2,
+      commandedTargetAngleDegrees: this.commandedTargetAngleDegrees,
       softwareVersion: this.softwareVersion,
       algorithms: {
         ecgDetector: "pan-tompkins-streaming-v1",
@@ -532,12 +537,46 @@ export class TiltRecordingSession {
       "sampleCounts",
       JSON.stringify({ ecg: this.ecgCount, imu: this.imuCount }),
     );
+    const undone = new Set(
+      this.events
+        .filter((event) => event.type === "annotation_undo")
+        .map((event) => event.data.targetEventId),
+    );
+    const activePhaseEvents = this.events.filter(
+      (event) => event.type === "phase" && !undone.has(event.id),
+    );
+    const targetReached = activePhaseEvents.find(
+      (event) => event.label === "target_angle_reached",
+    );
+    const earlyReturn = activePhaseEvents.find(
+      (event) => event.label === "begin_return_early",
+    );
+    const protocolOutcome = {
+      commandedTargetAngleDegrees: this.commandedTargetAngleDegrees,
+      targetAngleReached: Boolean(targetReached),
+      earlyReturn: Boolean(earlyReturn),
+      achievedAngleDegrees: targetReached
+        ? this.commandedTargetAngleDegrees
+        : earlyReturn?.data.achievedAngleDegrees ?? null,
+      achievedAngleSource: targetReached
+        ? "commanded_target_confirmed_reached"
+        : earlyReturn?.data.achievedAngleDegrees !== null
+          && earlyReturn?.data.achievedAngleDegrees !== undefined
+          ? "operator_observation_during_acquisition"
+          : null,
+      earlyReturnReason: earlyReturn?.data.reason ?? null,
+    };
+    this.insertMetadata.run(
+      "protocolOutcome",
+      JSON.stringify(protocolOutcome),
+    );
     this.database.exec("PRAGMA wal_checkpoint(TRUNCATE)");
     this.database.close();
     await rename(this.partialDatabasePath, this.databasePath);
     const summaryRows = buildFiveSecondSummary({
       recordingId: this.recordingId,
       startedHostMonotonicNs: this.startedHostMonotonicNs,
+      commandedTargetAngleDegrees: this.commandedTargetAngleDegrees,
       durationSeconds,
       hrEstimates: this.hrEstimates,
       tiltEstimates: this.tiltEstimates,
@@ -562,6 +601,10 @@ export class TiltRecordingSession {
       finalized: true,
       sensor: this.sensor,
       acceptedSupineZero: this.zero,
+      protocol: {
+        commandedTargetAngleDegrees: this.commandedTargetAngleDegrees,
+        ...protocolOutcome,
+      },
       sampleCounts: { ecg: this.ecgCount, imu: this.imuCount },
       eventCount: this.events.length,
       files: {
