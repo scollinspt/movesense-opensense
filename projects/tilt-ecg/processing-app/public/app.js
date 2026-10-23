@@ -13,6 +13,7 @@ const elements = {
   reviewPanel: byId("review-panel"),
   analysisPanel: byId("analysis-panel"),
   reportPanel: byId("report-panel"),
+  physiologyPanel: byId("physiology-panel"),
   achievedAngle: byId("achieved-angle"),
   confirmAngle: byId("confirm-angle"),
   baselineStart: byId("baseline-start"),
@@ -21,6 +22,24 @@ const elements = {
   plateauEnd: byId("plateau-end"),
   ascentStart: byId("ascent-start"),
   ascentEnd: byId("ascent-end"),
+  orthostaticThreshold: byId("orthostatic-threshold"),
+  orthostaticDuration: byId("orthostatic-duration"),
+  sustainedWindow: byId("sustained-window"),
+  supineHrvStart: byId("supine-hrv-start"),
+  supineHrvEnd: byId("supine-hrv-end"),
+  uprightHrvStart: byId("upright-hrv-start"),
+  uprightHrvEnd: byId("upright-hrv-end"),
+  recoveryHrvStart: byId("recovery-hrv-start"),
+  recoveryHrvEnd: byId("recovery-hrv-end"),
+  frequencyMode: byId("frequency-mode"),
+  minimumHfSeconds: byId("minimum-hf-seconds"),
+  minimumLfSeconds: byId("minimum-lf-seconds"),
+  minimumAcceptedNn: byId("minimum-accepted-nn"),
+  maximumExcludedNn: byId("maximum-excluded-nn"),
+  requireStationarity: byId("require-stationarity"),
+  maximumStationaryAngle: byId("maximum-stationary-angle"),
+  frequencyOverride: byId("frequency-override"),
+  frequencyOverrideRationale: byId("frequency-override-rationale"),
   rrMinimum: byId("rr-minimum"),
   rrMaximum: byId("rr-maximum"),
   recalculate: byId("recalculate"),
@@ -28,11 +47,17 @@ const elements = {
   calibrationBadge: byId("calibration-badge"),
   timelineChart: byId("timeline-chart"),
   scatterChart: byId("scatter-chart"),
+  hrScatterChart: byId("hr-scatter-chart"),
+  poincareChart: byId("poincare-chart"),
   reportTimelineChart: byId("report-timeline-chart"),
   reportScatterChart: byId("report-scatter-chart"),
+  reportHrScatterChart: byId("report-hr-scatter-chart"),
+  reportPoincareChart: byId("report-poincare-chart"),
   eventLegend: byId("event-legend"),
   equation: byId("equation"),
   regressionStatistics: byId("regression-statistics"),
+  hrEquation: byId("hr-equation"),
+  hrRegressionStatistics: byId("hr-regression-statistics"),
   rawBaseline: byId("raw-baseline"),
   rawPlateau: byId("raw-plateau"),
   scaleFactor: byId("scale-factor"),
@@ -40,13 +65,29 @@ const elements = {
   acceptedCount: byId("accepted-count"),
   excludedCount: byId("excluded-count"),
   baselineHr: byId("baseline-hr"),
+  clinicalSummary: byId("clinical-summary"),
+  heartRateSummary: byId("heart-rate-summary"),
+  bloodPressureSummary: byId("blood-pressure-summary"),
+  etco2Summary: byId("etco2-summary"),
+  symptomSummary: byId("symptom-summary"),
+  hrvTableBody: byId("hrv-table").querySelector("tbody"),
   reportState: byId("report-state"),
   reportRecordingId: byId("report-recording-id"),
   reportRecordingSummary: byId("report-recording-summary"),
+  reportClinicalSummary: byId("report-clinical-summary"),
+  reportReviewerConclusion: byId("report-reviewer-conclusion"),
+  reportHeartRateSummary: byId("report-heart-rate-summary"),
+  reportHrEquation: byId("report-hr-equation"),
+  reportHrRegressionDetail: byId("report-hr-regression-detail"),
+  reportBloodPressure: byId("report-blood-pressure"),
+  reportEtco2: byId("report-etco2"),
+  reportSymptoms: byId("report-symptoms"),
+  reportHrvSummary: byId("report-hrv-summary"),
   reportEquation: byId("report-equation"),
   reportRegressionDetail: byId("report-regression-detail"),
   reportAnalysisSummary: byId("report-analysis-summary"),
   reportFooter: byId("report-footer"),
+  reviewerConclusion: byId("reviewer-conclusion"),
   approveReview: byId("approve-review"),
   printReport: byId("print-report"),
   reportStatus: byId("report-status"),
@@ -96,8 +137,27 @@ function collectSettings() {
     plateauEndSeconds: Number(elements.plateauEnd.value),
     ascentStartSeconds: Number(elements.ascentStart.value),
     ascentEndSeconds: Number(elements.ascentEnd.value),
+    supineHrvStartSeconds: Number(elements.supineHrvStart.value),
+    supineHrvEndSeconds: Number(elements.supineHrvEnd.value),
+    uprightHrvStartSeconds: Number(elements.uprightHrvStart.value),
+    uprightHrvEndSeconds: Number(elements.uprightHrvEnd.value),
+    recoveryHrvStartSeconds: Number(elements.recoveryHrvStart.value),
+    recoveryHrvEndSeconds: Number(elements.recoveryHrvEnd.value),
     minimumRrMs: Number(elements.rrMinimum.value),
     maximumRrMs: Number(elements.rrMaximum.value),
+    orthostaticHrThresholdBpm: Number(elements.orthostaticThreshold.value),
+    orthostaticAssessmentSeconds: Number(elements.orthostaticDuration.value),
+    sustainedHrWindowSeconds: Number(elements.sustainedWindow.value),
+    frequencyDomainMode: elements.frequencyMode.value,
+    minimumHfSeconds: Number(elements.minimumHfSeconds.value),
+    minimumLfSeconds: Number(elements.minimumLfSeconds.value),
+    minimumAcceptedNnPercent: Number(elements.minimumAcceptedNn.value),
+    maximumExcludedNnPercent: Number(elements.maximumExcludedNn.value),
+    requireStationarity: elements.requireStationarity.checked,
+    maximumStationaryAngleRangeDegrees:
+      Number(elements.maximumStationaryAngle.value),
+    frequencyEligibilityOverride: elements.frequencyOverride.checked,
+    frequencyOverrideRationale: elements.frequencyOverrideRationale.value,
     excludedIntervalIds: [...excludedIntervalIds],
   };
 }
@@ -220,6 +280,69 @@ function drawScatter(canvas, analysis, interactive = false) {
   if (interactive) scatterHitTargets = localTargets;
 }
 
+function drawHeartRateScatter(canvas, analysis) {
+  const points = analysis.heartRateRegressionPoints;
+  if (!points.length) return;
+  const xDomain = extents(points.map((point) => point.x));
+  const yDomain = extents(points.map((point) => point.y));
+  const chart = axes(canvas, xDomain, yDomain, {
+    x: "Corrected table angle (degrees)",
+    y: "Beat-to-beat HR (bpm)",
+  });
+  for (const point of points) {
+    chart.context.beginPath();
+    chart.context.arc(chart.x(point.x), chart.y(point.y), 3.7, 0, Math.PI * 2);
+    chart.context.fillStyle = "#2f6f5e";
+    chart.context.fill();
+  }
+  const regression = analysis.heartRateRegression;
+  if (regression.slope === null) return;
+  chart.context.beginPath();
+  chart.context.moveTo(
+    chart.x(xDomain[0]),
+    chart.y(regression.slope * xDomain[0] + regression.intercept),
+  );
+  chart.context.lineTo(
+    chart.x(xDomain[1]),
+    chart.y(regression.slope * xDomain[1] + regression.intercept),
+  );
+  chart.context.strokeStyle = "#9c2f2f";
+  chart.context.lineWidth = 2.5;
+  chart.context.stroke();
+}
+
+function drawPoincare(canvas, analysis) {
+  const colors = {
+    supine: "#2f6f5e",
+    upright: "#a16518",
+    recovery: "#6c6fb4",
+  };
+  const points = analysis.hrv.segments.flatMap((segment) => (
+    segment.poincarePoints.map((point) => ({ ...point, segment: segment.name }))
+  ));
+  if (!points.length) return;
+  const domain = extents(points.flatMap((point) => [point.x, point.y]));
+  const chart = axes(canvas, domain, domain, {
+    x: "NN interval n (ms)",
+    y: "NN interval n+1 (ms)",
+  });
+  chart.context.beginPath();
+  chart.context.moveTo(chart.x(domain[0]), chart.y(domain[0]));
+  chart.context.lineTo(chart.x(domain[1]), chart.y(domain[1]));
+  chart.context.strokeStyle = "#cad6d0";
+  chart.context.setLineDash([5, 5]);
+  chart.context.stroke();
+  chart.context.setLineDash([]);
+  for (const point of points) {
+    chart.context.beginPath();
+    chart.context.arc(chart.x(point.x), chart.y(point.y), 3.5, 0, Math.PI * 2);
+    chart.context.fillStyle = colors[point.segment];
+    chart.context.globalAlpha = 0.78;
+    chart.context.fill();
+  }
+  chart.context.globalAlpha = 1;
+}
+
 function drawTimeline(canvas, analysis) {
   const timeline = analysis.timeline;
   const intervals = analysis.intervals.filter((interval) => interval.accepted);
@@ -287,15 +410,94 @@ function summaryRows(container, rows) {
   }));
 }
 
+function renderClinicalSummary(container, statements) {
+  container.replaceChildren(...statements.map((statement) => {
+    const paragraph = document.createElement("p");
+    paragraph.textContent = statement;
+    return paragraph;
+  }));
+}
+
+function renderObservations(container, lines, emptyMessage) {
+  container.className = "observation-list";
+  container.replaceChildren(...(lines.length ? lines : [emptyMessage]).map((line) => {
+    const paragraph = document.createElement("p");
+    paragraph.textContent = line;
+    return paragraph;
+  }));
+}
+
+function frequencyValue(segment, property, suffix = " ms²") {
+  if (Number.isFinite(segment.frequency?.[property])) {
+    return `${segment.frequency[property].toFixed(1)}${suffix}`;
+  }
+  return "Not eligible";
+}
+
+function renderHrvTable(analysis) {
+  elements.hrvTableBody.replaceChildren(...analysis.hrv.segments.map((segment) => {
+    const row = document.createElement("tr");
+    const values = [
+      segment.name,
+      `${segment.durationSeconds.toFixed(1)} s`,
+      `${segment.acceptedNnCount}/${segment.candidateNnCount}`,
+      format(segment.metrics.sdnnMs, 1, " ms"),
+      format(segment.metrics.rmssdMs, 1, " ms"),
+      format(segment.metrics.pnn50Percent, 1, "%"),
+      `${format(segment.metrics.sd1Ms, 1)} / ${format(segment.metrics.sd2Ms, 1)}`,
+      frequencyValue(segment, "hfPowerMs2"),
+      frequencyValue(segment, "lfPowerMs2"),
+      frequencyValue(segment, "lfHfRatio", ""),
+    ];
+    values.forEach((value, index) => {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      if (index === 7 && segment.eligibility.reasons.length) {
+        const reason = document.createElement("span");
+        reason.className = "eligibility-reason";
+        reason.textContent = segment.eligibility.reasons.join(" ");
+        cell.append(reason);
+      }
+      row.append(cell);
+    });
+    return row;
+  }));
+}
+
+function renderHrvReport(container, analysis) {
+  container.replaceChildren(...analysis.hrv.segments.map((segment) => {
+    const section = document.createElement("section");
+    const heading = document.createElement("h4");
+    heading.textContent = `${segment.name[0].toUpperCase()}${segment.name.slice(1)} · ${segment.durationSeconds.toFixed(1)} seconds`;
+    const metrics = document.createElement("p");
+    metrics.textContent =
+      `NN ${segment.acceptedNnCount}/${segment.candidateNnCount}; `
+      + `SDNN ${format(segment.metrics.sdnnMs, 1, " ms")}; `
+      + `RMSSD ${format(segment.metrics.rmssdMs, 1, " ms")}; `
+      + `pNN50 ${format(segment.metrics.pnn50Percent, 1, "%")}; `
+      + `SD1/SD2 ${format(segment.metrics.sd1Sd2Ratio, 3)}.`;
+    const frequency = document.createElement("p");
+    frequency.textContent = segment.frequency
+      ? `HF ${frequencyValue(segment, "hfPowerMs2")}; LF ${frequencyValue(segment, "lfPowerMs2")}; LF/HF ${frequencyValue(segment, "lfHfRatio", "")}.`
+      : segment.eligibility.reasons.join(" ");
+    section.append(heading, metrics, frequency);
+    return section;
+  }));
+}
+
 function renderAnalysis(result) {
   currentResult = result;
   approvedReview = null;
   analysisDirty = false;
   elements.analysisPanel.hidden = false;
+  elements.physiologyPanel.hidden = false;
   elements.reportPanel.hidden = false;
   elements.printReport.disabled = true;
   setBadge(elements.reportState, "Draft", "warning");
-  elements.reportFooter.textContent = "Draft review; not yet approved.";
+  elements.reportFooter.textContent =
+    "Computer-assisted physiologic analysis; clinician review and approval required.";
+  elements.reportReviewerConclusion.textContent =
+    elements.reviewerConclusion.value.trim() || "No reviewer conclusion entered.";
   const { analysis, recording } = result;
   const calibration = analysis.calibration;
   setBadge(
@@ -327,6 +529,10 @@ function renderAnalysis(result) {
   elements.equation.textContent = analysis.regression.equation ?? "Regression unavailable";
   elements.regressionStatistics.textContent =
     `R² ${format(analysis.regression.rSquared, 3)} · n=${analysis.regression.count}`;
+  elements.hrEquation.textContent =
+    analysis.heartRateRegression.equation ?? "Regression unavailable";
+  elements.hrRegressionStatistics.textContent =
+    `R² ${format(analysis.heartRateRegression.rSquared, 3)} · n=${analysis.heartRateRegression.count}`;
   elements.eventLegend.replaceChildren(
     ...analysis.events.filter((event) => event.type === "phase").map((event) => {
       const item = document.createElement("span");
@@ -337,8 +543,62 @@ function renderAnalysis(result) {
   );
   drawTimeline(elements.timelineChart, analysis);
   drawScatter(elements.scatterChart, analysis, true);
+  drawHeartRateScatter(elements.hrScatterChart, analysis);
+  drawPoincare(elements.poincareChart, analysis);
   drawTimeline(elements.reportTimelineChart, analysis);
   drawScatter(elements.reportScatterChart, analysis);
+  drawHeartRateScatter(elements.reportHrScatterChart, analysis);
+  drawPoincare(elements.reportPoincareChart, analysis);
+
+  const clinical = analysis.clinical;
+  renderClinicalSummary(elements.clinicalSummary, clinical.summary);
+  renderClinicalSummary(elements.reportClinicalSummary, clinical.summary);
+  const heartRateRows = [
+    ["Baseline median", format(clinical.heartRate.baselineMedianBpm, 1, " bpm")],
+    ["Baseline range", `${format(clinical.heartRate.baselineMinimumBpm, 1)}–${format(clinical.heartRate.baselineMaximumBpm, 1)} bpm`],
+    ["Peak upright", format(clinical.heartRate.peakUprightBpm, 1, " bpm")],
+    ["Maximum change", format(clinical.heartRate.maximumChangeBpm, 1, " bpm")],
+    ["Maximum sustained change", format(clinical.heartRate.maximumSustainedChangeBpm, 1, " bpm")],
+    ["Upright duration", format(clinical.heartRate.uprightDurationSeconds, 1, " s")],
+    ["Configured HR threshold", `${clinical.heartRate.orthostaticThresholdBpm} bpm over ${clinical.heartRate.orthostaticAssessmentSeconds} s`],
+    ["Threshold assessment", clinical.heartRate.orthostaticAssessable
+      ? clinical.heartRate.orthostaticThresholdMet ? "Met" : "Not met"
+      : "Not assessable"],
+  ];
+  summaryRows(elements.heartRateSummary, heartRateRows);
+  summaryRows(elements.reportHeartRateSummary, heartRateRows);
+  const bpLines = [
+    ...(clinical.bloodPressure.baseline
+      ? [`Baseline ${clinical.bloodPressure.baseline.systolic}/${clinical.bloodPressure.baseline.diastolic} mmHg.`]
+      : []),
+    ...clinical.bloodPressure.observations.map((observation) => (
+      `${observation.timeSeconds.toFixed(1)} s · ${observation.systolic}/${observation.diastolic} mmHg · Δ ${observation.systolicChange}/${observation.diastolicChange} · angle ${format(observation.correctedAngleDegrees, 1, "°")} · HR ${format(observation.heartRateBpm, 1, " bpm")}`
+    )),
+    ...(clinical.bloodPressure.orthostaticHypotensionAssessable
+      ? [clinical.bloodPressure.orthostaticHypotensionCriteriaMet
+        ? "Configured orthostatic hypotension decrease criterion met."
+        : "Configured orthostatic hypotension decrease criterion not met."]
+      : ["Orthostatic BP criterion not assessable from available upright observations."]),
+  ];
+  renderObservations(elements.bloodPressureSummary, bpLines, "No BP observations recorded.");
+  renderObservations(elements.reportBloodPressure, bpLines, "No BP observations recorded.");
+  const etco2Lines = [
+    ...(Number.isFinite(clinical.etco2.baseline)
+      ? [`Baseline ${clinical.etco2.baseline} mmHg.`]
+      : []),
+    ...clinical.etco2.observations.map((observation) => (
+      `${observation.timeSeconds.toFixed(1)} s · ${observation.value} mmHg · Δ ${observation.change} · angle ${format(observation.correctedAngleDegrees, 1, "°")} · HR ${format(observation.heartRateBpm, 1, " bpm")}`
+    )),
+  ];
+  renderObservations(elements.etco2Summary, etco2Lines, "No etCO₂ observations recorded.");
+  renderObservations(elements.reportEtco2, etco2Lines, "No etCO₂ observations recorded.");
+  const symptomLines = clinical.symptoms.map((symptom) => (
+    `${symptom.label.replaceAll("_", " ")} ${symptom.semantics} at ${symptom.timeSeconds.toFixed(1)} s · angle ${format(symptom.correctedAngleDegrees, 1, "°")} · HR ${format(symptom.heartRateBpm, 1, " bpm")} · ΔHR ${format(symptom.heartRateChangeBpm, 1, " bpm")}`
+  ));
+  renderObservations(elements.symptomSummary, symptomLines, "No symptoms recorded.");
+  renderObservations(elements.reportSymptoms, symptomLines, "No symptoms recorded.");
+  renderHrvTable(analysis);
+  renderHrvReport(elements.reportHrvSummary, analysis);
 
   elements.reportRecordingId.textContent = `Recording ${recording.recordingId}`;
   summaryRows(elements.reportRecordingSummary, [
@@ -354,6 +614,10 @@ function renderAnalysis(result) {
   elements.reportEquation.textContent = analysis.regression.equation ?? "Regression unavailable.";
   elements.reportRegressionDetail.textContent =
     `Ordinary least-squares fit during ascending tilt: R² = ${format(analysis.regression.rSquared, 3)}, n = ${analysis.regression.count}, corrected-angle range ${format(analysis.regression.angleMinimum, 1, "°")} to ${format(analysis.regression.angleMaximum, 1, "°")}.`;
+  elements.reportHrEquation.textContent =
+    analysis.heartRateRegression.equation ?? "Regression unavailable.";
+  elements.reportHrRegressionDetail.textContent =
+    `Ordinary least-squares fit during ascending tilt: R² = ${format(analysis.heartRateRegression.rSquared, 3)}, n = ${analysis.heartRateRegression.count}. Protocol-specific normal slope ranges are not yet established.`;
   summaryRows(elements.reportAnalysisSummary, [
     ["Achieved angle", format(calibration.achievedAngleDegrees, 1, "°")],
     ["Raw baseline", format(calibration.baselineRawDegrees, 2, "°")],
@@ -432,8 +696,31 @@ async function loadSelectedRecording() {
     setInput(elements.plateauEnd, defaults.plateauEndSeconds);
     setInput(elements.ascentStart, defaults.ascentStartSeconds);
     setInput(elements.ascentEnd, defaults.ascentEndSeconds);
+    setInput(elements.supineHrvStart, defaults.supineHrvStartSeconds);
+    setInput(elements.supineHrvEnd, defaults.supineHrvEndSeconds);
+    setInput(elements.uprightHrvStart, defaults.uprightHrvStartSeconds);
+    setInput(elements.uprightHrvEnd, defaults.uprightHrvEndSeconds);
+    setInput(elements.recoveryHrvStart, defaults.recoveryHrvStartSeconds);
+    setInput(elements.recoveryHrvEnd, defaults.recoveryHrvEndSeconds);
     elements.rrMinimum.value = defaults.minimumRrMs;
     elements.rrMaximum.value = defaults.maximumRrMs;
+    elements.orthostaticThreshold.value = defaults.orthostaticHrThresholdBpm;
+    elements.orthostaticDuration.value = defaults.orthostaticAssessmentSeconds;
+    elements.sustainedWindow.value = defaults.sustainedHrWindowSeconds;
+    elements.frequencyMode.value = defaults.frequencyDomainMode;
+    elements.minimumHfSeconds.value = defaults.minimumHfSeconds;
+    elements.minimumLfSeconds.value = defaults.minimumLfSeconds;
+    elements.minimumAcceptedNn.value = defaults.minimumAcceptedNnPercent;
+    elements.maximumExcludedNn.value = defaults.maximumExcludedNnPercent;
+    elements.requireStationarity.checked = defaults.requireStationarity;
+    elements.maximumStationaryAngle.value =
+      defaults.maximumStationaryAngleRangeDegrees;
+    elements.frequencyOverride.checked =
+      defaults.frequencyEligibilityOverride;
+    elements.frequencyOverrideRationale.value =
+      defaults.frequencyOverrideRationale;
+    elements.frequencyOverrideRationale.disabled = true;
+    elements.reviewerConclusion.value = "";
     elements.confirmAngle.checked =
       defaults.achievedAngleSource === "acquisition_record";
     elements.confirmAngle.disabled =
@@ -464,10 +751,39 @@ elements.recalculate.addEventListener("click", recalculate);
   elements.plateauEnd,
   elements.ascentStart,
   elements.ascentEnd,
+  elements.supineHrvStart,
+  elements.supineHrvEnd,
+  elements.uprightHrvStart,
+  elements.uprightHrvEnd,
+  elements.recoveryHrvStart,
+  elements.recoveryHrvEnd,
   elements.rrMinimum,
   elements.rrMaximum,
+  elements.orthostaticThreshold,
+  elements.orthostaticDuration,
+  elements.sustainedWindow,
+  elements.frequencyMode,
+  elements.minimumHfSeconds,
+  elements.minimumLfSeconds,
+  elements.minimumAcceptedNn,
+  elements.maximumExcludedNn,
+  elements.requireStationarity,
+  elements.maximumStationaryAngle,
 ].forEach((control) => {
   control.addEventListener("change", invalidateAnalysis);
+});
+elements.frequencyOverride.addEventListener("change", () => {
+  elements.frequencyOverrideRationale.disabled =
+    !elements.frequencyOverride.checked;
+  invalidateAnalysis();
+});
+elements.frequencyOverrideRationale.addEventListener("change", invalidateAnalysis);
+elements.reviewerConclusion.addEventListener("input", () => {
+  approvedReview = null;
+  elements.printReport.disabled = true;
+  setBadge(elements.reportState, "Approval required", "warning");
+  elements.reportReviewerConclusion.textContent =
+    elements.reviewerConclusion.value.trim() || "No reviewer conclusion entered.";
 });
 elements.scatterChart.addEventListener("click", async (event) => {
   const bounds = elements.scatterChart.getBoundingClientRect();
@@ -494,6 +810,7 @@ elements.approveReview.addEventListener("click", async () => {
       body: JSON.stringify({
         recordingId: description.recordingId,
         settings: collectSettings(),
+        reviewerConclusion: elements.reviewerConclusion.value,
       }),
     });
     approvedReview = result.review;
@@ -501,6 +818,8 @@ elements.approveReview.addEventListener("click", async () => {
     setBadge(elements.reportState, "Approved", "");
     elements.reportFooter.textContent =
       `Approved review ${approvedReview.reviewId} · ${approvedReview.createdAt} · Source artifacts unchanged.`;
+    elements.reportReviewerConclusion.textContent =
+      approvedReview.reviewerConclusion || "No reviewer conclusion entered.";
     elements.reportStatus.textContent =
       "Review provenance saved. The report is ready to print or save as PDF.";
   } catch (error) {
@@ -519,8 +838,12 @@ window.addEventListener("resize", () => {
   if (!currentResult) return;
   drawTimeline(elements.timelineChart, currentResult.analysis);
   drawScatter(elements.scatterChart, currentResult.analysis, true);
+  drawHeartRateScatter(elements.hrScatterChart, currentResult.analysis);
+  drawPoincare(elements.poincareChart, currentResult.analysis);
   drawTimeline(elements.reportTimelineChart, currentResult.analysis);
   drawScatter(elements.reportScatterChart, currentResult.analysis);
+  drawHeartRateScatter(elements.reportHrScatterChart, currentResult.analysis);
+  drawPoincare(elements.reportPoincareChart, currentResult.analysis);
 });
 
 const listing = await api("/api/recordings");

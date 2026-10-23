@@ -15,8 +15,7 @@
     <span class="mode-badge">Read-only source review</span>
   </header>
   <aside class="safety" role="note">
-    <strong>Research analysis only.</strong>
-    This application does not provide a diagnosis or clinical interpretation.
+    <strong>De-identified clinical physiology review.</strong>
     Do not enter a name, MRN, date of birth, or other direct identifier.
   </aside>
 
@@ -105,6 +104,75 @@
             at its midpoint. Click a scatter point to exclude or restore it.
           </p>
         </fieldset>
+        <fieldset>
+          <legend>Clinical heart-rate criteria</legend>
+          <div class="number-grid">
+            <label>Orthostatic HR threshold (bpm)
+              <input id="orthostatic-threshold" type="number" min="1" max="100" step="1">
+            </label>
+            <label>Assessment duration (seconds)
+              <input id="orthostatic-duration" type="number" min="60" max="3600" step="30">
+            </label>
+            <label>Sustained HR window (seconds)
+              <input id="sustained-window" type="number" min="10" max="300" step="5">
+            </label>
+          </div>
+          <p class="hint">
+            Meeting a configured HR threshold is reported as a physiologic
+            pattern, not as a diagnosis. BP and symptom context remain required.
+          </p>
+        </fieldset>
+        <fieldset>
+          <legend>HRV segment windows</legend>
+          <div class="segment-grid">
+            <strong>Supine</strong>
+            <label>Start (s)<input id="supine-hrv-start" type="number" min="0" step="0.1"></label>
+            <label>End (s)<input id="supine-hrv-end" type="number" min="0" step="0.1"></label>
+            <strong>Upright</strong>
+            <label>Start (s)<input id="upright-hrv-start" type="number" min="0" step="0.1"></label>
+            <label>End (s)<input id="upright-hrv-end" type="number" min="0" step="0.1"></label>
+            <strong>Recovery</strong>
+            <label>Start (s)<input id="recovery-hrv-start" type="number" min="0" step="0.1"></label>
+            <label>End (s)<input id="recovery-hrv-end" type="number" min="0" step="0.1"></label>
+          </div>
+        </fieldset>
+        <fieldset class="frequency-controls">
+          <legend>Frequency-domain HRV eligibility</legend>
+          <label>Frequency-domain mode
+            <select id="frequency-mode">
+              <option value="automatic">Automatic eligibility</option>
+              <option value="exclude">Exclude frequency-domain HRV</option>
+            </select>
+          </label>
+          <div class="number-grid">
+            <label>Minimum HF duration (s)
+              <input id="minimum-hf-seconds" type="number" min="30" max="1800" step="10">
+            </label>
+            <label>Minimum LF duration (s)
+              <input id="minimum-lf-seconds" type="number" min="30" max="1800" step="10">
+            </label>
+            <label>Minimum accepted NN (%)
+              <input id="minimum-accepted-nn" type="number" min="50" max="100" step="1">
+            </label>
+            <label>Maximum excluded NN (%)
+              <input id="maximum-excluded-nn" type="number" min="0" max="50" step="1">
+            </label>
+            <label>Maximum stationary angle range (°)
+              <input id="maximum-stationary-angle" type="number" min="0.1" max="30" step="0.5">
+            </label>
+          </div>
+          <label class="confirmation">
+            <input id="require-stationarity" type="checkbox">
+            <span>Require stationary corrected angle</span>
+          </label>
+          <label class="confirmation">
+            <input id="frequency-override" type="checkbox">
+            <span>Override eligibility requirements</span>
+          </label>
+          <label>Override rationale
+            <input id="frequency-override-rationale" type="text" maxlength="500" disabled>
+          </label>
+        </fieldset>
       </div>
       <div class="actions">
         <button id="recalculate" type="button">Recalculate analysis</button>
@@ -136,6 +204,33 @@
           <span id="regression-statistics">—</span>
         </div>
       </article>
+      <article class="panel chart-panel">
+        <div class="section-heading compact">
+          <div>
+            <p class="step">Ascending tilt only</p>
+            <h2>Corrected angle versus beat-to-beat HR</h2>
+          </div>
+        </div>
+        <canvas id="hr-scatter-chart" aria-label="Scatter plot of corrected table angle and beat-to-beat heart rate"></canvas>
+        <div class="equation-card">
+          <strong id="hr-equation">—</strong>
+          <span id="hr-regression-statistics">—</span>
+        </div>
+      </article>
+      <article class="panel chart-panel">
+        <div class="section-heading compact">
+          <div>
+            <p class="step">Reviewed NN intervals</p>
+            <h2>Poincaré plot</h2>
+          </div>
+        </div>
+        <canvas id="poincare-chart" aria-label="Poincare plot by review segment"></canvas>
+        <div class="poincare-legend">
+          <span class="supine">Supine</span>
+          <span class="upright">Upright</span>
+          <span class="recovery">Recovery</span>
+        </div>
+      </article>
       <article class="panel metrics-panel">
         <p class="step">Review metrics</p>
         <h2>Calibration and signal quality</h2>
@@ -149,6 +244,47 @@
           <div><dt>Baseline mean HR</dt><dd id="baseline-hr">—</dd></div>
         </dl>
       </article>
+    </section>
+
+    <section id="physiology-panel" class="panel" aria-labelledby="physiology-heading" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="step">Clinical physiology</p>
+          <h2 id="physiology-heading">Integrated response review</h2>
+        </div>
+      </div>
+      <div id="clinical-summary" class="clinical-summary"></div>
+      <div class="physiology-grid">
+        <article>
+          <h3>Heart-rate response</h3>
+          <div id="heart-rate-summary" class="report-summary"></div>
+        </article>
+        <article>
+          <h3>Blood pressure</h3>
+          <div id="blood-pressure-summary"></div>
+        </article>
+        <article>
+          <h3>End-tidal CO₂</h3>
+          <div id="etco2-summary"></div>
+        </article>
+        <article>
+          <h3>Symptoms</h3>
+          <div id="symptom-summary"></div>
+        </article>
+      </div>
+      <h3>HRV segment eligibility and metrics</h3>
+      <div class="table-wrap">
+        <table id="hrv-table">
+          <thead>
+            <tr>
+              <th>Segment</th><th>Duration</th><th>NN accepted</th>
+              <th>SDNN</th><th>RMSSD</th><th>pNN50</th>
+              <th>SD1 / SD2</th><th>HF</th><th>LF</th><th>LF/HF</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </section>
 
     <section id="report-panel" class="panel report-panel" aria-labelledby="report-heading" hidden>
@@ -165,39 +301,62 @@
           <h2>De-identified Tilt ECG Analysis Report</h2>
           <p id="report-recording-id">Recording —</p>
         </header>
-        <div class="report-warning">
-          Research analysis only. Not a diagnostic interpretation or clinical alarm.
-        </div>
         <section>
-          <h3>Recording integrity and protocol</h3>
-          <div id="report-recording-summary" class="report-summary"></div>
+          <h3>Clinical physiology summary</h3>
+          <div id="report-clinical-summary" class="clinical-summary"></div>
         </section>
         <section>
-          <h3>Corrected angle and native R–R intervals</h3>
+          <h3>Clinical reviewer conclusion</h3>
+          <p id="report-reviewer-conclusion">No reviewer conclusion entered.</p>
+        </section>
+        <section>
+          <h3>Heart rate and corrected-angle response</h3>
+          <div id="report-heart-rate-summary" class="report-summary"></div>
           <canvas id="report-timeline-chart" aria-label="Report timeline chart"></canvas>
+          <canvas id="report-hr-scatter-chart" aria-label="Report heart-rate scatter plot"></canvas>
+          <p id="report-hr-equation" class="report-equation">—</p>
+          <p id="report-hr-regression-detail"></p>
         </section>
         <section>
-          <h3>Ascending tilt regression</h3>
+          <h3>Blood pressure, end-tidal CO₂, and symptoms</h3>
+          <div class="physiology-grid">
+            <div><h4>Blood pressure</h4><div id="report-blood-pressure"></div></div>
+            <div><h4>End-tidal CO₂</h4><div id="report-etco2"></div></div>
+            <div><h4>Symptoms</h4><div id="report-symptoms"></div></div>
+          </div>
+        </section>
+        <section>
+          <h3>Heart-rate variability</h3>
+          <canvas id="report-poincare-chart" aria-label="Report Poincare plot"></canvas>
+          <div id="report-hrv-summary"></div>
+        </section>
+        <section>
+          <h3>Native R–R interval relationship</h3>
           <canvas id="report-scatter-chart" aria-label="Report scatter plot"></canvas>
           <p id="report-equation" class="report-equation">—</p>
           <p id="report-regression-detail"></p>
         </section>
         <section>
-          <h3>Calibration and signal quality</h3>
-          <div id="report-analysis-summary" class="report-summary"></div>
-        </section>
-        <section>
           <h3>Methods and limitations</h3>
           <ul>
-            <li>R–R intervals use consecutive accepted R waves at native ECG timestamps, not five-second aggregates.</li>
+            <li>Beat-to-beat HR and R–R intervals use reviewed native ECG timestamps, not five-second aggregates.</li>
             <li>Corrected angle uses reviewer-approved baseline, plateau, and achieved table-angle references.</li>
-            <li>The linear fit uses only the reviewer-defined ascending tilt interval.</li>
-            <li>Association does not establish causation or clinical significance.</li>
+            <li>HR and R–R regression use only the reviewer-defined ascending tilt interval.</li>
+            <li>Frequency-domain HRV is included only when its configured duration, NN quality, and stationarity requirements are met or explicitly overridden.</li>
+            <li>LF/HF is reported descriptively and is not labeled as a direct measure of sympathovagal balance.</li>
           </ul>
         </section>
-        <footer id="report-footer">Draft review; not yet approved.</footer>
+        <section class="technical-appendix">
+          <h3>Technical appendix: integrity, calibration, and provenance</h3>
+          <div id="report-recording-summary" class="report-summary"></div>
+          <div id="report-analysis-summary" class="report-summary"></div>
+        </section>
+        <footer id="report-footer">Computer-assisted physiologic analysis; clinician review and approval required.</footer>
       </div>
       <div class="actions no-print">
+        <label class="reviewer-conclusion">Clinical reviewer conclusion
+          <textarea id="reviewer-conclusion" rows="4" maxlength="4000" placeholder="Optional de-identified conclusion. Do not enter direct identifiers."></textarea>
+        </label>
         <button id="approve-review" type="button">Approve review and prepare report</button>
         <button id="print-report" class="secondary" type="button" disabled>Print / Save PDF</button>
         <span id="report-status" class="status" role="status"></span>

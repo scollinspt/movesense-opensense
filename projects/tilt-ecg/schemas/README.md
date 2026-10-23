@@ -12,7 +12,7 @@ Schemas must preserve the distinction among sensor-native sample time, host
 receipt time, event time, and log retrieval time. Public fixtures must be
 synthetic or explicitly redistributable.
 
-## `tilt-ecg-review-v1`
+## `tilt-ecg-review-v2`
 
 The processing application writes approved review provenance as versioned JSON
 under the governed derived recording directory. Each review records:
@@ -25,6 +25,14 @@ under the governed derived recording directory. Each review records:
 - Reviewer-excluded R–R interval IDs.
 - Ascending-tilt ordinary least-squares equation, coefficient of determination,
   interval count, and corrected-angle range.
+- Beat-to-beat HR response and corrected-angle regression.
+- Configured orthostatic HR and BP assessment results.
+- BP, etCO2, and symptom physiology correlations.
+- Segment-specific time-domain HRV and Poincare metrics.
+- HF/LF duration, NN-quality, stationarity, and override eligibility
+  provenance.
+- Eligible LF, HF, and LF/HF spectral results.
+- Optional de-identified clinical reviewer conclusion.
 - Processing algorithm and software provenance.
 
 The review never contains direct identifiers and never changes the acquisition

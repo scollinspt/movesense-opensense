@@ -32,7 +32,15 @@ test("serves the review interface and recording API", async (context) => {
   const pageText = await page.text();
   assert.match(pageText, /Tilt ECG Review and Report/);
   assert.match(pageText, /Corrected angle versus raw R–R interval/);
+  assert.match(pageText, /Corrected angle versus beat-to-beat HR/);
+  assert.match(pageText, /Poincaré plot/);
+  assert.match(pageText, /Frequency-domain HRV eligibility/);
+  assert.match(pageText, /Blood pressure, end-tidal CO₂, and symptoms/);
   assert.match(pageText, /Print \/ Save PDF/);
+  assert.doesNotMatch(
+    pageText,
+    /Research analysis only\. Not a diagnostic interpretation or clinical alarm\./,
+  );
 
   const listing = await fetch(new URL("/api/recordings", application.url));
   assert.deepEqual(await listing.json(), {

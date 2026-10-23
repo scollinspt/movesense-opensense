@@ -29,13 +29,19 @@ A separate processing/report application is available at:
 - Default URL: `http://127.0.0.1:4175/`
 - Entry point: `projects/tilt-ecg/processing-app/server.mjs`
 - macOS launcher: `projects/tilt-ecg/launch-tilt-ecg-processing.command`
-- Review schema: `tilt-ecg-review-v1`
+- Review schema: `tilt-ecg-review-v2`
 
 It discovers finalized governed recordings, verifies source checksums, derives
 R waves and consecutive R–R intervals from native 512 Hz timestamps, supports
 reviewed table-angle calibration, and fits corrected angle to raw R–R interval
 during the ascending tilt phase. Approved reviews are written as new governed
 derived JSON artifacts; acquisition files remain unchanged.
+
+The clinical report expansion also provides beat-to-beat HR-angle regression,
+configurable orthostatic HR assessment, BP and etCO2 changes, symptom
+correlation, segment-specific time-domain HRV, Poincare plots, and
+duration/quality/stationarity-gated frequency-domain HRV. Default spectral
+minimums are 90 seconds for HF and 300 seconds for LF or LF/HF.
 
 Firefox and the VS Code shared browser are equivalent clients of one
 server-owned state. Opening two browser tabs does not create two BLE
@@ -158,6 +164,17 @@ The processing application was validated against recording
 - Initial engineering fit:
   `R–R interval (ms) = -3.124 × corrected angle (°) + 834.280`.
 - Coefficient of determination: approximately 0.894.
+- Beat-to-beat HR-angle fit:
+  `Heart rate (bpm) = 0.361 × corrected angle (°) + 71.400`.
+- Baseline median beat-to-beat HR: approximately 75.5 bpm.
+- Peak upright HR: approximately 115.2 bpm.
+- Maximum HR change from baseline: approximately 39.6 bpm.
+- Upright duration: approximately 17.7 seconds; the configured 600-second
+  orthostatic HR assessment was therefore not possible.
+- Supine HRV window: approximately 69.0 seconds; HF was ineligible under the
+  90-second default and LF was ineligible under the 300-second default.
+- Upright and recovery frequency-domain HRV were also ineligible because of
+  insufficient duration.
 
 These are development-validation results, not a clinical interpretation. The
 real governed recording was not marked reviewed or approved. Approval,

@@ -15,7 +15,7 @@ import {
   loadRecordingData,
 } from "./analysis.mjs";
 
-const REVIEW_SCHEMA_VERSION = "tilt-ecg-review-v1";
+const REVIEW_SCHEMA_VERSION = "tilt-ecg-review-v2";
 
 async function sha256(filePath) {
   const hash = createHash("sha256");
@@ -187,7 +187,7 @@ export class RecordingStore {
     };
   }
 
-  async saveReview(recordingId, settings) {
+  async saveReview(recordingId, settings, reviewerConclusion = "") {
     const recording = await this.load(recordingId);
     if (
       !recording.integrity.finalized
@@ -203,6 +203,9 @@ export class RecordingStore {
     if (!analysis.calibration.valid || !analysis.regression.equation) {
       throw new Error("Calibration and regression must be valid before review approval.");
     }
+    if (typeof reviewerConclusion !== "string" || reviewerConclusion.length > 4_000) {
+      throw new Error("Reviewer conclusion must be text no longer than 4000 characters.");
+    }
     const reviewId = `${new Date().toISOString().replaceAll(":", "-")}-${randomUUID()}`;
     const review = {
       schemaVersion: REVIEW_SCHEMA_VERSION,
@@ -211,6 +214,7 @@ export class RecordingStore {
       createdAt: new Date().toISOString(),
       deidentified: true,
       rawArtifactsModified: false,
+      reviewerConclusion: reviewerConclusion.trim(),
       sourceChecksums: {
         signalsSha256: recording.integrity.databaseSha256,
         fiveSecondSummarySha256: recording.integrity.summarySha256,
@@ -218,14 +222,19 @@ export class RecordingStore {
       settings: analysis.settings,
       calibration: analysis.calibration,
       regression: analysis.regression,
+      heartRateRegression: analysis.heartRateRegression,
+      clinical: analysis.clinical,
+      hrv: analysis.hrv,
       quality: analysis.quality,
       summary: analysis.summary,
       provenance: {
-        processingApplication: "tilt-ecg-processing-v0.1.0",
+        processingApplication: "tilt-ecg-processing-v0.2.0",
         detector: "pan-tompkins-streaming-v1",
         rrSource: "consecutive accepted native-timestamp R waves",
         angleAttribution: "linearly interpolated corrected angle at RR midpoint",
         regression: "ordinary least squares; ascending tilt only",
+        frequencyDomain:
+          "4 Hz interpolated NN tachogram; mean detrending; Hann-window Welch periodogram",
       },
     };
     const reviewPath = path.join(

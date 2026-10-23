@@ -6,6 +6,41 @@ import {
   linearRegression,
 } from "../analysis.mjs";
 
+function settings(durationSeconds, overrides = {}) {
+  return {
+    achievedAngleDegrees: 70,
+    achievedAngleSource: "reviewer_confirmed",
+    baselineStartSeconds: 0,
+    baselineEndSeconds: 1,
+    plateauStartSeconds: durationSeconds - 1,
+    plateauEndSeconds: durationSeconds,
+    ascentStartSeconds: 0,
+    ascentEndSeconds: durationSeconds,
+    supineHrvStartSeconds: 0,
+    supineHrvEndSeconds: 1,
+    uprightHrvStartSeconds: 1,
+    uprightHrvEndSeconds: 2,
+    recoveryHrvStartSeconds: durationSeconds - 1,
+    recoveryHrvEndSeconds: durationSeconds,
+    minimumRrMs: 300,
+    maximumRrMs: 2_000,
+    orthostaticHrThresholdBpm: 30,
+    orthostaticAssessmentSeconds: 600,
+    sustainedHrWindowSeconds: 30,
+    frequencyDomainMode: "exclude",
+    minimumHfSeconds: 90,
+    minimumLfSeconds: 300,
+    minimumAcceptedNnPercent: 95,
+    maximumExcludedNnPercent: 5,
+    requireStationarity: true,
+    maximumStationaryAngleRangeDegrees: 5,
+    frequencyEligibilityOverride: false,
+    frequencyOverrideRationale: "",
+    excludedIntervalIds: [],
+    ...overrides,
+  };
+}
+
 test("computes an ordinary least-squares line", () => {
   const result = linearRegression([
     { x: 0, y: 900 },
@@ -40,6 +75,7 @@ test("fits raw RR intervals against corrected angle during ascent only", () => {
   });
   const recording = {
     durationSeconds: 100,
+    metadata: {},
     rWaveCount: 11,
     tiltSamples,
     rrIntervals,
@@ -62,19 +98,7 @@ test("fits raw RR intervals against corrected angle during ascent only", () => {
       },
     ],
   };
-  const analysis = analyzeRecording(recording, {
-    achievedAngleDegrees: 70,
-    achievedAngleSource: "reviewer_confirmed",
-    baselineStartSeconds: 0,
-    baselineEndSeconds: 1,
-    plateauStartSeconds: 99,
-    plateauEndSeconds: 100,
-    ascentStartSeconds: 0,
-    ascentEndSeconds: 100,
-    minimumRrMs: 300,
-    maximumRrMs: 2_000,
-    excludedIntervalIds: [],
-  });
+  const analysis = analyzeRecording(recording, settings(100));
 
   assert.equal(analysis.calibration.valid, true);
   assert.ok(Math.abs(analysis.regression.slope + 2) < 0.05);
@@ -86,6 +110,7 @@ test("fits raw RR intervals against corrected angle during ascent only", () => {
 test("excludes reviewer-selected RR intervals from regression", () => {
   const recording = {
     durationSeconds: 20,
+    metadata: {},
     rWaveCount: 4,
     tiltSamples: [
       { timeSeconds: 0, rawTiltDegrees: 0, rollDegrees: 0, quality: "good" },
@@ -99,19 +124,9 @@ test("excludes reviewer-selected RR intervals from regression", () => {
     ],
     events: [],
   };
-  const analysis = analyzeRecording(recording, {
-    achievedAngleDegrees: 70,
-    achievedAngleSource: "reviewer_confirmed",
-    baselineStartSeconds: 0,
-    baselineEndSeconds: 1,
-    plateauStartSeconds: 19,
-    plateauEndSeconds: 20,
-    ascentStartSeconds: 0,
-    ascentEndSeconds: 20,
-    minimumRrMs: 300,
-    maximumRrMs: 2_000,
+  const analysis = analyzeRecording(recording, settings(20, {
     excludedIntervalIds: ["rr-2"],
-  });
+  }));
 
   assert.equal(analysis.regression.count, 2);
   assert.equal(analysis.quality.excludedRrIntervalCount, 1);
@@ -119,4 +134,73 @@ test("excludes reviewer-selected RR intervals from regression", () => {
     analysis.intervals.find((interval) => interval.id === "rr-2").accepted,
     false,
   );
+});
+
+test("gates HF and LF by independent duration requirements", () => {
+  const durationSeconds = 400;
+  const tiltSamples = Array.from({ length: 401 }, (_, timeSeconds) => ({
+    timeSeconds,
+    rawTiltDegrees: timeSeconds < 399 ? 0 : 70,
+    rollDegrees: 0,
+    quality: "good",
+  }));
+  const rrIntervals = Array.from({ length: 390 }, (_, index) => {
+    const timeSeconds = index + 5;
+    return {
+      id: `rr-${index}`,
+      timeSeconds,
+      rrMs: 800 + 30 * Math.sin(index / 8),
+      rawTiltDegrees: timeSeconds < 399 ? 0 : 70,
+    };
+  });
+  const recording = {
+    durationSeconds,
+    metadata: {},
+    rWaveCount: 391,
+    tiltSamples,
+    rrIntervals,
+    events: [],
+  };
+  const short = analyzeRecording(recording, settings(durationSeconds, {
+    supineHrvStartSeconds: 5,
+    supineHrvEndSeconds: 100,
+    frequencyDomainMode: "automatic",
+    requireStationarity: false,
+  })).hrv.segments[0];
+
+  assert.equal(short.eligibility.hfEligible, true);
+  assert.equal(short.eligibility.lfEligible, false);
+  assert.ok(Number.isFinite(short.frequency.hfPowerMs2));
+  assert.equal(short.frequency.lfPowerMs2, null);
+
+  const long = analyzeRecording(recording, settings(durationSeconds, {
+    supineHrvStartSeconds: 5,
+    supineHrvEndSeconds: 355,
+    frequencyDomainMode: "automatic",
+    requireStationarity: false,
+  })).hrv.segments[0];
+
+  assert.equal(long.eligibility.hfEligible, true);
+  assert.equal(long.eligibility.lfEligible, true);
+  assert.ok(Number.isFinite(long.frequency.hfPowerMs2));
+  assert.ok(Number.isFinite(long.frequency.lfPowerMs2));
+  assert.ok(Number.isFinite(long.frequency.lfHfRatio));
+
+  assert.throws(
+    () => analyzeRecording(recording, settings(durationSeconds, {
+      frequencyDomainMode: "automatic",
+      frequencyEligibilityOverride: true,
+      frequencyOverrideRationale: "",
+    })),
+    /rationale is required/,
+  );
+  const overridden = analyzeRecording(recording, settings(durationSeconds, {
+    supineHrvStartSeconds: 5,
+    supineHrvEndSeconds: 100,
+    frequencyDomainMode: "automatic",
+    frequencyEligibilityOverride: true,
+    frequencyOverrideRationale: "Development validation",
+  })).hrv.segments[0];
+  assert.equal(overridden.eligibility.overrideApplied, true);
+  assert.equal(overridden.eligibility.lfEligible, true);
 });

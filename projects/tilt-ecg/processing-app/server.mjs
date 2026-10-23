@@ -114,7 +114,11 @@ export async function createProcessingServer({
         sendJson(
           response,
           201,
-          await store.saveReview(input.recordingId, input.settings),
+          await store.saveReview(
+            input.recordingId,
+            input.settings,
+            input.reviewerConclusion,
+          ),
         );
         return;
       }

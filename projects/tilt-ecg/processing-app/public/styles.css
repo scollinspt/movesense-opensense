@@ -20,7 +20,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
-button, input, select { min-height: 44px; font: inherit; }
+button, input, select, textarea { min-height: 44px; font: inherit; }
 button {
   padding: 0 18px;
   border: 1px solid var(--forest);
@@ -33,11 +33,11 @@ button {
 button.secondary { background: var(--white); color: var(--forest); }
 button:disabled { cursor: not-allowed; opacity: .45; }
 button:hover:not(:disabled) { background: var(--deep-forest); color: var(--white); }
-button:focus-visible, input:focus-visible, select:focus-visible {
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
   outline: 3px solid #e6a84d;
   outline-offset: 2px;
 }
-input, select {
+input, select, textarea {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--line);
@@ -142,6 +142,14 @@ main {
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
+.segment-grid {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 10px;
+  align-items: end;
+}
+.segment-grid > strong { align-self: center; color: var(--deep-forest); }
+.frequency-controls { grid-column: 1 / -1; }
 fieldset {
   display: grid;
   gap: 12px;
@@ -196,16 +204,59 @@ legend { padding: 0 7px; color: var(--deep-forest); font-weight: 800; }
   color: var(--muted);
   font-size: .75rem;
 }
+.poincare-legend { display: flex; gap: 16px; margin-top: 10px; color: var(--muted); }
+.poincare-legend span::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+}
+.poincare-legend .upright::before { background: var(--warning); }
+.poincare-legend .recovery::before { background: #6c6fb4; }
+.clinical-summary {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.clinical-summary p {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 4px solid var(--teal);
+  background: var(--paper);
+}
+.physiology-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+.physiology-grid article, .physiology-grid > div {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.observation-list { display: grid; gap: 7px; }
+.observation-list p { margin: 0; padding-bottom: 7px; border-bottom: 1px solid var(--paper-deep); }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+th, td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: var(--deep-forest); }
+.eligibility-reason { display: block; max-width: 260px; margin-top: 3px; color: var(--muted); font-size: .74rem; }
 .report-panel { padding: 0; overflow: hidden; }
 .report-panel > .section-heading, .report-panel > .actions { margin: 0; padding: 20px; }
 .report-document { max-width: 980px; margin: 0 auto; padding: 42px; background: white; }
 .report-document > header { padding-bottom: 18px; border-bottom: 3px solid var(--forest); }
 .report-document section { margin-top: 26px; break-inside: avoid; }
-.report-warning { margin-top: 16px; padding: 10px 12px; background: #fff3d8; color: #604a19; }
 .report-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; }
 .report-summary div { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--paper-deep); padding: 7px 0; }
 .report-summary span { color: var(--muted); }
 .report-equation { font-size: 1.15rem; font-weight: 800; color: var(--forest); }
+.report-document canvas + canvas { margin-top: 14px; }
+.technical-appendix { border-top: 2px solid var(--line); padding-top: 18px; }
+.reviewer-conclusion { width: min(620px, 100%); }
+.reviewer-conclusion textarea { resize: vertical; }
 .report-document footer { margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: .78rem; }
 
 @media (max-width: 1150px) {
@@ -216,6 +267,9 @@ legend { padding: 0 7px; color: var(--deep-forest); font-weight: 800; }
 @media (max-width: 760px) {
   .masthead, .section-heading, .actions { align-items: stretch; flex-direction: column; }
   .recording-row, .review-grid, .analysis-grid, .number-grid, .summary-grid, .report-summary { grid-template-columns: 1fr; }
+  .physiology-grid { grid-template-columns: 1fr; }
+  .segment-grid { grid-template-columns: 1fr 1fr; }
+  .segment-grid > strong { grid-column: 1 / -1; }
   .metrics-panel { grid-column: auto; }
   .report-document { padding: 22px; }
 }
