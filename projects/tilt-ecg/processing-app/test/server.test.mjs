@@ -41,6 +41,8 @@ test("serves the review interface and recording API", async (context) => {
     pageText,
     /Research analysis only\. Not a diagnostic interpretation or clinical alarm\./,
   );
+  const styles = await fetch(new URL("/styles.css", application.url));
+  assert.match(await styles.text(), /size:\s*portrait/);
 
   const listing = await fetch(new URL("/api/recordings", application.url));
   assert.deepEqual(await listing.json(), {

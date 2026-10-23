@@ -834,7 +834,8 @@ elements.approveReview.addEventListener("click", async () => {
 elements.printReport.addEventListener("click", () => {
   if (approvedReview) window.print();
 });
-window.addEventListener("resize", () => {
+
+function redrawCharts() {
   if (!currentResult) return;
   drawTimeline(elements.timelineChart, currentResult.analysis);
   drawScatter(elements.scatterChart, currentResult.analysis, true);
@@ -844,7 +845,11 @@ window.addEventListener("resize", () => {
   drawScatter(elements.reportScatterChart, currentResult.analysis);
   drawHeartRateScatter(elements.reportHrScatterChart, currentResult.analysis);
   drawPoincare(elements.reportPoincareChart, currentResult.analysis);
-});
+}
+
+window.addEventListener("resize", redrawCharts);
+window.addEventListener("beforeprint", redrawCharts);
+window.addEventListener("afterprint", redrawCharts);
 
 const listing = await api("/api/recordings");
 elements.recordingSelect.replaceChildren(

@@ -47,6 +47,7 @@ node projects/tilt-ecg/processing-app/server.mjs \
 11. Add an optional de-identified clinical reviewer conclusion.
 12. Approve the review to write immutable review provenance.
 13. Select **Print / Save PDF** and choose the browser's PDF destination.
+    The report is formatted for portrait-oriented paper by default.
 
 The regression pairs every accepted consecutive R–R interval with the
 linearly interpolated corrected table angle at the interval midpoint. It does

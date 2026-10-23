@@ -274,11 +274,24 @@ th { color: var(--deep-forest); }
   .report-document { padding: 22px; }
 }
 @media print {
-  @page { margin: .55in; }
+  @page {
+    size: portrait;
+    margin: .55in;
+  }
   body { background: white; font-size: 10pt; }
   .masthead, .safety, main > :not(.report-panel), .no-print { display: none !important; }
   main { display: block; max-width: none; padding: 0; }
-  .report-panel { border: 0; box-shadow: none; }
+  .report-panel { border: 0; box-shadow: none; overflow: visible; }
   .report-document { max-width: none; padding: 0; }
-  .report-document canvas { height: 260px; }
+  .report-document section { break-inside: auto; margin-top: 20px; }
+  .report-document h3, .report-document h4 { break-after: avoid-page; }
+  .report-summary, .physiology-grid { grid-template-columns: 1fr; }
+  .clinical-summary p, .physiology-grid > div, .report-summary div {
+    break-inside: avoid;
+  }
+  .report-document canvas {
+    height: 240px;
+    break-inside: avoid;
+  }
+  .report-document footer { break-inside: avoid; }
 }
