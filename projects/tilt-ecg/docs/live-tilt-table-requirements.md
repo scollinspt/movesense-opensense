@@ -41,6 +41,12 @@ distinguishable without relying on color alone.
 
 ## Operator workflow
 
+Before acquisition, identify the operational context outside the application
+as teaching/development or clinical-development. Confirm that the applicable
+governance, consent, privacy, retention, clinical-equipment, supervision, and
+safety requirements are satisfied. The application must remain free of direct
+identifiers in either context.
+
 1. Apply the Suunto electrode strap and Movesense sensor.
 2. Position the subject supine on the tilt table.
 3. Scan for and connect the sensor.
@@ -59,6 +65,13 @@ distinguishable without relying on color alone.
     **Begin return early** without delaying the table return for data entry.
 14. Select **End test** to finalize, checkpoint, checksum, and manifest the
     recording.
+15. Confirm finalization and checksum status before opening the processing
+    application.
+16. Review the finalized recording by its non-identifying recording ID,
+    approve any calibration or interval-review decisions, and export the
+    de-identified portrait report.
+17. Keep any authorized connection between the recording ID, report, and person
+    outside the acquisition and processing artifacts.
 
 The application may detect readiness for zeroing but must not silently accept a
 baseline. Chest orientation is not assumed to equal table angle.

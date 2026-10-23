@@ -2,6 +2,39 @@
 
 Maintain this as a chronological record of completed work, evidence, decisions, and blockers. Planned work belongs in the workplan; this log records what actually happened.
 
+## 2026-10-23
+
+### Tilt ECG clinical physiology review and report
+
+- Expanded the processing application from technical integrity review into a
+  de-identified clinical physiology workflow with beat-to-beat HR, corrected
+  angle-to-HR regression, configurable orthostatic HR assessment, BP, end-tidal
+  CO2, symptoms, segment-specific HRV, Poincare analysis, and independently
+  gated HF and LF frequency-domain results.
+- Preserved native ECG timing, reviewed table-angle calibration, source
+  checksums, reviewer exclusions, frequency eligibility and override rationale,
+  clinical findings, and reviewer conclusion in immutable
+  `tilt-ecg-review-v2` artifacts.
+- Reorganized the PDF around clinical physiology with technical integrity as an
+  appendix, then optimized printing for a portrait-oriented clinical report.
+- Validated the expanded analysis, approval, and print workflows against a
+  temporary copy of the October 22 tilt-table recording without modifying or
+  approving its governed source artifacts.
+
+### Decisions
+
+- Designated the October 23 teaching/development test and pro bono clinical
+  test as the next representative end-to-end workflow evaluations.
+- Kept clinical-development observations distinct from research use. Clinical
+  data do not enter a future research dataset without specific authorization.
+- Defined two post-refinement directions: distribution to other qualified
+  users, and a prospective comparison of active orthostatic stress with passive
+  head-up tilt in individuals without signs, symptoms, or a diagnosis of
+  dysautonomia.
+- Assigned public HMS website communication to the `movement-systems`
+  repository and limited near-term content to bounded development status,
+  architecture, governance, and permission-cleared or synthetic examples.
+
 ## 2026-10-21
 
 ### Tilt ECG implementation and continuity

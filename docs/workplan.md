@@ -10,11 +10,12 @@ dynamics and the effects of fatigue on coordination and motor control. See the
 current scientific and sensor-allocation priorities.
 
 The repository also incubates a parallel
-[tilt ECG project](../projects/tilt-ecg/README.md). Its first phase will
-synchronize live ECG with chest tilt during tilt-table testing. Its second
-phase will investigate ambulatory ECG and inertial logging to verified
-Movesense Flash storage. This project reuses acquisition and governance
-infrastructure but does not use OpenSense.
+[tilt ECG project](../projects/tilt-ecg/README.md). Its first phase now
+synchronizes live ECG with chest tilt during tilt-table testing and provides a
+separate de-identified processing, physiology-review, and report application.
+Its second phase will investigate ambulatory ECG and inertial logging to
+verified Movesense Flash storage. This project reuses acquisition and
+governance infrastructure but does not use OpenSense.
 
 ## Parallel tilt ECG execution order
 
@@ -38,6 +39,35 @@ infrastructure but does not use OpenSense.
    long-duration protocol.
 10. Develop posture, activity, and ECG-derived outputs as provenance-tracked
    artifacts rather than modifying raw logs.
+
+### Current tilt ECG refinement sequence
+
+1. Use the two scheduled October 23 tests to evaluate the complete operational
+   path from acquisition through immutable processing, clinical physiology
+   review, approval, and portrait PDF export:
+   - one teaching/development test;
+   - one pro bono clinical test that may also provide development observations.
+2. Keep the two contexts explicit. The clinical test remains governed clinical
+   data; it does not become research data merely because it informs software
+   refinement.
+3. Review workflow friction, event timing, angle calibration, ECG quality,
+   report content, print behavior, and any operator corrections after each
+   test. Make changes only after preserving the original governed artifacts.
+4. Repeat representative trials until the acquisition-to-report flow is stable
+   enough to document, install, and support without developer assistance.
+5. Then evaluate two distinct next directions:
+   - packaging and support that could make the system available to other
+     qualified users; and
+   - a prospective research protocol comparing an active orthostatic stress
+     protocol with passive head-up tilt in individuals without signs,
+     symptoms, or a diagnosis of dysautonomia.
+6. Treat the proposed comparison as a research question requiring a defined
+   protocol, endpoints, sample-size rationale, ethics/governance review,
+   informed consent, and a prespecified analysis plan before enrollment or
+   reuse of clinical-development data.
+7. Prepare bounded public HMS website content in the `movement-systems`
+   repository only after the statements, images, and example outputs are
+   reviewed and cleared for public use.
 
 ## Current state and next execution order
 

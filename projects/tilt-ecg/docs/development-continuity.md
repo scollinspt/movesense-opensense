@@ -30,6 +30,7 @@ A separate processing/report application is available at:
 - Entry point: `projects/tilt-ecg/processing-app/server.mjs`
 - macOS launcher: `projects/tilt-ecg/launch-tilt-ecg-processing.command`
 - Review schema: `tilt-ecg-review-v2`
+- Current processing/report commit: `9ca0395`
 
 It discovers finalized governed recordings, verifies source checksums, derives
 R waves and consecutive R–R intervals from native 512 Hz timestamps, supports
@@ -143,7 +144,8 @@ MOVESENSE_DATA_ROOT/
 ```
 
 The report is previewed in the processing browser and exported through
-**Print / Save PDF** after review approval.
+**Print / Save PDF** after review approval. The print layout is portrait-first
+and redraws its charts at print dimensions.
 
 ## Processing validation with the October 22 table trial
 
@@ -180,6 +182,61 @@ These are development-validation results, not a clinical interpretation. The
 real governed recording was not marked reviewed or approved. Approval,
 immutable review output, report preview, and print-mode behavior were tested
 against a temporary copy that was deleted afterward.
+
+## October 23 representative workflow tests
+
+Two tests are scheduled to provide the next development evidence:
+
+1. A teaching/development test.
+2. A pro bono clinical test that may also identify workflow and reporting
+   improvements.
+
+For each test:
+
+- Use approved clinical equipment, supervision, safety procedures, stopping
+  rules, and documentation independently of this development system.
+- Do not enter a name, MRN, date of birth, or other direct identifier in the
+  acquisition or processing applications.
+- Preserve the recording ID and any authorized person linkage only in the
+  appropriate external clinical or governed system.
+- Complete the acquisition phase markers and observations in real time without
+  delaying care, table return, or safety actions.
+- Confirm normal finalization and manifest/checksum creation before processing.
+- Open the processing application, verify source integrity, review achieved
+  angle and phase windows, inspect ECG-derived intervals and clinical
+  physiology, and record any justified exclusions or overrides.
+- Add a de-identified reviewer conclusion only after review, approve the
+  immutable review artifact, and export the portrait report.
+- Record workflow friction, corrections, unexpected states, and desired report
+  changes separately from the immutable source artifacts.
+
+The teaching and clinical contexts must remain distinguishable. The clinical
+test may guide engineering refinement, but its data must not be treated as
+research data or included in a future comparative study without the applicable
+authorization.
+
+## Longer-term decision points
+
+After representative tests show that the full acquisition-to-report workflow
+is stable:
+
+1. Evaluate how to package, install, document, validate, and support the system
+   for other qualified users.
+2. Evaluate a prospective research protocol comparing an active orthostatic
+   stress protocol with passive head-up tilt in individuals without signs,
+   symptoms, or a diagnosis of dysautonomia.
+
+The second direction requires a prespecified protocol, outcomes, analysis
+plan, sample-size rationale, ethics/governance determination, consent, and
+clear separation from clinical-development recordings.
+
+Public project communication belongs in the `movement-systems` website
+repository. Begin with a bounded development-project page using diagrams,
+synthetic data, or explicitly permission-cleared teaching material. Do not
+publish governed clinical traces, reports, recording IDs, or claims of
+diagnostic or normative validity. Later website updates may describe the
+comparative study as proposed, approved, active, or completed only when that
+status is accurate.
 
 ## Interrupted recording recovery
 
@@ -235,8 +292,9 @@ bookmark.
   rates rather than relying only on the configured 512 Hz request.
 - Add an explicit `test_end` event in addition to manifest `stoppedAt`
   metadata.
-- Extend the current native R–R review into a full HRV artifact with persisted
-  accepted/rejected peaks, reviewed NN intervals, artifact or ectopic
-  correction provenance, and duration-specific HRV eligibility.
+- Refine the current HRV artifact with persisted accepted/rejected R-wave and
+  NN-interval provenance plus an explicit artifact/ectopic correction workflow.
+- Review the acquisition-to-report workflow against the October 23 teaching
+  and clinical-development tests.
 - Validate chest angle against an independent table-angle reference before
   interpreting it as table tilt.

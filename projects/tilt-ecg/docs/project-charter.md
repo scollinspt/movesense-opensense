@@ -135,14 +135,13 @@ Duration must be calculated from measured encoded bytes per sample, metadata
 overhead, usable Flash capacity, and actual logging behavior. It must not be
 estimated only from nominal sample rates.
 
-## Deferred processing, analysis, and report application
+## Phase 1 processing, analysis, and report application
 
-A separate localhost browser application will process finalized tilt-table
-recordings and export a report for the student or clinician who brought the
-participant. Development is gated on at least one representative recording
+A separate localhost browser application now processes finalized tilt-table
+recordings and exports a report for the student or clinician who brought the
+participant. Its initial design was grounded in a representative recording
 from the actual tilt table so that phase segmentation, angle behavior, ECG
-quality, event projections, and report content are grounded in real workflow
-evidence.
+quality, event projections, and report content reflect the real workflow.
 
 The processing application must:
 
@@ -162,6 +161,84 @@ The processing application must:
 
 One actual tilt-table trial is sufficient to begin designing the application,
 not to validate its clinical interpretation or reporting conclusions.
+
+## Post-refinement directions
+
+After the full acquisition, processing, analysis, review, and report workflow
+has been refined with representative teaching and clinical-development tests,
+the project may advance along two separate tracks.
+
+### Availability to other users
+
+Before distribution beyond the development environment, determine:
+
+- Intended users, intended use, and the claims that may be made.
+- Supported computers, browsers, Bluetooth adapters, sensors, firmware, and
+  operating-system versions.
+- Installation, update, rollback, backup, recovery, and support procedures.
+- Whether configuration, data-root selection, and launch can be made safe
+  without repository or Terminal knowledge.
+- Validation fixtures and acceptance checks that do not expose human data.
+- Training, documentation, incident reporting, and version compatibility.
+- Applicable institutional, privacy, regulatory, licensing, and clinical
+  governance requirements.
+
+Availability does not imply clinical validation or authorization. The public
+software and any governed operational deployment must retain distinct
+boundaries.
+
+### Active versus passive orthostatic stress research
+
+A future prospective study may compare an active orthostatic stress protocol
+with passive head-up tilt in people without signs, symptoms, or a diagnosis of
+dysautonomia. The scientific purpose would be to characterize how physiologic
+responses differ between active and passive orthostatic loading under
+standardized conditions, not to derive a diagnostic claim from development
+recordings.
+
+Before beginning that work:
+
+- Define the active protocol and passive head-up tilt protocol precisely,
+  including posture, timing, target angle, transition rate, duration, stopping
+  rules, and recovery.
+- Prespecify primary and secondary outcomes, candidate covariates, signal
+  quality rules, exclusions, and statistical comparisons.
+- Determine whether ECG, beat-to-beat HR, BP, end-tidal CO2, symptoms, and HRV
+  can be acquired comparably in both protocols.
+- Establish ethics/governance review, consent, recruitment, data retention,
+  adverse-event, and privacy procedures.
+- Develop a sample-size rationale and an analysis plan before enrollment.
+- Keep clinical-development recordings out of the research dataset unless
+  their use is specifically authorized.
+
+## HMS website communication
+
+The public HMS website is owned through the separate `movement-systems`
+repository. Website updates should therefore be prepared there after review,
+not generated from governed recordings or approved reports in this
+repository.
+
+The publication sequence should be:
+
+1. **Development project page:** describe the de-identified Movesense ECG and
+   chest-angle workflow, acquisition-to-report architecture, current
+   development status, and boundaries. State that it is not a diagnostic
+   monitor or replacement for approved clinical systems.
+2. **Methods and teaching update:** after additional workflow validation, show
+   only diagrams, synthetic data, or explicitly permission-cleared teaching
+   examples. Link to the public implementation repository when installation
+   and documentation are ready.
+3. **Research direction:** describe the active-versus-passive orthostatic
+   comparison as a proposed research question until governance approval and a
+   protocol exist.
+4. **Results:** publish findings only after formal analysis and scientific
+   review; do not turn engineering or clinical-development observations into
+   efficacy, normative, or diagnostic claims.
+
+Do not publish patient traces, reports, recording identifiers, clinical event
+details, or screenshots derived from governed clinical data. Every public
+statement must distinguish current capability, validation status, proposed
+work, and completed research.
 
 ### Phase 2 advancement criteria
 
