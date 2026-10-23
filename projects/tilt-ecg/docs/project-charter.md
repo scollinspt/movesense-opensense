@@ -196,11 +196,41 @@ responses differ between active and passive orthostatic loading under
 standardized conditions, not to derive a diagnostic claim from development
 recordings.
 
+Tilt angle is a conventional protocol descriptor, not the circulatory load
+itself. During stationary or quasi-static periods, the chest accelerometer
+estimates the direction and magnitude of gravity in the sensor frame. The
+hydrostatic pressure difference relevant to the circulation depends on gravity
+and the vertical distance between vascular locations. In a simplified aligned
+model, that vertical column varies with an anatomical length and the sine of
+the tilt angle. Standing height may be a useful initial proxy, but
+heart-to-foot, heart-to-head, leg, and trunk distances are more directly tied
+to the relevant vascular columns.
+
+The project should therefore test whether physiology is better explained by:
+
+- Corrected tilt angle alone.
+- The measured gravity component along the table or body axis.
+- A stature-adjusted gravity-load proxy.
+- Direct anatomical vertical-column estimates.
+- A hydrostatic-load estimate such as `rho * g * delta-h`, with assumptions,
+  units, and uncertainty retained.
+
+This is a hypothesis to evaluate, not a claim that one chest sensor directly
+measures vascular pressure. Active standing also introduces muscle-pump
+activity, joint configuration, postural stabilization, and other mechanisms
+that must be separated from gravitational loading when compared with passive
+head-up tilt.
+
 Before beginning that work:
 
 - Define the active protocol and passive head-up tilt protocol precisely,
   including posture, timing, target angle, transition rate, duration, stopping
   rules, and recovery.
+- Define which anthropometric distances are required and whether standing
+  height is adequate or only a preliminary proxy. Treat those measurements as
+  governed participant data and assess their re-identification implications.
+- Prespecify the gravitational and hydrostatic-load variables, coordinate
+  axes, equations, units, assumptions, and uncertainty.
 - Prespecify primary and secondary outcomes, candidate covariates, signal
   quality rules, exclusions, and statistical comparisons.
 - Determine whether ECG, beat-to-beat HR, BP, end-tidal CO2, symptoms, and HRV

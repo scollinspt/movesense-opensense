@@ -230,6 +230,16 @@ The second direction requires a prespecified protocol, outcomes, analysis
 plan, sample-size rationale, ethics/governance determination, consent, and
 clear separation from clinical-development recordings.
 
+One candidate research hypothesis is that individualized gravitational or
+hydrostatic loading explains physiologic responses better than corrected tilt
+angle alone. The sensor preserves the gravity vector used to estimate angle;
+future analysis could compare angle with gravity-axis components and
+anthropometric vertical-column estimates. Standing height is a possible first
+proxy, but direct heart-to-foot, heart-to-head, leg, and trunk distances may be
+more physiologically relevant. The accelerometer does not directly measure
+vascular pressure, and active standing adds muscle-pump and postural effects
+that must be modeled separately.
+
 Public project communication belongs in the `movement-systems` website
 repository. Begin with a bounded development-project page using diagrams,
 synthetic data, or explicitly permission-cleared teaching material. Do not
@@ -296,5 +306,8 @@ bookmark.
   NN-interval provenance plus an explicit artifact/ectopic correction workflow.
 - Review the acquisition-to-report workflow against the October 23 teaching
   and clinical-development tests.
+- Preserve the gravity-vector and coordinate provenance needed to evaluate
+  angle-only versus individualized gravitational/hydrostatic-load models in a
+  future governed study.
 - Validate chest angle against an independent table-angle reference before
   interpreting it as table tilt.

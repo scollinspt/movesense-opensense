@@ -65,7 +65,19 @@ governance infrastructure but does not use OpenSense.
    protocol, endpoints, sample-size rationale, ethics/governance review,
    informed consent, and a prespecified analysis plan before enrollment or
    reuse of clinical-development data.
-7. Prepare bounded public HMS website content in the `movement-systems`
+7. Evaluate whether an individualized gravitational or hydrostatic-load
+   estimate explains HR, BP, end-tidal CO2, symptom, and HRV responses better
+   than tilt angle alone:
+   - preserve the measured gravity-vector magnitude and orientation rather than
+     retaining only corrected angle;
+   - compare angle with the gravity component along the relevant body or table
+     axis;
+   - evaluate standing height as an initial coarse proxy and direct anatomical
+     distances, such as heart-to-foot and heart-to-head distance, as more
+     physiologically relevant measures of the vertical vascular column; and
+   - prespecify comparisons among angle-only, stature-adjusted, segment-length,
+     and hydrostatic-load models.
+8. Prepare bounded public HMS website content in the `movement-systems`
    repository only after the statements, images, and example outputs are
    reviewed and cleared for public use.
 

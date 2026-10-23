@@ -31,6 +31,16 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
   users, and a prospective comparison of active orthostatic stress with passive
   head-up tilt in individuals without signs, symptoms, or a diagnosis of
   dysautonomia.
+- Added a candidate gravity-load hypothesis: corrected tilt angle may be a
+  conventional proxy for the gravitational and hydrostatic demand imposed on
+  the circulation. Future research should compare angle alone with measured
+  gravity-axis components, standing height, direct heart-to-foot or
+  heart-to-head distances, and explicit vertical-column or hydrostatic-load
+  estimates. Height is an initial proxy rather than an assumed causal measure.
+- Preserved the distinction between accelerometer-derived gravity orientation
+  and vascular pressure. Active standing adds muscle-pump, joint-position, and
+  postural-stabilization effects that must be separated from passive
+  gravitational loading.
 - Assigned public HMS website communication to the `movement-systems`
   repository and limited near-term content to bounded development status,
   architecture, governance, and permission-cleared or synthetic examples.

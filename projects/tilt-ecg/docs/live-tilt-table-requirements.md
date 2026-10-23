@@ -128,6 +128,14 @@ output is signed head-up/head-down chest tilt relative to that reference.
 - Tilt estimates must report invalid or low-quality states rather than silently
   falling back to zero.
 
+Tilt angle is a protocol descriptor and geometric proxy, not a direct measure
+of circulatory or hydrostatic load. Preserve the calibrated acceleration
+vector, its magnitude, coordinate-frame provenance, and the derived angle so
+future research can evaluate gravity-axis and anthropometric vertical-column
+models without reconstructing them from rounded angle summaries. Any future
+stature or segment-length measurements require an explicit governed data
+contract and must not be added as free-text annotations.
+
 Placement, breathing, torso motion, strap motion, and calibration can separate
 chest angle from table angle. Validation should include a table-mounted
 reference sensor or another independent table-angle reference.
