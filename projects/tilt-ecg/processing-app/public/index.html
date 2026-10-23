@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HMS Lab Tilt ECG Review</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Human Movement System Laboratory</p>
+      <h1>Tilt ECG Review and Report</h1>
+    </div>
+    <span class="mode-badge">Read-only source review</span>
+  </header>
+  <aside class="safety" role="note">
+    <strong>Research analysis only.</strong>
+    This application does not provide a diagnosis or clinical interpretation.
+    Do not enter a name, MRN, date of birth, or other direct identifier.
+  </aside>
+
+  <main>
+    <section class="panel" aria-labelledby="recording-heading">
+      <div class="section-heading">
+        <div>
+          <p class="step">1 · Recording</p>
+          <h2 id="recording-heading">Select and verify</h2>
+        </div>
+        <span id="integrity-badge" class="badge neutral">Not loaded</span>
+      </div>
+      <div class="recording-row">
+        <label>Finalized Tilt ECG recording
+          <select id="recording-select">
+            <option value="">Loading recordings…</option>
+          </select>
+        </label>
+        <button id="load-recording" type="button" disabled>Load recording</button>
+      </div>
+      <div id="recording-summary" class="summary-grid" hidden>
+        <article><span>Recording ID</span><strong id="recording-id">—</strong></article>
+        <article><span>Duration</span><strong id="duration">—</strong></article>
+        <article><span>ECG</span><strong id="ecg-summary">—</strong></article>
+        <article><span>IMU</span><strong id="imu-summary">—</strong></article>
+        <article><span>Raw checksum</span><strong id="raw-checksum">—</strong></article>
+        <article><span>Summary checksum</span><strong id="summary-checksum">—</strong></article>
+      </div>
+    </section>
+
+    <section id="review-panel" class="panel" aria-labelledby="review-heading" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="step">2 · Review</p>
+          <h2 id="review-heading">Calibration and analysis windows</h2>
+        </div>
+        <span id="calibration-badge" class="badge neutral">Draft</span>
+      </div>
+      <p class="hint">
+        Suggested windows come from the recorded protocol events. They can be
+        corrected here without changing the raw acquisition.
+      </p>
+      <div class="review-grid">
+        <fieldset>
+          <legend>Table-angle calibration</legend>
+          <label>Achieved table angle (degrees)
+            <input id="achieved-angle" type="number" min="1" max="90" step="0.1">
+          </label>
+          <label class="confirmation">
+            <input id="confirm-angle" type="checkbox">
+            <span>I confirm this achieved table angle</span>
+          </label>
+          <div class="number-grid">
+            <label>Baseline start (s)
+              <input id="baseline-start" type="number" min="0" step="0.1">
+            </label>
+            <label>Baseline end (s)
+              <input id="baseline-end" type="number" min="0" step="0.1">
+            </label>
+            <label>Plateau start (s)
+              <input id="plateau-start" type="number" min="0" step="0.1">
+            </label>
+            <label>Plateau end (s)
+              <input id="plateau-end" type="number" min="0" step="0.1">
+            </label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Ascending-tilt regression</legend>
+          <div class="number-grid">
+            <label>Ascent start (s)
+              <input id="ascent-start" type="number" min="0" step="0.1">
+            </label>
+            <label>Ascent end (s)
+              <input id="ascent-end" type="number" min="0" step="0.1">
+            </label>
+            <label>Minimum accepted R–R (ms)
+              <input id="rr-minimum" type="number" min="250" max="2999" step="1">
+            </label>
+            <label>Maximum accepted R–R (ms)
+              <input id="rr-maximum" type="number" min="251" max="3000" step="1">
+            </label>
+          </div>
+          <p class="hint">
+            Each raw R–R interval is assigned the interpolated corrected angle
+            at its midpoint. Click a scatter point to exclude or restore it.
+          </p>
+        </fieldset>
+      </div>
+      <div class="actions">
+        <button id="recalculate" type="button">Recalculate analysis</button>
+        <span id="review-status" class="status" role="status"></span>
+      </div>
+    </section>
+
+    <section id="analysis-panel" class="analysis-grid" hidden>
+      <article class="panel chart-panel">
+        <div class="section-heading compact">
+          <div>
+            <p class="step">Native-rate review</p>
+            <h2>Corrected angle and R–R timeline</h2>
+          </div>
+        </div>
+        <canvas id="timeline-chart" aria-label="Corrected angle and raw R-R interval timeline"></canvas>
+        <div id="event-legend" class="event-legend"></div>
+      </article>
+      <article class="panel chart-panel">
+        <div class="section-heading compact">
+          <div>
+            <p class="step">Ascending tilt only</p>
+            <h2>Corrected angle versus raw R–R interval</h2>
+          </div>
+        </div>
+        <canvas id="scatter-chart" aria-label="Scatter plot of corrected table angle and raw R-R interval"></canvas>
+        <div class="equation-card">
+          <strong id="equation">—</strong>
+          <span id="regression-statistics">—</span>
+        </div>
+      </article>
+      <article class="panel metrics-panel">
+        <p class="step">Review metrics</p>
+        <h2>Calibration and signal quality</h2>
+        <dl>
+          <div><dt>Raw baseline</dt><dd id="raw-baseline">—</dd></div>
+          <div><dt>Raw plateau</dt><dd id="raw-plateau">—</dd></div>
+          <div><dt>Scale factor</dt><dd id="scale-factor">—</dd></div>
+          <div><dt>Detected R waves</dt><dd id="r-wave-count">—</dd></div>
+          <div><dt>Accepted R–R intervals</dt><dd id="accepted-count">—</dd></div>
+          <div><dt>Excluded intervals</dt><dd id="excluded-count">—</dd></div>
+          <div><dt>Baseline mean HR</dt><dd id="baseline-hr">—</dd></div>
+        </dl>
+      </article>
+    </section>
+
+    <section id="report-panel" class="panel report-panel" aria-labelledby="report-heading" hidden>
+      <div class="section-heading no-print">
+        <div>
+          <p class="step">3 · Report</p>
+          <h2 id="report-heading">Preview, approve, and export</h2>
+        </div>
+        <span id="report-state" class="badge warning">Draft</span>
+      </div>
+      <div class="report-document">
+        <header>
+          <p class="eyebrow dark">Human Movement System Laboratory</p>
+          <h2>De-identified Tilt ECG Analysis Report</h2>
+          <p id="report-recording-id">Recording —</p>
+        </header>
+        <div class="report-warning">
+          Research analysis only. Not a diagnostic interpretation or clinical alarm.
+        </div>
+        <section>
+          <h3>Recording integrity and protocol</h3>
+          <div id="report-recording-summary" class="report-summary"></div>
+        </section>
+        <section>
+          <h3>Corrected angle and native R–R intervals</h3>
+          <canvas id="report-timeline-chart" aria-label="Report timeline chart"></canvas>
+        </section>
+        <section>
+          <h3>Ascending tilt regression</h3>
+          <canvas id="report-scatter-chart" aria-label="Report scatter plot"></canvas>
+          <p id="report-equation" class="report-equation">—</p>
+          <p id="report-regression-detail"></p>
+        </section>
+        <section>
+          <h3>Calibration and signal quality</h3>
+          <div id="report-analysis-summary" class="report-summary"></div>
+        </section>
+        <section>
+          <h3>Methods and limitations</h3>
+          <ul>
+            <li>R–R intervals use consecutive accepted R waves at native ECG timestamps, not five-second aggregates.</li>
+            <li>Corrected angle uses reviewer-approved baseline, plateau, and achieved table-angle references.</li>
+            <li>The linear fit uses only the reviewer-defined ascending tilt interval.</li>
+            <li>Association does not establish causation or clinical significance.</li>
+          </ul>
+        </section>
+        <footer id="report-footer">Draft review; not yet approved.</footer>
+      </div>
+      <div class="actions no-print">
+        <button id="approve-review" type="button">Approve review and prepare report</button>
+        <button id="print-report" class="secondary" type="button" disabled>Print / Save PDF</button>
+        <span id="report-status" class="status" role="status"></span>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

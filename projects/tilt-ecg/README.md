@@ -18,6 +18,9 @@ See:
 
 - The [local application](app/README.md) for launch, synthetic validation,
   governed output, and tests.
+- The [processing and report application](processing-app/README.md) for
+  immutable review, table-angle calibration, native R–R analysis, and
+  de-identified report export.
 - The [project charter](docs/project-charter.md) for scope, architecture,
   phases, governance, and repository-extraction criteria.
 - The [live tilt-table requirements](docs/live-tilt-table-requirements.md) for

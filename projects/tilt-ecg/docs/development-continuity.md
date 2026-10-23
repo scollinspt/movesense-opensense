@@ -24,6 +24,19 @@ early-return reason may be captured, but neither is required before returning
 the table. The commanded target and protocol outcome are preserved in SQLite,
 the five-second summary, and the manifest for later immutable review.
 
+A separate processing/report application is available at:
+
+- Default URL: `http://127.0.0.1:4175/`
+- Entry point: `projects/tilt-ecg/processing-app/server.mjs`
+- macOS launcher: `projects/tilt-ecg/launch-tilt-ecg-processing.command`
+- Review schema: `tilt-ecg-review-v1`
+
+It discovers finalized governed recordings, verifies source checksums, derives
+R waves and consecutive R–R intervals from native 512 Hz timestamps, supports
+reviewed table-angle calibration, and fits corrected angle to raw R–R interval
+during the ascending tilt phase. Approved reviews are written as new governed
+derived JSON artifacts; acquisition files remain unchanged.
+
 Firefox and the VS Code shared browser are equivalent clients of one
 server-owned state. Opening two browser tabs does not create two BLE
 connections. Actions in either client affect the same connection and
@@ -116,6 +129,41 @@ database, generates the five-second summary, computes SHA-256 checksums, and
 writes the manifest. After a browser-only trial, identify the newest recording
 by sorting the manifest paths rather than relying on browser state.
 
+Approved processing reviews add:
+
+```text
+MOVESENSE_DATA_ROOT/
+└── derived/tilt-ecg/YYYY-MM-DD/<recording-id>/reviews/<review-id>.json
+```
+
+The report is previewed in the processing browser and exported through
+**Print / Save PDF** after review approval.
+
+## Processing validation with the October 22 table trial
+
+The processing application was validated against recording
+`20261022T162753Z-77ddb2da` without modifying the governed source artifacts:
+
+- Raw and five-second-summary checksums verified.
+- 94,678 native ECG samples and 4,640 IMU samples loaded.
+- 247 R waves and 246 consecutive R–R intervals detected.
+- Suggested baseline window: 49.0–74.0 seconds.
+- Suggested upright plateau: 125.7–143.4 seconds.
+- Reviewer-confirmation default achieved angle: 70 degrees.
+- Raw baseline angle: approximately -2.83 degrees.
+- Raw plateau angle: approximately 74.01 degrees.
+- Calibration scale factor: approximately 0.911.
+- Ascending phase: 79.0–125.7 seconds.
+- 62 native R–R intervals included in the default ascending fit.
+- Initial engineering fit:
+  `R–R interval (ms) = -3.124 × corrected angle (°) + 834.280`.
+- Coefficient of determination: approximately 0.894.
+
+These are development-validation results, not a clinical interpretation. The
+real governed recording was not marked reviewed or approved. Approval,
+immutable review output, report preview, and print-mode behavior were tested
+against a temporary copy that was deleted afterward.
+
 ## Interrupted recording recovery
 
 If the server or computer stops during recording, preserve the partial
@@ -170,8 +218,8 @@ bookmark.
   rates rather than relying only on the configured 512 Hz request.
 - Add an explicit `test_end` event in addition to manifest `stoppedAt`
   metadata.
-- Create an HRV-derived artifact with accepted/rejected peaks, refined R-wave
-  times, R-R intervals, reviewed NN intervals, quality flags, and artifact or
-  ectopic-correction provenance.
+- Extend the current native R–R review into a full HRV artifact with persisted
+  accepted/rejected peaks, reviewed NN intervals, artifact or ectopic
+  correction provenance, and duration-specific HRV eligibility.
 - Validate chest angle against an independent table-angle reference before
   interpreting it as table tilt.
