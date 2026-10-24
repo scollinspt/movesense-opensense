@@ -98,6 +98,9 @@ const elements = {
   clinicProtocolSummary: byId("clinic-protocol-summary"),
   clinicStageTableBody: byId("clinic-stage-table").querySelector("tbody"),
   clinicCriteriaTableBody: byId("clinic-criteria-table").querySelector("tbody"),
+  clinicEtco2Summary: byId("clinic-etco2-summary"),
+  clinicEtco2Interpretation: byId("clinic-etco2-interpretation"),
+  clinicEtco2Method: byId("clinic-etco2-method"),
   clinicLimitations: byId("clinic-limitations"),
   clinicReferenceList: byId("clinic-reference-list"),
   clinicMethodSummary: byId("clinic-method-summary"),
@@ -778,6 +781,30 @@ function renderAnalysis(result) {
     ],
   );
   renderCriteria(clinicReport.criteria);
+  const etco2Response = clinicReport.etco2Response;
+  summaryRows(elements.clinicEtco2Summary, [
+    ["Classification", etco2Response.classification],
+    ["Baseline", Number.isFinite(etco2Response.baselineMmHg)
+      ? `${etco2Response.baselineMmHg} mmHg`
+      : "Not available"],
+    ["Upright observations", etco2Response.uprightObservationCount
+      ? `${etco2Response.uprightValuesMmHg.join(", ")} mmHg`
+      : "Not available"],
+    ["Upright nadir", Number.isFinite(etco2Response.uprightNadirMmHg)
+      ? `${etco2Response.uprightNadirMmHg} mmHg`
+      : "Not available"],
+    ["Values below 30 mmHg", `${etco2Response.hypocapnicUprightCount} of ${etco2Response.uprightObservationCount}`],
+    ["Maximum decrease from baseline", Number.isFinite(etco2Response.maximumDecreaseMmHg)
+      ? `${etco2Response.maximumDecreaseMmHg} mmHg`
+      : "Not available"],
+    ["Recovery observations", etco2Response.recoveryValuesMmHg.length
+      ? `${etco2Response.recoveryValuesMmHg.join(", ")} mmHg`
+      : "Not available"],
+  ]);
+  elements.clinicEtco2Interpretation.textContent =
+    etco2Response.interpretation;
+  elements.clinicEtco2Method.textContent =
+    `${etco2Response.basis} ${etco2Response.limitation}`;
   renderList(
     elements.clinicLimitations,
     clinicReport.limitations,

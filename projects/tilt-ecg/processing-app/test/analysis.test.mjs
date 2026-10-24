@@ -5,6 +5,7 @@ import {
   analyzeRecording,
   linearRegression,
 } from "../analysis.mjs";
+import { classifyEtco2Response } from "../clinic-report.mjs";
 
 function settings(durationSeconds, overrides = {}) {
   return {
@@ -362,18 +363,73 @@ test("builds the preliminary Panther PT clinic report from reviewed physiology",
     false,
   );
   assert.equal(analysis.clinicReport.criteria.length, 3);
+  assert.equal(
+    analysis.clinicReport.etco2Response.classification,
+    "Postural hypocapnic-range etCO₂ not observed",
+  );
+  assert.equal(analysis.clinicReport.etco2Response.uprightNadirMmHg, 34);
   assert.doesNotMatch(
     analysis.clinicReport.plainLanguageSummary.join(" "),
     /peak|recorded \d+ time/i,
   );
   assert.equal(
     analysis.clinicReport.reportMethod.reportMethodVersion,
-    "panther-pt-passive-hut-report-v0.1.0",
+    "panther-pt-passive-hut-report-v0.2.0",
   );
   assert.match(
     analysis.clinicReport.limitations.join(" "),
     /does not establish a diagnosis/,
   );
+});
+
+test("classifies baseline hypocapnic-range etCO2 that persists upright", () => {
+  const response = classifyEtco2Response({
+    baseline: 28,
+    uprightStartSeconds: 100,
+    uprightEndSeconds: 400,
+    recoveryStartSeconds: 450,
+    observations: [
+      { timeSeconds: 120, value: 25 },
+      { timeSeconds: 180, value: 24 },
+      { timeSeconds: 240, value: 26 },
+      { timeSeconds: 300, value: 25 },
+      { timeSeconds: 470, value: 28 },
+      { timeSeconds: 500, value: 31 },
+      { timeSeconds: 530, value: 27 },
+      { timeSeconds: 560, value: 31 },
+    ],
+  });
+
+  assert.equal(response.status, "baseline_hypocapnia");
+  assert.equal(
+    response.classification,
+    "Baseline hypocapnic-range etCO₂ persisted upright",
+  );
+  assert.equal(response.uprightNadirMmHg, 24);
+  assert.equal(response.maximumDecreaseMmHg, 4);
+  assert.equal(response.hypocapnicUprightCount, 4);
+  assert.deepEqual(response.recoveryValuesMmHg, [28, 31, 27, 31]);
+  assert.match(
+    response.interpretation,
+    /does not establish a new postural transition/i,
+  );
+});
+
+test("requires baseline and upright etCO2 for classification", () => {
+  assert.equal(classifyEtco2Response({
+    baseline: null,
+    uprightStartSeconds: 100,
+    uprightEndSeconds: 400,
+    recoveryStartSeconds: 450,
+    observations: [{ timeSeconds: 120, value: 25 }],
+  }).status, "not_assessable");
+  assert.equal(classifyEtco2Response({
+    baseline: 40,
+    uprightStartSeconds: 100,
+    uprightEndSeconds: 400,
+    recoveryStartSeconds: 450,
+    observations: [],
+  }).status, "not_assessable");
 });
 
 test("reports an observed HR criterion before a shortened upright phase ends", () => {

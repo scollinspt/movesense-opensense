@@ -6,6 +6,20 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
 
 ### Panther PT passive head-up tilt report
 
+- Added a literature-grounded end-tidal CO2 response classification to the
+  Panther PT report, including baseline state, upright values and nadir,
+  values below 30 mmHg, change from baseline, recovery observations, and
+  explicit distinction between baseline hypocapnic-range values and a new
+  postural transition.
+- Revised the electronic attestation to approve the report for use alongside
+  other physical therapy examination findings in developing a movement system
+  interpretation, consistent with the project's professional-identity
+  literature collection.
+- Advanced the clinic report method to
+  `panther-pt-passive-hut-report-v0.2.0` while retaining the frozen
+  `tilt-ecg-evidence-2026-10-24-v1` evidence set.
+
+
 - Built the first PSU DPT Panther PT Pro Bono Clinic clinical-adjunct report as
   a second export from the existing governed Tilt ECG analysis.
 - Revised the clinic report to begin with a stage-by-stage table containing

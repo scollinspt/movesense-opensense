@@ -1,5 +1,5 @@
 export const CLINIC_REPORT_METHOD = Object.freeze({
-  reportMethodVersion: "panther-pt-passive-hut-report-v0.1.0",
+  reportMethodVersion: "panther-pt-passive-hut-report-v0.2.0",
   evidenceSetVersion: "tilt-ecg-evidence-2026-10-24-v1",
   title: "Passive Head-Up Tilt Physiological Response Report",
   plannedProtocol: {
@@ -9,7 +9,7 @@ export const CLINIC_REPORT_METHOD = Object.freeze({
     recoverySeconds: 600,
   },
   attestation:
-    "I reviewed the source recording, analysis decisions, physiological findings, and stated limitations and approve this report for the documented clinical purpose.",
+    "I reviewed the source recording, analysis decisions, physiological findings, and stated limitations and approve this report for use alongside other physical therapy examination findings in developing a movement system interpretation.",
   references: [
     {
       id: "thijs-2021",
@@ -96,6 +96,116 @@ function statusLabel(status) {
   if (status === "met") return "Criterion observed";
   if (status === "not_met") return "Criterion not observed";
   return "Not assessable";
+}
+
+export function classifyEtco2Response({
+  baseline,
+  observations,
+  uprightStartSeconds,
+  uprightEndSeconds,
+  recoveryStartSeconds,
+}) {
+  const thresholdMmHg = 30;
+  const validObservations = observations.filter((observation) => (
+    Number.isFinite(observation.timeSeconds)
+    && Number.isFinite(observation.value)
+  ));
+  const upright = validObservations.filter((observation) => (
+    observation.timeSeconds >= uprightStartSeconds
+    && observation.timeSeconds <= uprightEndSeconds
+  ));
+  const recovery = Number.isFinite(recoveryStartSeconds)
+    ? validObservations.filter(
+      (observation) => observation.timeSeconds >= recoveryStartSeconds,
+    )
+    : [];
+  const uprightValues = upright.map((observation) => observation.value);
+  const recoveryValues = recovery.map((observation) => observation.value);
+  const hypocapnicUprightCount = uprightValues.filter(
+    (value) => value < thresholdMmHg,
+  ).length;
+  const uprightNadirMmHg = uprightValues.length
+    ? Math.min(...uprightValues)
+    : null;
+  const maximumDecreaseMmHg =
+    Number.isFinite(baseline) && Number.isFinite(uprightNadirMmHg)
+      ? Math.max(0, baseline - uprightNadirMmHg)
+      : null;
+  const base = {
+    thresholdMmHg,
+    baselineMmHg: Number.isFinite(baseline) ? baseline : null,
+    uprightValuesMmHg: uprightValues,
+    uprightNadirMmHg,
+    uprightObservationCount: uprightValues.length,
+    hypocapnicUprightCount,
+    maximumDecreaseMmHg,
+    recoveryValuesMmHg: recoveryValues,
+    recoveryMinimumMmHg: recoveryValues.length
+      ? Math.min(...recoveryValues)
+      : null,
+    recoveryMaximumMmHg: recoveryValues.length
+      ? Math.max(...recoveryValues)
+      : null,
+    basis:
+      "Stewart et al. described a modest normal upright decrease near 40 to 36 mmHg and marked postural hypocapnia below 30 mmHg, often below 25 mmHg, in orthostatic-intolerance cohorts.",
+    limitation:
+      "This is a descriptive literature-grounded classification, not a consensus diagnostic criterion; end-tidal CO₂ is a capnographic surrogate for arterial CO₂.",
+  };
+
+  if (!Number.isFinite(baseline) || !uprightValues.length) {
+    return {
+      ...base,
+      status: "not_assessable",
+      classification: "Not assessable",
+      interpretation:
+        "A baseline value and at least one upright end-tidal CO₂ observation are required.",
+    };
+  }
+
+  if (baseline < thresholdMmHg) {
+    if (hypocapnicUprightCount > 0) {
+      const persistence = hypocapnicUprightCount > 1
+        ? "Repeated hypocapnic-range values were observed upright."
+        : "One hypocapnic-range value was observed upright.";
+      return {
+        ...base,
+        status: "baseline_hypocapnia",
+        classification: "Baseline hypocapnic-range etCO₂ persisted upright",
+        interpretation:
+          `Supine baseline end-tidal CO₂ was already below ${thresholdMmHg} mmHg at ${baseline} mmHg. ${persistence} The upright nadir was ${uprightNadirMmHg} mmHg, ${maximumDecreaseMmHg} mmHg below baseline. This does not establish a new postural transition from normocapnia to hypocapnia.`,
+      };
+    }
+    return {
+      ...base,
+      status: "baseline_hypocapnia",
+      classification: "Baseline hypocapnic-range etCO₂ without upright persistence",
+      interpretation:
+        `Supine baseline end-tidal CO₂ was below ${thresholdMmHg} mmHg at ${baseline} mmHg, while the available upright values were at or above ${thresholdMmHg} mmHg.`,
+    };
+  }
+
+  if (hypocapnicUprightCount > 0) {
+    const observationDescription = hypocapnicUprightCount > 1
+      ? `${hypocapnicUprightCount} upright values were below ${thresholdMmHg} mmHg`
+      : `one upright value was below ${thresholdMmHg} mmHg`;
+    return {
+      ...base,
+      status: "observed",
+      classification: hypocapnicUprightCount > 1
+        ? "Repeated postural hypocapnic-range etCO₂ observed"
+        : "Single postural hypocapnic-range etCO₂ reading observed",
+      interpretation:
+        `Baseline end-tidal CO₂ was ${baseline} mmHg and ${observationDescription}. The upright nadir was ${uprightNadirMmHg} mmHg, ${maximumDecreaseMmHg} mmHg below baseline.`,
+    };
+  }
+
+  return {
+    ...base,
+    status: "not_observed",
+    classification: "Postural hypocapnic-range etCO₂ not observed",
+    interpretation:
+      `Baseline end-tidal CO₂ was ${baseline} mmHg and all ${uprightValues.length} available upright ${uprightValues.length === 1 ? "value was" : "values were"} at or above ${thresholdMmHg} mmHg. The upright nadir was ${uprightNadirMmHg} mmHg.`,
+  };
 }
 
 export function buildClinicReport({
@@ -282,6 +392,13 @@ export function buildClinicReport({
       limitation: clinical.bloodPressure.delayed.limitation,
     },
   ];
+  const etco2Response = classifyEtco2Response({
+    baseline: clinical.etco2.baseline,
+    observations: clinical.etco2.observations,
+    uprightStartSeconds: uprightStart,
+    uprightEndSeconds: uprightEnd,
+    recoveryStartSeconds: recoveryStart,
+  });
 
   const plainLanguageSummary = [
     Number.isFinite(clinical.heartRate.maximumSustainedChangeBpm)
@@ -294,6 +411,7 @@ export function buildClinicReport({
     "Active standing and passive tilt produce related but non-identical physiological responses.",
     "Intermittent BP cannot characterize beat-to-beat or initial orthostatic BP responses.",
     "Symptoms and measurements are temporally associated; the report does not infer causation.",
+    "End-tidal CO₂ is a capnographic surrogate for arterial CO₂ and may be affected by breathing route, ventilation pattern, dead space, sampling quality, and equipment setup.",
     "Corrected-angle HR and R–R slopes are exploratory because protocol-specific clinical reference ranges have not been established.",
   ];
   if (quality.acceptedPercent < 95) {
@@ -318,6 +436,7 @@ export function buildClinicReport({
     },
     plainLanguageSummary,
     criteria,
+    etco2Response,
     limitations,
   };
 }

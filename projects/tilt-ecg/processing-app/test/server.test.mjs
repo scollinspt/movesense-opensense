@@ -82,6 +82,8 @@ test("serves the review interface and recording API", async (context) => {
   assert.match(pageText, /Blood pressure/);
   assert.match(pageText, /End-tidal CO₂/);
   assert.match(pageText, /Consensus criteria/);
+  assert.match(pageText, /Literature-grounded end-tidal CO₂ response/);
+  assert.match(pageText, /movement system interpretation/);
   assert.match(pageText, /Limitations/);
   assert.doesNotMatch(pageText, /Structured impression/);
   assert.doesNotMatch(pageText, /Licensed reviewer conclusion and recommendations/);

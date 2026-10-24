@@ -45,8 +45,8 @@ node projects/tilt-ecg/processing-app/server.mjs \
 9. Review time-domain HRV, Poincare results, and frequency-domain eligibility.
 10. Click an R–R scatter point to exclude or restore that interval.
 11. Review the Panther PT stage table, performed protocol, sustained HR
-    response, consensus-criteria table, limitations, and frozen evidence
-    references.
+    response, consensus-criteria table, literature-grounded end-tidal CO2
+    response, limitations, and frozen evidence references.
 12. Add an optional de-identified reviewer conclusion to the detailed HMS
     report when needed.
 13. Complete the DPT student, licensed reviewer, supervising clinician,
@@ -140,16 +140,22 @@ One approved analysis produces two report views:
   Response Report** — a de-identified clinical adjunct led by a stage-by-stage
   table containing phase duration, median and sustained HR, every logged BP
   and etCO2 value, and every symptom event. It also includes the performed
-  protocol, sustained orthostatic HR, classic and delayed OH criteria,
-  limitations, licensed approval, and frozen evidence references.
+  protocol, sustained orthostatic HR, classic and delayed OH criteria, a
+  literature-grounded end-tidal CO2 response classification, limitations,
+  licensed approval, and frozen evidence references.
 - **Detailed HMS report** — the existing physiology and technical report with
   HR-angle and R–R regression, HRV, Poincare plots, and technical provenance.
 
 The clinic report method is
-`panther-pt-passive-hut-report-v0.1.0`; its initial frozen evidence set is
+`panther-pt-passive-hut-report-v0.2.0`; its initial frozen evidence set is
 `tilt-ecg-evidence-2026-10-24-v1`. Criteria are physiological observations, not automatic diagnoses. Initial
 orthostatic hypotension is omitted because the current workflow does not
 record the continuous beat-to-beat BP required for that assessment.
+The end-tidal CO2 response uses the Stewart et al. literature threshold below
+30 mmHg as a descriptive classification and distinguishes baseline
+hypocapnic-range values from a new postural transition. Approval attests that
+the report will be used alongside other physical therapy examination findings
+in developing a movement system interpretation.
 
 The browser print dialog is intentionally used for PDF export so the operator
 can preview the exact report and choose an approved destination. The application

@@ -30,7 +30,7 @@ A separate processing/report application is available at:
 - Entry point: `projects/tilt-ecg/processing-app/server.mjs`
 - macOS launcher: `projects/tilt-ecg/launch-tilt-ecg-processing.command`
 - Review schema: `tilt-ecg-review-v3`
-- Clinic report method: `panther-pt-passive-hut-report-v0.1.0`
+- Clinic report method: `panther-pt-passive-hut-report-v0.2.0`
 - Frozen evidence set: `tilt-ecg-evidence-2026-10-24-v1`
 
 It discovers finalized governed recordings, verifies source checksums, derives
@@ -51,7 +51,12 @@ PT Pro Bono Clinic report begins with a stage table containing formatted phase
 duration, median and sustained HR, every logged BP and etCO2 value, and every
 symptom event. It then reports the performed protocol, sustained orthostatic
 HR, classic and delayed OH criteria with explicit assessability, limitations,
-frozen references, and licensed electronic approval. It omits single-beat peak
+a separate literature-grounded end-tidal CO2 response, frozen references,
+and licensed electronic approval. The CO2 classification distinguishes
+baseline hypocapnic-range values from a new postural transition using the
+Stewart et al. threshold below 30 mmHg. The approval attestation frames these
+results for use alongside other physical therapy examination findings in a
+movement system interpretation. It omits single-beat peak
 HR, initial OH, and generated structured impressions.
 Patient identity remains in the clinical/EMR workflow rather than these
 artifacts; authorized student and clinician identities are preserved only in

@@ -494,7 +494,11 @@ function clinicalAnalysis({
     )
     : null;
 
-  const baselineEtco2 = Number(recording.metadata.baselineEtco2);
+  const baselineEtco2 =
+    recording.metadata.baselineEtco2 === null
+    || recording.metadata.baselineEtco2 === ""
+      ? null
+      : Number(recording.metadata.baselineEtco2);
   const etco2 = recording.events
     .filter((event) => event.type === "etco2")
     .map((event) => ({
