@@ -1145,6 +1145,7 @@ export function analyzeRecording(recording, inputSettings) {
     },
     clinical,
     quality,
+    intervals: acceptedIntervals,
   });
   return {
     settings,

@@ -96,16 +96,9 @@ const elements = {
   clinicPlainSummary: byId("clinic-plain-summary"),
   clinicProtocolNarrative: byId("clinic-protocol-narrative"),
   clinicProtocolSummary: byId("clinic-protocol-summary"),
-  clinicHeartRateSummary: byId("clinic-heart-rate-summary"),
-  clinicRecoverySummary: byId("clinic-recovery-summary"),
-  clinicBloodPressure: byId("clinic-blood-pressure"),
-  clinicEtco2: byId("clinic-etco2"),
-  clinicSymptoms: byId("clinic-symptoms"),
+  clinicStageTableBody: byId("clinic-stage-table").querySelector("tbody"),
   clinicCriteriaTableBody: byId("clinic-criteria-table").querySelector("tbody"),
-  clinicImpressionObserved: byId("clinic-impression-observed"),
-  clinicImpressionAssessability: byId("clinic-impression-assessability"),
-  clinicImpressionLimitations: byId("clinic-impression-limitations"),
-  clinicReviewerConclusion: byId("clinic-reviewer-conclusion"),
+  clinicLimitations: byId("clinic-limitations"),
   clinicReferenceList: byId("clinic-reference-list"),
   clinicMethodSummary: byId("clinic-method-summary"),
   clinicApprovalSummary: byId("clinic-approval-summary"),
@@ -143,6 +136,13 @@ async function api(path, options = {}) {
 
 function format(value, digits = 1, suffix = "") {
   return Number.isFinite(value) ? `${value.toFixed(digits)}${suffix}` : "—";
+}
+
+function formatDuration(seconds) {
+  if (!Number.isFinite(seconds)) return "—";
+  const totalSeconds = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(totalSeconds / 60);
+  return `${minutes}:${String(totalSeconds % 60).padStart(2, "0")}`;
 }
 
 function setBadge(element, text, kind) {
@@ -490,6 +490,64 @@ function renderCriteria(criteria) {
   }));
 }
 
+function appendCellList(cell, values, emptyMessage = "—") {
+  if (!values.length) {
+    cell.textContent = emptyMessage;
+    return;
+  }
+  const list = document.createElement("ul");
+  list.className = "stage-observations";
+  values.forEach((value) => {
+    const item = document.createElement("li");
+    item.textContent = value;
+    list.append(item);
+  });
+  cell.append(list);
+}
+
+function renderStageTable(stages) {
+  elements.clinicStageTableBody.replaceChildren(...stages.map((stage) => {
+    const row = document.createElement("tr");
+    const stageCell = document.createElement("th");
+    stageCell.scope = "row";
+    stageCell.textContent = stage.name;
+    const durationCell = document.createElement("td");
+    durationCell.textContent = formatDuration(stage.durationSeconds);
+    const heartRateCell = document.createElement("td");
+    const heartRateValues = [];
+    if (Number.isFinite(stage.medianHeartRateBpm)) {
+      heartRateValues.push(`Median ${stage.medianHeartRateBpm.toFixed(1)} bpm`);
+    }
+    if (Number.isFinite(stage.sustainedHeartRateChangeBpm)) {
+      heartRateValues.push(
+        `${stage.sustainedWindowSeconds}-second sustained Δ ${stage.sustainedHeartRateChangeBpm.toFixed(1)} bpm`,
+      );
+    }
+    appendCellList(heartRateCell, heartRateValues);
+    const bpCell = document.createElement("td");
+    appendCellList(bpCell, stage.bloodPressure.map((observation) => (
+      `${formatDuration(observation.timeSeconds)} · ${observation.systolic}/${observation.diastolic} mmHg · Δ ${format(observation.systolicChange, 0)}/${format(observation.diastolicChange, 0)}`
+    )));
+    const etco2Cell = document.createElement("td");
+    appendCellList(etco2Cell, stage.etco2.map((observation) => (
+      `${formatDuration(observation.timeSeconds)} · ${observation.value} mmHg · Δ ${format(observation.change, 0)}`
+    )));
+    const symptomCell = document.createElement("td");
+    appendCellList(symptomCell, stage.symptoms.map((symptom) => (
+      `${formatDuration(symptom.timeSeconds)} · ${symptom.label.replaceAll("_", " ")} ${symptom.semantics}`
+    )));
+    row.append(
+      stageCell,
+      durationCell,
+      heartRateCell,
+      bpCell,
+      etco2Cell,
+      symptomCell,
+    );
+    return row;
+  }));
+}
+
 function renderClinicApproval(approval, attestation) {
   if (!approval) {
     elements.clinicApprovalSummary.replaceChildren();
@@ -597,8 +655,6 @@ function renderAnalysis(result) {
     "Computer-assisted physiologic analysis; clinician review and approval required.";
   elements.reportReviewerConclusion.textContent =
     elements.reviewerConclusion.value.trim() || "No reviewer conclusion entered.";
-  elements.clinicReviewerConclusion.textContent =
-    elements.reviewerConclusion.value.trim() || "No reviewer conclusion entered.";
   renderClinicApproval(null);
   const { analysis, recording } = result;
   const calibration = analysis.calibration;
@@ -670,20 +726,6 @@ function renderAnalysis(result) {
   ];
   summaryRows(elements.heartRateSummary, heartRateRows);
   summaryRows(elements.reportHeartRateSummary, heartRateRows);
-  summaryRows(elements.clinicHeartRateSummary, heartRateRows.slice(0, 6));
-  const recoveryRows = clinical.heartRate.recovery.fixedTimes.map((point) => [
-    `${point.offsetSeconds} seconds`,
-    Number.isFinite(point.heartRateBpm)
-      ? `${point.heartRateBpm.toFixed(1)} bpm · Δ ${format(point.changeFromBaselineBpm, 1, " bpm")}`
-      : "Not available",
-  ]);
-  recoveryRows.push([
-    "Return to within 10 bpm of baseline",
-    clinical.heartRate.recovery.reachedWithinTenBpm
-      ? `${clinical.heartRate.recovery.timeToWithinTenBpmSeconds.toFixed(1)} seconds`
-      : "Not observed during recorded recovery",
-  ]);
-  summaryRows(elements.clinicRecoverySummary, recoveryRows);
   const bpLines = [
     ...(clinical.bloodPressure.baseline
       ? [`Baseline ${clinical.bloodPressure.baseline.systolic}/${clinical.bloodPressure.baseline.diastolic} mmHg.`]
@@ -699,7 +741,6 @@ function renderAnalysis(result) {
   ];
   renderObservations(elements.bloodPressureSummary, bpLines, "No BP observations recorded.");
   renderObservations(elements.reportBloodPressure, bpLines, "No BP observations recorded.");
-  renderObservations(elements.clinicBloodPressure, bpLines, "No BP observations recorded.");
   const etco2Lines = [
     ...(Number.isFinite(clinical.etco2.baseline)
       ? [`Baseline ${clinical.etco2.baseline} mmHg.`]
@@ -710,13 +751,11 @@ function renderAnalysis(result) {
   ];
   renderObservations(elements.etco2Summary, etco2Lines, "No etCO₂ observations recorded.");
   renderObservations(elements.reportEtco2, etco2Lines, "No etCO₂ observations recorded.");
-  renderObservations(elements.clinicEtco2, etco2Lines, "No etCO₂ observations recorded.");
   const symptomLines = clinical.symptoms.map((symptom) => (
     `${symptom.label.replaceAll("_", " ")} ${symptom.semantics} at ${symptom.timeSeconds.toFixed(1)} s · angle ${format(symptom.correctedAngleDegrees, 1, "°")} · HR ${format(symptom.heartRateBpm, 1, " bpm")} · ΔHR ${format(symptom.heartRateChangeBpm, 1, " bpm")}`
   ));
   renderObservations(elements.symptomSummary, symptomLines, "No symptoms recorded.");
   renderObservations(elements.reportSymptoms, symptomLines, "No symptoms recorded.");
-  renderObservations(elements.clinicSymptoms, symptomLines, "No symptoms recorded.");
   renderHrvTable(analysis);
   renderHrvReport(elements.reportHrvSummary, analysis);
 
@@ -726,33 +765,22 @@ function renderAnalysis(result) {
     elements.clinicPlainSummary,
     clinicReport.plainLanguageSummary,
   );
+  renderStageTable(clinicReport.protocol.stages);
   elements.clinicProtocolNarrative.textContent = clinicReport.protocol.narrative;
-  summaryRows(elements.clinicProtocolSummary, [
-    ["Planned supine baseline", `${clinicReport.protocol.planned.baselineSeconds / 60} min`],
-    ["Planned target angle", `${clinicReport.protocol.planned.targetAngleDegrees}°`],
-    ["Actual reviewed angle", `${clinicReport.protocol.actual.achievedAngleDegrees.toFixed(1)}°`],
-    ["Actual upright duration", Number.isFinite(clinicReport.protocol.actual.uprightSeconds)
-      ? `${clinicReport.protocol.actual.uprightSeconds.toFixed(1)} s`
-      : "Not available"],
-    ["Actual recovery duration", Number.isFinite(clinicReport.protocol.actual.recoverySeconds)
-      ? `${clinicReport.protocol.actual.recoverySeconds.toFixed(1)} s`
-      : "Not available"],
-    ["Protocol outcome", clinicReport.protocol.actual.earlyReturn
-      ? "Early return to supine"
-      : "Recorded protocol progression"],
-  ]);
+  summaryRows(
+    elements.clinicProtocolSummary,
+    [
+      ...clinicReport.protocol.stages.map((stage) => [
+        stage.name,
+        formatDuration(stage.durationSeconds),
+      ]),
+      ["Reviewed head-up angle", `${clinicReport.protocol.actual.achievedAngleDegrees.toFixed(1)}°`],
+    ],
+  );
   renderCriteria(clinicReport.criteria);
-  renderClinicalSummary(
-    elements.clinicImpressionObserved,
-    clinicReport.impression.observedResponse,
-  );
-  renderClinicalSummary(
-    elements.clinicImpressionAssessability,
-    clinicReport.impression.assessability,
-  );
   renderList(
-    elements.clinicImpressionLimitations,
-    clinicReport.impression.limitations,
+    elements.clinicLimitations,
+    clinicReport.limitations,
   );
   elements.clinicReferenceList.replaceChildren(
     ...clinicReport.reportMethod.references.map((reference) => {
@@ -962,8 +990,6 @@ elements.reviewerConclusion.addEventListener("input", () => {
   setBadge(elements.reportState, "Approval required", "warning");
   elements.reportReviewerConclusion.textContent =
     elements.reviewerConclusion.value.trim() || "No reviewer conclusion entered.";
-  elements.clinicReviewerConclusion.textContent =
-    elements.reviewerConclusion.value.trim() || "No reviewer conclusion entered.";
 });
 [
   elements.clinicStudentName,
@@ -1023,8 +1049,6 @@ elements.approveReview.addEventListener("click", async () => {
     elements.reportFooter.textContent =
       `Approved review ${approvedReview.reviewId} · ${approvedReview.createdAt} · Source artifacts unchanged.`;
     elements.reportReviewerConclusion.textContent =
-      approvedReview.reviewerConclusion || "No reviewer conclusion entered.";
-    elements.clinicReviewerConclusion.textContent =
       approvedReview.reviewerConclusion || "No reviewer conclusion entered.";
     renderClinicApproval(
       approvedReview.clinicApproval,

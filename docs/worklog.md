@@ -8,14 +8,18 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
 
 - Built the first PSU DPT Panther PT Pro Bono Clinic clinical-adjunct report as
   a second export from the existing governed Tilt ECG analysis.
-- Added planned-versus-actual protocol narrative, plain-language physiological
-  summary, peak and sustained HR response, fixed-time recovery and return to
-  within 10 bpm of baseline, BP and etCO2 absolute/change displays, symptom
-  timing, and a structured impression.
+- Revised the clinic report to begin with a stage-by-stage table containing
+  minutes-and-seconds duration, median and sustained HR, every logged BP and
+  etCO2 value, and every symptom event.
+- Limited the clinic HR summary to the reviewed 30-second sustained response
+  and removed single-beat peak HR. The protocol section now reports only what
+  was performed.
 - Added explicit observed/not-observed/not-assessable results for sustained
-  orthostatic HR response, classic orthostatic hypotension, initial orthostatic
-  hypotension, and delayed orthostatic hypotension. Initial OH remains not
-  assessable with passive tilt and intermittent BP.
+  orthostatic HR response, classic orthostatic hypotension, and delayed
+  orthostatic hypotension. Initial OH was omitted because continuous
+  beat-to-beat BP is not acquired.
+- Removed the generated structured impression and clinic reviewer conclusion;
+  retained explicit limitations, evidence and methods, and licensed approval.
 - Added required DPT student, licensed reviewer, supervising clinician,
   credentials, approval date, and electronic attestation fields.
 - Advanced immutable review provenance to `tilt-ecg-review-v3` and preserved

@@ -367,24 +367,28 @@
           <p class="clinic-support">Measurement and analysis support: Human Movement System Laboratory</p>
         </header>
         <section>
-          <h3>Plain-language summary</h3>
+          <h3>Results by test stage</h3>
+          <div class="table-wrap">
+            <table id="clinic-stage-table">
+              <caption>Times within result cells are elapsed test time in minutes:seconds.</caption>
+              <thead>
+                <tr>
+                  <th>Stage</th><th>Duration</th><th>Heart rate</th>
+                  <th>Blood pressure</th><th>End-tidal CO₂</th><th>Symptoms</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+        <section>
+          <h3>Sustained heart-rate response</h3>
           <div id="clinic-plain-summary" class="clinical-summary"></div>
         </section>
         <section>
           <h3>Protocol performed</h3>
           <p id="clinic-protocol-narrative">—</p>
           <div id="clinic-protocol-summary" class="report-summary"></div>
-        </section>
-        <section>
-          <h3>Observed physiological response</h3>
-          <div id="clinic-heart-rate-summary" class="report-summary"></div>
-          <h4>Recovery</h4>
-          <div id="clinic-recovery-summary" class="report-summary"></div>
-          <div class="clinic-observation-grid">
-            <div><h4>Blood pressure</h4><div id="clinic-blood-pressure"></div></div>
-            <div><h4>End-tidal CO₂</h4><div id="clinic-etco2"></div></div>
-            <div><h4>Symptoms</h4><div id="clinic-symptoms"></div></div>
-          </div>
         </section>
         <section>
           <h3>Consensus criteria</h3>
@@ -398,15 +402,8 @@
           </div>
         </section>
         <section>
-          <h3>Structured impression</h3>
-          <h4>Observed response</h4>
-          <div id="clinic-impression-observed" class="clinical-summary"></div>
-          <h4>Assessability</h4>
-          <div id="clinic-impression-assessability" class="clinical-summary"></div>
-          <h4>Limitations</h4>
-          <ul id="clinic-impression-limitations"></ul>
-          <h4>Licensed reviewer conclusion and recommendations</h4>
-          <p id="clinic-reviewer-conclusion">No reviewer conclusion entered.</p>
+          <h3>Limitations</h3>
+          <ul id="clinic-limitations"></ul>
         </section>
         <section class="clinic-references">
           <h3>Evidence and methods</h3>
@@ -428,7 +425,7 @@
         </footer>
       </div>
       <div class="report-approval no-print">
-        <label class="reviewer-conclusion">Clinical reviewer conclusion
+        <label class="reviewer-conclusion">Detailed HMS report reviewer conclusion
           <textarea id="reviewer-conclusion" rows="4" maxlength="4000" placeholder="Optional de-identified conclusion. Do not enter direct identifiers."></textarea>
         </label>
         <fieldset class="clinic-approval-fields">

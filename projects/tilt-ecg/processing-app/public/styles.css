@@ -241,6 +241,12 @@ legend { padding: 0 7px; color: var(--deep-forest); font-weight: 800; }
 .observation-list p { margin: 0; padding-bottom: 7px; border-bottom: 1px solid var(--paper-deep); }
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+caption {
+  padding: 0 0 8px;
+  color: var(--muted);
+  font-size: .76rem;
+  text-align: left;
+}
 th, td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 th { color: var(--deep-forest); }
 .eligibility-reason { display: block; max-width: 260px; margin-top: 3px; color: var(--muted); font-size: .74rem; }
@@ -281,6 +287,20 @@ th { color: var(--deep-forest); }
 .criterion-status.met { color: var(--forest); }
 .criterion-status.not_met { color: #3f5365; }
 .criterion-status.not_assessable { color: var(--warning); }
+#clinic-stage-table { table-layout: fixed; }
+#clinic-stage-table th:nth-child(1) { width: 14%; }
+#clinic-stage-table th:nth-child(2) { width: 8%; }
+#clinic-stage-table th:nth-child(3) { width: 17%; }
+#clinic-stage-table th:nth-child(4) { width: 22%; }
+#clinic-stage-table th:nth-child(5) { width: 18%; }
+#clinic-stage-table th:nth-child(6) { width: 21%; }
+.stage-observations {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-left: 16px;
+}
+.stage-observations li { overflow-wrap: anywhere; }
 .clinic-references li { margin-bottom: 10px; }
 .clinic-references small {
   display: block;
@@ -337,7 +357,8 @@ th { color: var(--deep-forest); }
     break-inside: avoid;
   }
   .clinic-report-document section { break-inside: auto; }
-  .clinic-report-document table { font-size: 8.5pt; }
+  .clinic-report-document table { font-size: 8pt; }
+  #clinic-stage-table th, #clinic-stage-table td { padding: 6px 5px; }
   .clinic-report-document tr,
   .clinic-approval-block,
   .clinic-observation-grid > div,

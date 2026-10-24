@@ -78,7 +78,13 @@ test("serves the review interface and recording API", async (context) => {
   assert.match(pageText, /Blood pressure, end-tidal CO₂, and symptoms/);
   assert.match(pageText, /PSU DPT Panther PT Pro Bono Clinic/);
   assert.match(pageText, /Passive Head-Up Tilt Physiological Response Report/);
+  assert.match(pageText, /Results by test stage/);
+  assert.match(pageText, /Blood pressure/);
+  assert.match(pageText, /End-tidal CO₂/);
   assert.match(pageText, /Consensus criteria/);
+  assert.match(pageText, /Limitations/);
+  assert.doesNotMatch(pageText, /Structured impression/);
+  assert.doesNotMatch(pageText, /Licensed reviewer conclusion and recommendations/);
   assert.match(pageText, /Licensed reviewer/);
   assert.match(pageText, /Print Panther PT PDF/);
   assert.match(pageText, /Print detailed HMS PDF/);

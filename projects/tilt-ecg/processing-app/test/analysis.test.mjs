@@ -336,18 +336,42 @@ test("builds the preliminary Panther PT clinic report from reviewed physiology",
   assert.equal(analysis.clinicReport.protocol.actual.baselineSeconds, 600);
   assert.equal(analysis.clinicReport.protocol.actual.uprightSeconds, 600);
   assert.equal(analysis.clinicReport.protocol.actual.recoverySeconds, 60);
+  assert.equal(analysis.clinicReport.protocol.stages.length, 5);
   assert.equal(
-    analysis.clinicReport.criteria.find(
+    analysis.clinicReport.protocol.stages.find(
+      (stage) => stage.id === "upright",
+    ).bloodPressure.length,
+    2,
+  );
+  assert.equal(
+    analysis.clinicReport.protocol.stages.find(
+      (stage) => stage.id === "upright",
+    ).etco2.length,
+    1,
+  );
+  assert.equal(
+    analysis.clinicReport.protocol.stages.find(
+      (stage) => stage.id === "upright",
+    ).symptoms.length,
+    1,
+  );
+  assert.equal(
+    analysis.clinicReport.criteria.some(
       (criterion) => criterion.id === "initial-oh",
-    ).status,
-    "not_assessable",
+    ),
+    false,
+  );
+  assert.equal(analysis.clinicReport.criteria.length, 3);
+  assert.doesNotMatch(
+    analysis.clinicReport.plainLanguageSummary.join(" "),
+    /peak|recorded \d+ time/i,
   );
   assert.equal(
     analysis.clinicReport.reportMethod.reportMethodVersion,
     "panther-pt-passive-hut-report-v0.1.0",
   );
   assert.match(
-    analysis.clinicReport.impression.limitations.join(" "),
+    analysis.clinicReport.limitations.join(" "),
     /does not establish a diagnosis/,
   );
 });
@@ -403,6 +427,14 @@ test("reports an observed HR criterion before a shortened upright phase ends", (
         data: {},
       },
       {
+        id: "symptom",
+        type: "symptom",
+        label: "lightheadedness",
+        semantics: "onset",
+        relativeSeconds: 70,
+        data: {},
+      },
+      {
         id: "return",
         type: "phase",
         label: "begin_return_early",
@@ -439,5 +471,9 @@ test("reports an observed HR criterion before a shortened upright phase ends", (
   assert.equal(
     analysis.clinicReport.criteria[0].status,
     "met",
+  );
+  assert.match(
+    analysis.clinicReport.criteria[0].limitation,
+    /symptom onset was recorded during upright tilt/i,
   );
 });

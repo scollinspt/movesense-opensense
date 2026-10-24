@@ -69,10 +69,27 @@ function phaseTime(events, label) {
   )?.relativeSeconds ?? null;
 }
 
+function formatDuration(seconds) {
+  if (!Number.isFinite(seconds)) return "not available";
+  const roundedSeconds = Math.max(0, Math.round(seconds));
+  return `${Math.floor(roundedSeconds / 60)}:${String(
+    roundedSeconds % 60,
+  ).padStart(2, "0")}`;
+}
+
 function roundedDuration(start, end) {
   return Number.isFinite(start) && Number.isFinite(end) && end >= start
     ? Number((end - start).toFixed(1))
     : null;
+}
+
+function median(values) {
+  if (!values.length) return null;
+  const sorted = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2
+    ? sorted[middle]
+    : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
 function statusLabel(status) {
@@ -87,6 +104,7 @@ export function buildClinicReport({
   calibration,
   clinical,
   quality,
+  intervals,
 }) {
   const beginTilt = phaseTime(recording.events, "begin_tilt");
   const targetReached = phaseTime(recording.events, "target_angle_reached");
@@ -104,10 +122,110 @@ export function buildClinicReport({
     achievedAngleDegrees: calibration.achievedAngleDegrees,
     earlyReturn: phaseTime(recording.events, "begin_return_early") !== null,
   };
-  const protocolNarrative = [
-    `The planned protocol was ${CLINIC_REPORT_METHOD.plannedProtocol.baselineSeconds / 60} minutes supine, passive head-up tilt to ${CLINIC_REPORT_METHOD.plannedProtocol.targetAngleDegrees}°, ${CLINIC_REPORT_METHOD.plannedProtocol.uprightSeconds / 60} minutes upright, and ${CLINIC_REPORT_METHOD.plannedProtocol.recoverySeconds / 60} minutes supine recovery.`,
-    `The recorded test included ${actualProtocol.baselineSeconds ?? "an unrecorded"} seconds before tilt, reached a reviewed angle of ${actualProtocol.achievedAngleDegrees.toFixed(1)}°, included ${actualProtocol.uprightSeconds ?? "an unrecorded"} seconds upright, and included ${actualProtocol.recoverySeconds ?? "an unrecorded"} seconds of recorded recovery.${actualProtocol.earlyReturn ? " Return to supine began before the planned upright duration was completed." : ""}`,
-  ].join(" ");
+  const protocolNarrative =
+    "The performed protocol included a recorded supine baseline, passive transition to the reviewed head-up angle, an upright phase, return to supine, and recorded recovery. Actual phase durations are reported below.";
+
+  const stageDefinitions = [
+    {
+      id: "baseline",
+      name: "Supine baseline",
+      startSeconds: 0,
+      endSeconds: beginTilt,
+    },
+    {
+      id: "ascent",
+      name: "Passive transition",
+      startSeconds: beginTilt,
+      endSeconds: uprightStart,
+    },
+    {
+      id: "upright",
+      name: "Head-up tilt",
+      startSeconds: uprightStart,
+      endSeconds: uprightEnd,
+    },
+    {
+      id: "return",
+      name: "Return to supine",
+      startSeconds: beginReturn,
+      endSeconds: recoveryStart,
+    },
+    {
+      id: "recovery",
+      name: "Supine recovery",
+      startSeconds: recoveryStart,
+      endSeconds: recording.durationSeconds,
+    },
+  ].filter((stage) => (
+    Number.isFinite(stage.startSeconds)
+    && Number.isFinite(stage.endSeconds)
+    && stage.endSeconds >= stage.startSeconds
+  ));
+  const stageForTime = (timeSeconds) => (
+    stageDefinitions.find((stage, index) => (
+      timeSeconds >= stage.startSeconds
+      && (
+        timeSeconds < stage.endSeconds
+        || (
+          index === stageDefinitions.length - 1
+          && timeSeconds <= stage.endSeconds
+        )
+      )
+    ))
+  );
+  const baselineBpObservation = clinical.bloodPressure.baseline
+    ? [{
+      timeSeconds: 0,
+      systolic: clinical.bloodPressure.baseline.systolic,
+      diastolic: clinical.bloodPressure.baseline.diastolic,
+      systolicChange: 0,
+      diastolicChange: 0,
+    }]
+    : [];
+  const baselineEtco2Observation = Number.isFinite(clinical.etco2.baseline)
+    ? [{ timeSeconds: 0, value: clinical.etco2.baseline, change: 0 }]
+    : [];
+  const allBloodPressure = [
+    ...baselineBpObservation,
+    ...clinical.bloodPressure.observations,
+  ];
+  const allEtco2 = [
+    ...baselineEtco2Observation,
+    ...clinical.etco2.observations,
+  ];
+  const stages = stageDefinitions.map((stage) => {
+    const stageIntervals = intervals.filter(
+      (interval) => stageForTime(interval.timeSeconds)?.id === stage.id,
+    );
+    return {
+      ...stage,
+      durationSeconds: roundedDuration(stage.startSeconds, stage.endSeconds),
+      medianHeartRateBpm: Number.isFinite(median(
+        stageIntervals.map((interval) => interval.heartRateBpm),
+      ))
+        ? Number(median(
+          stageIntervals.map((interval) => interval.heartRateBpm),
+        ).toFixed(1))
+        : null,
+      sustainedHeartRateChangeBpm:
+        stage.id === "upright"
+          ? clinical.heartRate.maximumSustainedChangeBpm
+          : null,
+      sustainedWindowSeconds:
+        stage.id === "upright"
+          ? clinical.heartRate.sustainedWindowSeconds
+          : null,
+      bloodPressure: allBloodPressure.filter(
+        (observation) => stageForTime(observation.timeSeconds)?.id === stage.id,
+      ),
+      etco2: allEtco2.filter(
+        (observation) => stageForTime(observation.timeSeconds)?.id === stage.id,
+      ),
+      symptoms: clinical.symptoms.filter(
+        (observation) => stageForTime(observation.timeSeconds)?.id === stage.id,
+      ),
+    };
+  });
 
   const hrStatus = !clinical.heartRate.orthostaticAssessable
     ? "not_assessable"
@@ -118,6 +236,20 @@ export function buildClinicReport({
     clinical.bloodPressure.classic.status ?? "not_assessable";
   const delayedOhStatus =
     clinical.bloodPressure.delayed.status ?? "not_assessable";
+  const uprightSymptomRecorded = clinical.symptoms.some((event) => (
+    event.semantics === "onset"
+    && stageForTime(event.timeSeconds)?.id === "upright"
+  ));
+  const heartRateQualification = [
+    "A threshold-level physiological response is not a diagnosis.",
+    clinical.heartRate.uprightDurationSeconds
+      < clinical.heartRate.orthostaticAssessmentSeconds
+      ? `The upright position was maintained for ${formatDuration(clinical.heartRate.uprightDurationSeconds)} rather than the full ${formatDuration(clinical.heartRate.orthostaticAssessmentSeconds)} assessment.`
+      : null,
+    uprightSymptomRecorded
+      ? "Symptom onset was recorded during upright tilt before return to supine."
+      : null,
+  ].filter(Boolean).join(" ");
   const criteria = [
     {
       id: "sustained-orthostatic-hr",
@@ -128,10 +260,8 @@ export function buildClinicReport({
         ? `${clinical.heartRate.maximumSustainedChangeBpm.toFixed(1)} bpm over ${clinical.heartRate.sustainedWindowSeconds} seconds`
         : "No qualifying sustained window",
       basis:
-        `${clinical.heartRate.orthostaticThresholdBpm} bpm threshold during the configured ${clinical.heartRate.orthostaticAssessmentSeconds}-second assessment`,
-      limitation: clinical.heartRate.orthostaticAssessable
-        ? "A threshold-level physiological response is not a diagnosis."
-        : `Recorded upright duration was ${clinical.heartRate.uprightDurationSeconds.toFixed(1)} seconds.`,
+        `${clinical.heartRate.orthostaticThresholdBpm} bpm threshold during the configured ${formatDuration(clinical.heartRate.orthostaticAssessmentSeconds)} assessment`,
+      limitation: heartRateQualification,
     },
     {
       id: "classic-oh",
@@ -141,16 +271,6 @@ export function buildClinicReport({
       result: clinical.bloodPressure.classic.result,
       basis: "Sustained decrease of at least 20 mmHg systolic or 10 mmHg diastolic within 3 minutes",
       limitation: clinical.bloodPressure.classic.limitation,
-    },
-    {
-      id: "initial-oh",
-      name: "Initial orthostatic hypotension",
-      status: "not_assessable",
-      label: statusLabel("not_assessable"),
-      result: "Continuous beat-to-beat BP was not recorded during an active stand.",
-      basis: "Transient decrease greater than 40 mmHg systolic or 20 mmHg diastolic within approximately 15 seconds",
-      limitation:
-        "The acquisition uses intermittent BP and passive tilt; this criterion generally requires continuous BP during active standing.",
     },
     {
       id: "delayed-oh",
@@ -164,26 +284,11 @@ export function buildClinicReport({
   ];
 
   const plainLanguageSummary = [
-    Number.isFinite(clinical.heartRate.maximumChangeBpm)
-      ? `Heart rate reached a peak change of ${clinical.heartRate.maximumChangeBpm.toFixed(1)} bpm above the supine baseline median.`
-      : "A peak upright heart-rate change could not be calculated.",
     Number.isFinite(clinical.heartRate.maximumSustainedChangeBpm)
-      ? `The largest ${clinical.heartRate.sustainedWindowSeconds}-second sustained change was ${clinical.heartRate.maximumSustainedChangeBpm.toFixed(1)} bpm.`
+      ? `The largest reviewed ${clinical.heartRate.sustainedWindowSeconds}-second sustained upright heart-rate change was ${clinical.heartRate.maximumSustainedChangeBpm.toFixed(1)} bpm above the supine baseline median.`
       : "A sustained upright heart-rate change could not be calculated.",
-    clinical.bloodPressure.observations.length
-      ? `Blood pressure was recorded ${clinical.bloodPressure.observations.length} time(s) after baseline; criteria are reported only where timing and sampling permitted assessment.`
-      : "No upright blood-pressure observation was available.",
-    clinical.etco2.observations.length
-      ? `End-tidal CO2 was recorded ${clinical.etco2.observations.length} time(s) after baseline.`
-      : "No post-baseline end-tidal CO2 observation was available.",
-    clinical.symptoms.filter((event) => event.semantics === "onset").length
-      ? `${clinical.symptoms.filter((event) => event.semantics === "onset").length} symptom onset event(s) were documented and aligned with the available measurements.`
-      : "No symptom onset event was documented.",
   ];
 
-  const assessableCount = criteria.filter(
-    (criterion) => criterion.status !== "not_assessable",
-  ).length;
   const limitations = [
     "This report describes a single passive head-up tilt recording and does not establish a diagnosis.",
     "Active standing and passive tilt produce related but non-identical physiological responses.",
@@ -207,19 +312,12 @@ export function buildClinicReport({
       ?? recording.manifest?.startTime?.slice(0, 10)
       ?? null,
     protocol: {
-      planned: CLINIC_REPORT_METHOD.plannedProtocol,
       actual: actualProtocol,
       narrative: protocolNarrative,
+      stages,
     },
     plainLanguageSummary,
     criteria,
-    impression: {
-      observedResponse: plainLanguageSummary,
-      assessability: [
-        `${assessableCount} of ${criteria.length} displayed consensus criteria were assessable from the recorded protocol and measurements.`,
-        "A not-assessable result does not mean that the physiological response was absent.",
-      ],
-      limitations,
-    },
+    limitations,
   };
 }

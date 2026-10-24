@@ -44,10 +44,11 @@ node projects/tilt-ecg/processing-app/server.mjs \
 8. Set the supine, upright, and recovery HRV windows.
 9. Review time-domain HRV, Poincare results, and frequency-domain eligibility.
 10. Click an R–R scatter point to exclude or restore that interval.
-11. Review the Panther PT plain-language summary, actual protocol, recovery,
-    consensus-criteria table, assessability, limitations, and frozen evidence
+11. Review the Panther PT stage table, performed protocol, sustained HR
+    response, consensus-criteria table, limitations, and frozen evidence
     references.
-12. Add an optional de-identified clinical reviewer conclusion.
+12. Add an optional de-identified reviewer conclusion to the detailed HMS
+    report when needed.
 13. Complete the DPT student, licensed reviewer, supervising clinician,
     credentials, approval date, and electronic-attestation fields.
 14. Approve the review to write immutable `tilt-ecg-review-v3` provenance.
@@ -136,18 +137,19 @@ No name, MRN, date of birth, or other direct identifier is requested or stored.
 One approved analysis produces two report views:
 
 - **PSU DPT Panther PT Pro Bono Clinic Passive Head-Up Tilt Physiological
-  Response Report** — a de-identified clinical adjunct with planned-versus-
-  actual protocol, plain-language summary, HR and recovery, BP, etCO2,
-  symptoms, consensus-criteria assessability, structured impression,
+  Response Report** — a de-identified clinical adjunct led by a stage-by-stage
+  table containing phase duration, median and sustained HR, every logged BP
+  and etCO2 value, and every symptom event. It also includes the performed
+  protocol, sustained orthostatic HR, classic and delayed OH criteria,
   limitations, licensed approval, and frozen evidence references.
 - **Detailed HMS report** — the existing physiology and technical report with
   HR-angle and R–R regression, HRV, Poincare plots, and technical provenance.
 
 The clinic report method is
 `panther-pt-passive-hut-report-v0.1.0`; its initial frozen evidence set is
-`tilt-ecg-evidence-2026-10-24-v1`. Criteria are physiological observations,
-not automatic diagnoses. Initial orthostatic hypotension is reported as not
-assessable because the current workflow uses passive tilt and intermittent BP.
+`tilt-ecg-evidence-2026-10-24-v1`. Criteria are physiological observations, not automatic diagnoses. Initial
+orthostatic hypotension is omitted because the current workflow does not
+record the continuous beat-to-beat BP required for that assessment.
 
 The browser print dialog is intentionally used for PDF export so the operator
 can preview the exact report and choose an approved destination. The application

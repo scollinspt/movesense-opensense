@@ -47,10 +47,12 @@ minimums are 90 seconds for HF and 300 seconds for LF or LF/HF.
 
 The same approved analysis now supports two portrait exports. The detailed HMS
 report preserves physiology, plots, HRV, and technical provenance. The Panther
-PT Pro Bono Clinic report provides a plain-language summary, planned-versus-
-actual protocol, peak and sustained HR response, fixed-time recovery, BP and
-etCO2 changes, symptom timing, consensus criteria with explicit assessability,
-a structured impression, frozen references, and licensed electronic approval.
+PT Pro Bono Clinic report begins with a stage table containing formatted phase
+duration, median and sustained HR, every logged BP and etCO2 value, and every
+symptom event. It then reports the performed protocol, sustained orthostatic
+HR, classic and delayed OH criteria with explicit assessability, limitations,
+frozen references, and licensed electronic approval. It omits single-beat peak
+HR, initial OH, and generated structured impressions.
 Patient identity remains in the clinical/EMR workflow rather than these
 artifacts; authorized student and clinician identities are preserved only in
 the report-approval provenance.
