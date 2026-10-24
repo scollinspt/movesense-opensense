@@ -29,8 +29,9 @@ A separate processing/report application is available at:
 - Default URL: `http://127.0.0.1:4175/`
 - Entry point: `projects/tilt-ecg/processing-app/server.mjs`
 - macOS launcher: `projects/tilt-ecg/launch-tilt-ecg-processing.command`
-- Review schema: `tilt-ecg-review-v2`
-- Current processing/report commit: `9ca0395`
+- Review schema: `tilt-ecg-review-v3`
+- Clinic report method: `panther-pt-passive-hut-report-v0.1.0`
+- Frozen evidence set: `tilt-ecg-evidence-2026-10-24-v1`
 
 It discovers finalized governed recordings, verifies source checksums, derives
 R waves and consecutive R–R intervals from native 512 Hz timestamps, supports
@@ -43,6 +44,16 @@ configurable orthostatic HR assessment, BP and etCO2 changes, symptom
 correlation, segment-specific time-domain HRV, Poincare plots, and
 duration/quality/stationarity-gated frequency-domain HRV. Default spectral
 minimums are 90 seconds for HF and 300 seconds for LF or LF/HF.
+
+The same approved analysis now supports two portrait exports. The detailed HMS
+report preserves physiology, plots, HRV, and technical provenance. The Panther
+PT Pro Bono Clinic report provides a plain-language summary, planned-versus-
+actual protocol, peak and sustained HR response, fixed-time recovery, BP and
+etCO2 changes, symptom timing, consensus criteria with explicit assessability,
+a structured impression, frozen references, and licensed electronic approval.
+Patient identity remains in the clinical/EMR workflow rather than these
+artifacts; authorized student and clinician identities are preserved only in
+the report-approval provenance.
 
 Firefox and the VS Code shared browser are equivalent clients of one
 server-owned state. Opening two browser tabs does not create two BLE
@@ -143,9 +154,10 @@ MOVESENSE_DATA_ROOT/
 └── derived/tilt-ecg/YYYY-MM-DD/<recording-id>/reviews/<review-id>.json
 ```
 
-The report is previewed in the processing browser and exported through
-**Print / Save PDF** after review approval. The print layout is portrait-first
-and redraws its charts at print dimensions.
+The reports are previewed in the processing browser and exported through the
+separate **Print Panther PT PDF** and **Print detailed HMS PDF** controls after
+review approval. Both print layouts are portrait-first; the detailed report
+redraws its charts at print dimensions.
 
 ## Processing validation with the October 22 table trial
 

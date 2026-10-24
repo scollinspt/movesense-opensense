@@ -4,6 +4,7 @@ import {
   PanTompkinsDetector,
   TiltEstimator,
 } from "../app/signal-processing.mjs";
+import { buildClinicReport } from "./clinic-report.mjs";
 
 const MINIMUM_RR_MS = 300;
 const MAXIMUM_RR_MS = 2_000;
@@ -379,13 +380,19 @@ function clinicalAnalysis({
     )
     : null;
   const uprightDurationSeconds = uprightEndSeconds - uprightStartSeconds;
-  const orthostaticAssessable =
-    uprightDurationSeconds >= settings.orthostaticAssessmentSeconds
-    && Number.isFinite(baselineMedianHeartRate)
-    && sustained !== null;
   const sustainedDelta = sustained && Number.isFinite(baselineMedianHeartRate)
     ? sustained.heartRateBpm - baselineMedianHeartRate
     : null;
+  const orthostaticThresholdObserved =
+    Number.isFinite(sustainedDelta)
+    && sustainedDelta >= settings.orthostaticHrThresholdBpm;
+  const orthostaticAssessable =
+    Number.isFinite(baselineMedianHeartRate)
+    && sustained !== null
+    && (
+      orthostaticThresholdObserved
+      || uprightDurationSeconds >= settings.orthostaticAssessmentSeconds
+    );
 
   const heartRateAt = (timeSeconds) => interpolate(
     accepted,
@@ -422,13 +429,13 @@ function clinicalAnalysis({
   ));
   const maximumSystolicDrop =
     baselineBp && earlyUprightBp.length
-      ? Math.max(...earlyUprightBp.map(
+      ? Math.max(0, ...earlyUprightBp.map(
         (observation) => baselineBp.systolic - observation.systolic,
       ))
       : null;
   const maximumDiastolicDrop =
     baselineBp && earlyUprightBp.length
-      ? Math.max(...earlyUprightBp.map(
+      ? Math.max(0, ...earlyUprightBp.map(
         (observation) => baselineBp.diastolic - observation.diastolic,
       ))
       : null;
@@ -438,6 +445,54 @@ function clinicalAnalysis({
     orthostaticHypotensionAssessable
       ? maximumSystolicDrop >= 20 || maximumDiastolicDrop >= 10
       : null;
+  const delayedUprightBp = bloodPressure.filter((observation) => (
+    observation.timeSeconds > uprightStartSeconds + 180
+    && observation.timeSeconds <= uprightEndSeconds
+  ));
+  const delayedMaximumSystolicDrop =
+    baselineBp && delayedUprightBp.length
+      ? Math.max(0, ...delayedUprightBp.map(
+        (observation) => baselineBp.systolic - observation.systolic,
+      ))
+      : null;
+  const delayedMaximumDiastolicDrop =
+    baselineBp && delayedUprightBp.length
+      ? Math.max(0, ...delayedUprightBp.map(
+        (observation) => baselineBp.diastolic - observation.diastolic,
+      ))
+      : null;
+  const delayedAssessable = Boolean(baselineBp) && delayedUprightBp.length > 0;
+  const delayedCriteriaMet = delayedAssessable
+    ? delayedMaximumSystolicDrop >= 20 || delayedMaximumDiastolicDrop >= 10
+    : null;
+
+  const recoveryStartSeconds =
+    phaseTime(recording.events, "supine_recovery")
+    ?? returnTime;
+  const recoveryIntervals = accepted.filter(
+    (interval) => interval.timeSeconds >= recoveryStartSeconds,
+  );
+  const recoveryAtSeconds = [30, 60, 120, 300].map((offsetSeconds) => {
+    const targetSeconds = recoveryStartSeconds + offsetSeconds;
+    const heartRateBpm = targetSeconds <= recording.durationSeconds
+      ? interpolate(accepted, targetSeconds, "heartRateBpm")
+      : null;
+    return {
+      offsetSeconds,
+      heartRateBpm: round(heartRateBpm, 3),
+      changeFromBaselineBpm:
+        Number.isFinite(heartRateBpm) && Number.isFinite(baselineMedianHeartRate)
+          ? round(heartRateBpm - baselineMedianHeartRate, 3)
+          : null,
+    };
+  });
+  const recoveredWithinTen = Number.isFinite(baselineMedianHeartRate)
+    ? recoveryIntervals.find(
+      (interval) => (
+        Math.abs(interval.heartRateBpm - baselineMedianHeartRate) <= 10
+      ),
+    )
+    : null;
 
   const baselineEtco2 = Number(recording.metadata.baselineEtco2);
   const etco2 = recording.events
@@ -524,9 +579,17 @@ function clinicalAnalysis({
       orthostaticAssessable,
       orthostaticThresholdMet:
         orthostaticAssessable
-          ? sustainedDelta >= settings.orthostaticHrThresholdBpm
+          ? orthostaticThresholdObserved
           : null,
       angleRegression: hrRegression,
+      recovery: {
+        startSeconds: round(recoveryStartSeconds, 3),
+        fixedTimes: recoveryAtSeconds,
+        timeToWithinTenBpmSeconds: recoveredWithinTen
+          ? round(recoveredWithinTen.timeSeconds - recoveryStartSeconds, 3)
+          : null,
+        reachedWithinTenBpm: Boolean(recoveredWithinTen),
+      },
     },
     bloodPressure: {
       baseline: baselineBp,
@@ -539,6 +602,28 @@ function clinicalAnalysis({
       maximumDiastolicDropMmHg: round(maximumDiastolicDrop, 3),
       orthostaticHypotensionAssessable,
       orthostaticHypotensionCriteriaMet,
+      classic: {
+        status: orthostaticHypotensionAssessable
+          ? orthostaticHypotensionCriteriaMet ? "met" : "not_met"
+          : "not_assessable",
+        result: orthostaticHypotensionAssessable
+          ? `Maximum early-upright decrease ${round(maximumSystolicDrop, 1)} mmHg systolic and ${round(maximumDiastolicDrop, 1)} mmHg diastolic.`
+          : "No BP observation was recorded within 3 minutes upright.",
+        limitation: orthostaticHypotensionAssessable
+          ? "Assessment is based on available intermittent measurements."
+          : "Baseline and at least one BP observation within 3 minutes upright are required.",
+      },
+      delayed: {
+        status: delayedAssessable
+          ? delayedCriteriaMet ? "met" : "not_met"
+          : "not_assessable",
+        result: delayedAssessable
+          ? `Maximum decrease after 3 minutes ${round(delayedMaximumSystolicDrop, 1)} mmHg systolic and ${round(delayedMaximumDiastolicDrop, 1)} mmHg diastolic.`
+          : "No BP observation was recorded after 3 minutes upright.",
+        limitation: delayedAssessable
+          ? "Assessment is based on available intermittent measurements."
+          : "Baseline and at least one BP observation after 3 minutes upright are required.",
+      },
     },
     etco2: {
       baseline: Number.isFinite(baselineEtco2) ? baselineEtco2 : null,
@@ -1043,6 +1128,24 @@ export function analyzeRecording(recording, inputSettings) {
         : null,
     },
   });
+  const quality = {
+    detectedRWaveCount: recording.rWaveCount,
+    rrIntervalCount: intervals.length,
+    acceptedRrIntervalCount: acceptedIntervals.length,
+    excludedRrIntervalCount: intervals.length - acceptedIntervals.length,
+    acceptedPercent: intervals.length
+      ? round(acceptedIntervals.length / intervals.length * 100, 2)
+      : null,
+  };
+  const clinicReport = buildClinicReport({
+    recording,
+    settings,
+    calibration: {
+      achievedAngleDegrees: settings.achievedAngleDegrees,
+    },
+    clinical,
+    quality,
+  });
   return {
     settings,
     calibration: {
@@ -1070,15 +1173,7 @@ export function analyzeRecording(recording, inputSettings) {
         : `R–R interval (ms) = ${regression.slope.toFixed(3)} × corrected angle (°) + ${regression.intercept.toFixed(3)}`,
     },
     heartRateRegression: clinical.heartRate.angleRegression,
-    quality: {
-      detectedRWaveCount: recording.rWaveCount,
-      rrIntervalCount: intervals.length,
-      acceptedRrIntervalCount: acceptedIntervals.length,
-      excludedRrIntervalCount: intervals.length - acceptedIntervals.length,
-      acceptedPercent: intervals.length
-        ? round(acceptedIntervals.length / intervals.length * 100, 2)
-        : null,
-    },
+    quality,
     summary: {
       baselineMeanRrMs: round(mean(
         baselineIntervals.map((interval) => interval.rrMs),
@@ -1090,6 +1185,7 @@ export function analyzeRecording(recording, inputSettings) {
         : null,
     },
     clinical,
+    clinicReport,
     hrv,
     regressionPoints,
     heartRateRegressionPoints,

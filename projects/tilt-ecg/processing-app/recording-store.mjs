@@ -15,7 +15,15 @@ import {
   loadRecordingData,
 } from "./analysis.mjs";
 
-const REVIEW_SCHEMA_VERSION = "tilt-ecg-review-v2";
+const REVIEW_SCHEMA_VERSION = "tilt-ecg-review-v3";
+const CLINIC_APPROVAL_FIELDS = [
+  "studentName",
+  "reviewerName",
+  "reviewerCredentials",
+  "supervisingClinicianName",
+  "supervisingClinicianCredentials",
+  "approvalDate",
+];
 
 async function sha256(filePath) {
   const hash = createHash("sha256");
@@ -44,6 +52,36 @@ function resolveManifestFile(dataRoot, manifestPath, relativePath) {
     throw new Error(`Manifest ${manifestPath} references an artifact outside the governed root.`);
   }
   return resolved;
+}
+
+export function validateClinicApproval(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new Error("Clinic report approval is required.");
+  }
+  const approval = {};
+  for (const field of CLINIC_APPROVAL_FIELDS) {
+    if (input[field] === undefined || input[field] === null || input[field] === "") {
+      throw new Error("Complete all clinic report approval fields.");
+    }
+    if (typeof input[field] !== "string") {
+      throw new Error("Clinic report approval fields must be text.");
+    }
+    approval[field] = input[field].trim();
+    if (!approval[field]) {
+      throw new Error("Complete all clinic report approval fields.");
+    }
+    if (approval[field].length > 200) {
+      throw new Error("Clinic report approval fields must not exceed 200 characters.");
+    }
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(approval.approvalDate)) {
+    throw new Error("Clinic report approval date must use YYYY-MM-DD.");
+  }
+  if (input.attestationAccepted !== true) {
+    throw new Error("The licensed reviewer must accept the clinic report attestation.");
+  }
+  approval.attestationAccepted = true;
+  return approval;
 }
 
 export class RecordingStore {
@@ -187,7 +225,12 @@ export class RecordingStore {
     };
   }
 
-  async saveReview(recordingId, settings, reviewerConclusion = "") {
+  async saveReview(
+    recordingId,
+    settings,
+    reviewerConclusion = "",
+    clinicApprovalInput,
+  ) {
     const recording = await this.load(recordingId);
     if (
       !recording.integrity.finalized
@@ -206,6 +249,7 @@ export class RecordingStore {
     if (typeof reviewerConclusion !== "string" || reviewerConclusion.length > 4_000) {
       throw new Error("Reviewer conclusion must be text no longer than 4000 characters.");
     }
+    const clinicApproval = validateClinicApproval(clinicApprovalInput);
     const reviewId = `${new Date().toISOString().replaceAll(":", "-")}-${randomUUID()}`;
     const review = {
       schemaVersion: REVIEW_SCHEMA_VERSION,
@@ -215,6 +259,10 @@ export class RecordingStore {
       deidentified: true,
       rawArtifactsModified: false,
       reviewerConclusion: reviewerConclusion.trim(),
+      clinicApproval: {
+        ...clinicApproval,
+        attestation: analysis.clinicReport.reportMethod.attestation,
+      },
       sourceChecksums: {
         signalsSha256: recording.integrity.databaseSha256,
         fiveSecondSummarySha256: recording.integrity.summarySha256,
@@ -224,11 +272,16 @@ export class RecordingStore {
       regression: analysis.regression,
       heartRateRegression: analysis.heartRateRegression,
       clinical: analysis.clinical,
+      clinicReport: analysis.clinicReport,
       hrv: analysis.hrv,
       quality: analysis.quality,
       summary: analysis.summary,
       provenance: {
-        processingApplication: "tilt-ecg-processing-v0.2.0",
+        processingApplication: "tilt-ecg-processing-v0.3.0",
+        clinicReportMethod:
+          analysis.clinicReport.reportMethod.reportMethodVersion,
+        evidenceSet:
+          analysis.clinicReport.reportMethod.evidenceSetVersion,
         detector: "pan-tompkins-streaming-v1",
         rrSource: "consecutive accepted native-timestamp R waves",
         angleAttribution: "linearly interpolated corrected angle at RR midpoint",

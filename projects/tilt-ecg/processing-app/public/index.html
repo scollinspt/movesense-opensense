@@ -16,7 +16,9 @@
   </header>
   <aside class="safety" role="note">
     <strong>De-identified clinical physiology review.</strong>
-    Do not enter a name, MRN, date of birth, or other direct identifier.
+    Do not enter a patient name, MRN, date of birth, or other direct patient
+    identifier. Authorized student and clinician names are recorded only in
+    the report-approval block.
   </aside>
 
   <main>
@@ -295,7 +297,11 @@
         </div>
         <span id="report-state" class="badge warning">Draft</span>
       </div>
-      <div class="report-document">
+      <div class="report-switcher no-print" role="group" aria-label="Report preview">
+        <button id="show-clinic-report" type="button">Panther PT clinical report</button>
+        <button id="show-hms-report" class="secondary" type="button">Detailed HMS report</button>
+      </div>
+      <div id="hms-report-document" class="report-document hms-report-document" hidden>
         <header>
           <p class="eyebrow dark">Human Movement System Laboratory</p>
           <h2>De-identified Tilt ECG Analysis Report</h2>
@@ -353,12 +359,110 @@
         </section>
         <footer id="report-footer">Computer-assisted physiologic analysis; clinician review and approval required.</footer>
       </div>
-      <div class="actions no-print">
+      <div id="clinic-report-document" class="report-document clinic-report-document">
+        <header class="clinic-report-header">
+          <p class="eyebrow dark">PSU DPT Panther PT Pro Bono Clinic</p>
+          <h2>Passive Head-Up Tilt Physiological Response Report</h2>
+          <p>De-identified clinical adjunct · Test date <strong id="clinic-test-date">—</strong></p>
+          <p class="clinic-support">Measurement and analysis support: Human Movement System Laboratory</p>
+        </header>
+        <section>
+          <h3>Plain-language summary</h3>
+          <div id="clinic-plain-summary" class="clinical-summary"></div>
+        </section>
+        <section>
+          <h3>Protocol performed</h3>
+          <p id="clinic-protocol-narrative">—</p>
+          <div id="clinic-protocol-summary" class="report-summary"></div>
+        </section>
+        <section>
+          <h3>Observed physiological response</h3>
+          <div id="clinic-heart-rate-summary" class="report-summary"></div>
+          <h4>Recovery</h4>
+          <div id="clinic-recovery-summary" class="report-summary"></div>
+          <div class="clinic-observation-grid">
+            <div><h4>Blood pressure</h4><div id="clinic-blood-pressure"></div></div>
+            <div><h4>End-tidal CO₂</h4><div id="clinic-etco2"></div></div>
+            <div><h4>Symptoms</h4><div id="clinic-symptoms"></div></div>
+          </div>
+        </section>
+        <section>
+          <h3>Consensus criteria</h3>
+          <div class="table-wrap">
+            <table id="clinic-criteria-table">
+              <thead>
+                <tr><th>Criterion</th><th>Result</th><th>Assessment</th><th>Qualification</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+        <section>
+          <h3>Structured impression</h3>
+          <h4>Observed response</h4>
+          <div id="clinic-impression-observed" class="clinical-summary"></div>
+          <h4>Assessability</h4>
+          <div id="clinic-impression-assessability" class="clinical-summary"></div>
+          <h4>Limitations</h4>
+          <ul id="clinic-impression-limitations"></ul>
+          <h4>Licensed reviewer conclusion and recommendations</h4>
+          <p id="clinic-reviewer-conclusion">No reviewer conclusion entered.</p>
+        </section>
+        <section class="clinic-references">
+          <h3>Evidence and methods</h3>
+          <p>
+            Criteria are reported as observed, not observed, or not assessable.
+            They are not automatic diagnoses. References are frozen for this
+            report-method release.
+          </p>
+          <ol id="clinic-reference-list"></ol>
+          <div id="clinic-method-summary" class="report-summary"></div>
+        </section>
+        <section class="clinic-approval-block">
+          <h3>Review and approval</h3>
+          <div id="clinic-approval-summary" class="report-summary"></div>
+          <p id="clinic-attestation"></p>
+        </section>
+        <footer id="clinic-report-footer">
+          De-identified physiological response report; licensed clinician review and approval required.
+        </footer>
+      </div>
+      <div class="report-approval no-print">
         <label class="reviewer-conclusion">Clinical reviewer conclusion
           <textarea id="reviewer-conclusion" rows="4" maxlength="4000" placeholder="Optional de-identified conclusion. Do not enter direct identifiers."></textarea>
         </label>
-        <button id="approve-review" type="button">Approve review and prepare report</button>
-        <button id="print-report" class="secondary" type="button" disabled>Print / Save PDF</button>
+        <fieldset class="clinic-approval-fields">
+          <legend>Panther PT clinical report approval</legend>
+          <div class="approval-grid">
+            <label>DPT student
+              <input id="clinic-student-name" type="text" maxlength="200" autocomplete="off" required>
+            </label>
+            <label>Licensed reviewer
+              <input id="clinic-reviewer-name" type="text" maxlength="200" autocomplete="off" required>
+            </label>
+            <label>Reviewer credentials
+              <input id="clinic-reviewer-credentials" type="text" maxlength="200" autocomplete="off" required>
+            </label>
+            <label>Supervising clinician
+              <input id="clinic-supervisor-name" type="text" maxlength="200" autocomplete="off" required>
+            </label>
+            <label>Supervising clinician credentials
+              <input id="clinic-supervisor-credentials" type="text" maxlength="200" autocomplete="off" required>
+            </label>
+            <label>Approval date
+              <input id="clinic-approval-date" type="date" required>
+            </label>
+          </div>
+          <label class="confirmation clinic-attestation-control">
+            <input id="clinic-attestation-accepted" type="checkbox" required>
+            <span>I reviewed the source recording, analysis decisions, physiological findings, and stated limitations and approve this report for the documented clinical purpose.</span>
+          </label>
+        </fieldset>
+        <div class="actions">
+          <button id="approve-review" type="button">Approve review and prepare reports</button>
+          <button id="print-clinic-report" class="secondary" type="button" disabled>Print Panther PT PDF</button>
+          <button id="print-report" class="secondary" type="button" disabled>Print detailed HMS PDF</button>
+        </div>
         <span id="report-status" class="status" role="status"></span>
       </div>
     </section>

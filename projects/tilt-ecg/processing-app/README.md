@@ -44,10 +44,15 @@ node projects/tilt-ecg/processing-app/server.mjs \
 8. Set the supine, upright, and recovery HRV windows.
 9. Review time-domain HRV, Poincare results, and frequency-domain eligibility.
 10. Click an R–R scatter point to exclude or restore that interval.
-11. Add an optional de-identified clinical reviewer conclusion.
-12. Approve the review to write immutable review provenance.
-13. Select **Print / Save PDF** and choose the browser's PDF destination.
-    The report is formatted for portrait-oriented paper by default.
+11. Review the Panther PT plain-language summary, actual protocol, recovery,
+    consensus-criteria table, assessability, limitations, and frozen evidence
+    references.
+12. Add an optional de-identified clinical reviewer conclusion.
+13. Complete the DPT student, licensed reviewer, supervising clinician,
+    credentials, approval date, and electronic-attestation fields.
+14. Approve the review to write immutable `tilt-ecg-review-v3` provenance.
+15. Export either the Panther PT clinical-adjunct report or the detailed HMS
+    physiology report. Both use portrait-oriented paper by default.
 
 The regression pairs every accepted consecutive R–R interval with the
 linearly interpolated corrected table angle at the interval midpoint. It does
@@ -64,6 +69,10 @@ The clinical analysis also reports:
 - BP changes and configured orthostatic hypotension criteria.
 - etCO2 values and changes from baseline.
 - Symptom onset/resolution with corrected angle and HR context.
+- Recovery HR at 30, 60, 120, and 300 seconds plus time to return within
+  10 bpm of baseline.
+- Classic, initial, and delayed orthostatic-hypotension criteria as observed,
+  not observed, or not assessable.
 
 Meeting a configured HR threshold is reported as a physiologic pattern, not as
 a diagnosis. The HR-angle slope remains descriptive until a protocol-specific
@@ -124,14 +133,29 @@ No name, MRN, date of birth, or other direct identifier is requested or stored.
 
 ## Report boundary
 
-The report prioritizes the clinical physiology summary, heart-rate response,
-HR-angle association, BP, etCO2, symptoms, HRV, and Poincare analysis.
-Acquisition integrity, calibration, native R–R quality, source checksums, and
-processing provenance appear in the technical appendix.
+One approved analysis produces two report views:
+
+- **PSU DPT Panther PT Pro Bono Clinic Passive Head-Up Tilt Physiological
+  Response Report** — a de-identified clinical adjunct with planned-versus-
+  actual protocol, plain-language summary, HR and recovery, BP, etCO2,
+  symptoms, consensus-criteria assessability, structured impression,
+  limitations, licensed approval, and frozen evidence references.
+- **Detailed HMS report** — the existing physiology and technical report with
+  HR-angle and R–R regression, HRV, Poincare plots, and technical provenance.
+
+The clinic report method is
+`panther-pt-passive-hut-report-v0.1.0`; its initial frozen evidence set is
+`tilt-ecg-evidence-2026-10-24-v1`. Criteria are physiological observations,
+not automatic diagnoses. Initial orthostatic hypotension is reported as not
+assessable because the current workflow uses passive tilt and intermittent BP.
 
 The browser print dialog is intentionally used for PDF export so the operator
 can preview the exact report and choose an approved destination. The application
 does not silently write a PDF or infer a patient identity.
+
+Patient identifiers remain outside the acquisition and processing artifacts.
+Authorized student and clinician identities are stored only with immutable
+report approval provenance.
 
 ## Tests
 

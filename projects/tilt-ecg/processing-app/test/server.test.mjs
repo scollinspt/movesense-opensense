@@ -2,6 +2,46 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createProcessingServer } from "../server.mjs";
+import { validateClinicApproval } from "../recording-store.mjs";
+
+test("requires complete licensed clinic report approval", () => {
+  assert.throws(
+    () => validateClinicApproval({}),
+    /Complete all clinic report approval fields/,
+  );
+  assert.throws(
+    () => validateClinicApproval({
+      studentName: "DPT Student",
+      reviewerName: "Reviewer",
+      reviewerCredentials: "PT, DPT",
+      supervisingClinicianName: "Supervisor",
+      supervisingClinicianCredentials: "PT, DPT",
+      approvalDate: "2026-10-24",
+      attestationAccepted: false,
+    }),
+    /must accept/,
+  );
+  assert.deepEqual(
+    validateClinicApproval({
+      studentName: " DPT Student ",
+      reviewerName: " Reviewer ",
+      reviewerCredentials: " PT, DPT ",
+      supervisingClinicianName: " Supervisor ",
+      supervisingClinicianCredentials: " PT, DPT ",
+      approvalDate: "2026-10-24",
+      attestationAccepted: true,
+    }),
+    {
+      studentName: "DPT Student",
+      reviewerName: "Reviewer",
+      reviewerCredentials: "PT, DPT",
+      supervisingClinicianName: "Supervisor",
+      supervisingClinicianCredentials: "PT, DPT",
+      approvalDate: "2026-10-24",
+      attestationAccepted: true,
+    },
+  );
+});
 
 test("serves the review interface and recording API", async (context) => {
   const store = {
@@ -36,7 +76,12 @@ test("serves the review interface and recording API", async (context) => {
   assert.match(pageText, /Poincaré plot/);
   assert.match(pageText, /Frequency-domain HRV eligibility/);
   assert.match(pageText, /Blood pressure, end-tidal CO₂, and symptoms/);
-  assert.match(pageText, /Print \/ Save PDF/);
+  assert.match(pageText, /PSU DPT Panther PT Pro Bono Clinic/);
+  assert.match(pageText, /Passive Head-Up Tilt Physiological Response Report/);
+  assert.match(pageText, /Consensus criteria/);
+  assert.match(pageText, /Licensed reviewer/);
+  assert.match(pageText, /Print Panther PT PDF/);
+  assert.match(pageText, /Print detailed HMS PDF/);
   assert.doesNotMatch(
     pageText,
     /Research analysis only\. Not a diagnostic interpretation or clinical alarm\./,

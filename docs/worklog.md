@@ -2,6 +2,32 @@
 
 Maintain this as a chronological record of completed work, evidence, decisions, and blockers. Planned work belongs in the workplan; this log records what actually happened.
 
+## 2026-10-24
+
+### Panther PT passive head-up tilt report
+
+- Built the first PSU DPT Panther PT Pro Bono Clinic clinical-adjunct report as
+  a second export from the existing governed Tilt ECG analysis.
+- Added planned-versus-actual protocol narrative, plain-language physiological
+  summary, peak and sustained HR response, fixed-time recovery and return to
+  within 10 bpm of baseline, BP and etCO2 absolute/change displays, symptom
+  timing, and a structured impression.
+- Added explicit observed/not-observed/not-assessable results for sustained
+  orthostatic HR response, classic orthostatic hypotension, initial orthostatic
+  hypotension, and delayed orthostatic hypotension. Initial OH remains not
+  assessable with passive tilt and intermittent BP.
+- Added required DPT student, licensed reviewer, supervising clinician,
+  credentials, approval date, and electronic attestation fields.
+- Advanced immutable review provenance to `tilt-ecg-review-v3` and preserved
+  `panther-pt-passive-hut-report-v0.1.0` with frozen evidence set
+  `tilt-ecg-evidence-2026-10-24-v1`.
+- Preserved the existing detailed HMS physiology/technical report as a
+  separate portrait PDF target.
+- Validated deterministic analysis and server tests, clinic rendering against
+  an October 23 governed recording, required approval errors, horizontal
+  layout, and independent clinic/HMS print visibility without approving or
+  modifying the source recording.
+
 ## 2026-10-23
 
 ### Tilt ECG clinical physiology review and report

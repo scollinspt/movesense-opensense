@@ -81,7 +81,7 @@ export async function createProcessingServer({
         sendJson(response, 200, {
           dataRoot: path.resolve(dataRoot),
           disclaimer:
-            "Research review interface only; not a diagnostic interpretation.",
+            "De-identified physiological review; clinician approval is required.",
         });
         return;
       }
@@ -118,6 +118,7 @@ export async function createProcessingServer({
             input.recordingId,
             input.settings,
             input.reviewerConclusion,
+            input.clinicApproval,
           ),
         );
         return;

@@ -204,3 +204,240 @@ test("gates HF and LF by independent duration requirements", () => {
   assert.equal(overridden.eligibility.overrideApplied, true);
   assert.equal(overridden.eligibility.lfEligible, true);
 });
+
+test("builds the preliminary Panther PT clinic report from reviewed physiology", () => {
+  const durationSeconds = 1_300;
+  const rawTiltAt = (timeSeconds) => {
+    if (timeSeconds < 600 || timeSeconds >= 1_240) return 0;
+    if (timeSeconds < 620) return (timeSeconds - 600) / 20 * 70;
+    if (timeSeconds <= 1_220) return 70;
+    return Math.max(0, 70 - (timeSeconds - 1_220) / 20 * 70);
+  };
+  const tiltSamples = Array.from(
+    { length: durationSeconds + 1 },
+    (_, timeSeconds) => ({
+      timeSeconds,
+      rawTiltDegrees: rawTiltAt(timeSeconds),
+      rollDegrees: 0,
+      quality: "good",
+    }),
+  );
+  const rrIntervals = [];
+  let timeSeconds = 0.8;
+  let index = 0;
+  while (timeSeconds < durationSeconds) {
+    const rrMs =
+      timeSeconds < 620 ? 800
+        : timeSeconds < 1_240 ? 570
+          : 750;
+    rrIntervals.push({
+      id: `rr-${index}`,
+      timeSeconds,
+      rrMs,
+      rawTiltDegrees: rawTiltAt(timeSeconds),
+    });
+    timeSeconds += rrMs / 1_000;
+    index += 1;
+  }
+  const recording = {
+    durationSeconds,
+    metadata: {
+      baselineBloodPressure: { systolic: 120, diastolic: 80 },
+      baselineEtco2: 40,
+    },
+    manifest: { startedAt: "2026-10-23T14:00:00.000Z" },
+    rWaveCount: rrIntervals.length + 1,
+    tiltSamples,
+    rrIntervals,
+    events: [
+      {
+        id: "begin",
+        type: "phase",
+        label: "begin_tilt",
+        relativeSeconds: 600,
+        data: {},
+      },
+      {
+        id: "target",
+        type: "phase",
+        label: "target_angle_reached",
+        relativeSeconds: 620,
+        data: {},
+      },
+      {
+        id: "bp-early",
+        type: "blood_pressure",
+        label: "blood_pressure_observation",
+        relativeSeconds: 700,
+        data: { systolic: 110, diastolic: 75 },
+      },
+      {
+        id: "bp-delayed",
+        type: "blood_pressure",
+        label: "blood_pressure_observation",
+        relativeSeconds: 1_000,
+        data: { systolic: 95, diastolic: 65 },
+      },
+      {
+        id: "co2",
+        type: "etco2",
+        label: "etco2_observation",
+        relativeSeconds: 900,
+        data: { value: 34 },
+      },
+      {
+        id: "symptom",
+        type: "symptom",
+        label: "lightheadedness",
+        semantics: "onset",
+        relativeSeconds: 910,
+        data: {},
+      },
+      {
+        id: "return",
+        type: "phase",
+        label: "begin_return",
+        relativeSeconds: 1_220,
+        data: {},
+      },
+      {
+        id: "recovery",
+        type: "phase",
+        label: "supine_recovery",
+        relativeSeconds: 1_240,
+        data: {},
+      },
+    ],
+  };
+  const analysis = analyzeRecording(recording, settings(durationSeconds, {
+    baselineStartSeconds: 500,
+    baselineEndSeconds: 590,
+    plateauStartSeconds: 630,
+    plateauEndSeconds: 640,
+    ascentStartSeconds: 600,
+    ascentEndSeconds: 620,
+    supineHrvStartSeconds: 500,
+    supineHrvEndSeconds: 590,
+    uprightHrvStartSeconds: 630,
+    uprightHrvEndSeconds: 720,
+    recoveryHrvStartSeconds: 1_240,
+    recoveryHrvEndSeconds: 1_299,
+  }));
+
+  assert.equal(analysis.clinical.heartRate.orthostaticAssessable, true);
+  assert.equal(analysis.clinical.heartRate.orthostaticThresholdMet, true);
+  assert.equal(analysis.clinical.bloodPressure.classic.status, "not_met");
+  assert.equal(analysis.clinical.bloodPressure.delayed.status, "met");
+  assert.equal(
+    analysis.clinical.heartRate.recovery.reachedWithinTenBpm,
+    true,
+  );
+  assert.equal(analysis.clinicReport.testDate, "2026-10-23");
+  assert.equal(analysis.clinicReport.protocol.actual.baselineSeconds, 600);
+  assert.equal(analysis.clinicReport.protocol.actual.uprightSeconds, 600);
+  assert.equal(analysis.clinicReport.protocol.actual.recoverySeconds, 60);
+  assert.equal(
+    analysis.clinicReport.criteria.find(
+      (criterion) => criterion.id === "initial-oh",
+    ).status,
+    "not_assessable",
+  );
+  assert.equal(
+    analysis.clinicReport.reportMethod.reportMethodVersion,
+    "panther-pt-passive-hut-report-v0.1.0",
+  );
+  assert.match(
+    analysis.clinicReport.impression.limitations.join(" "),
+    /does not establish a diagnosis/,
+  );
+});
+
+test("reports an observed HR criterion before a shortened upright phase ends", () => {
+  const durationSeconds = 100;
+  const rawTiltAt = (timeSeconds) => (
+    timeSeconds < 20 ? 0
+      : timeSeconds < 30 ? (timeSeconds - 20) * 7
+        : timeSeconds <= 80 ? 70
+          : 0
+  );
+  const tiltSamples = Array.from(
+    { length: durationSeconds + 1 },
+    (_, timeSeconds) => ({
+      timeSeconds,
+      rawTiltDegrees: rawTiltAt(timeSeconds),
+      rollDegrees: 0,
+      quality: "good",
+    }),
+  );
+  const rrIntervals = [];
+  let timeSeconds = 0.8;
+  while (timeSeconds < durationSeconds) {
+    const rrMs = timeSeconds < 30 ? 800 : 500;
+    rrIntervals.push({
+      id: `rr-${rrIntervals.length}`,
+      timeSeconds,
+      rrMs,
+      rawTiltDegrees: rawTiltAt(timeSeconds),
+    });
+    timeSeconds += rrMs / 1_000;
+  }
+  const analysis = analyzeRecording({
+    durationSeconds,
+    metadata: {},
+    rWaveCount: rrIntervals.length + 1,
+    tiltSamples,
+    rrIntervals,
+    events: [
+      {
+        id: "begin",
+        type: "phase",
+        label: "begin_tilt",
+        relativeSeconds: 20,
+        data: {},
+      },
+      {
+        id: "target",
+        type: "phase",
+        label: "target_angle_reached",
+        relativeSeconds: 30,
+        data: {},
+      },
+      {
+        id: "return",
+        type: "phase",
+        label: "begin_return_early",
+        relativeSeconds: 80,
+        data: {},
+      },
+      {
+        id: "recovery",
+        type: "phase",
+        label: "supine_recovery",
+        relativeSeconds: 85,
+        data: {},
+      },
+    ],
+  }, settings(durationSeconds, {
+    baselineStartSeconds: 1,
+    baselineEndSeconds: 15,
+    plateauStartSeconds: 35,
+    plateauEndSeconds: 45,
+    ascentStartSeconds: 20,
+    ascentEndSeconds: 30,
+    supineHrvStartSeconds: 1,
+    supineHrvEndSeconds: 15,
+    uprightHrvStartSeconds: 35,
+    uprightHrvEndSeconds: 70,
+    recoveryHrvStartSeconds: 85,
+    recoveryHrvEndSeconds: 99,
+    orthostaticAssessmentSeconds: 60,
+  }));
+
+  assert.equal(analysis.clinical.heartRate.uprightDurationSeconds, 50);
+  assert.equal(analysis.clinical.heartRate.orthostaticAssessable, true);
+  assert.equal(analysis.clinical.heartRate.orthostaticThresholdMet, true);
+  assert.equal(
+    analysis.clinicReport.criteria[0].status,
+    "met",
+  );
+});

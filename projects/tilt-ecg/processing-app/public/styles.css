@@ -246,6 +246,12 @@ th { color: var(--deep-forest); }
 .eligibility-reason { display: block; max-width: 260px; margin-top: 3px; color: var(--muted); font-size: .74rem; }
 .report-panel { padding: 0; overflow: hidden; }
 .report-panel > .section-heading, .report-panel > .actions { margin: 0; padding: 20px; }
+.report-switcher {
+  display: flex;
+  gap: 10px;
+  padding: 0 20px 20px;
+  border-bottom: 1px solid var(--line);
+}
 .report-document { max-width: 980px; margin: 0 auto; padding: 42px; background: white; }
 .report-document > header { padding-bottom: 18px; border-bottom: 3px solid var(--forest); }
 .report-document section { margin-top: 26px; break-inside: avoid; }
@@ -258,6 +264,43 @@ th { color: var(--deep-forest); }
 .reviewer-conclusion { width: min(620px, 100%); }
 .reviewer-conclusion textarea { resize: vertical; }
 .report-document footer { margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: .78rem; }
+.clinic-report-header { border-bottom-color: #1f4e79 !important; }
+.clinic-report-header h2 { color: #1f4e79; }
+.clinic-support { color: var(--muted); font-size: .84rem; }
+.clinic-observation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.clinic-observation-grid > div {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.criterion-status { font-weight: 800; }
+.criterion-status.met { color: var(--forest); }
+.criterion-status.not_met { color: #3f5365; }
+.criterion-status.not_assessable { color: var(--warning); }
+.clinic-references li { margin-bottom: 10px; }
+.clinic-references small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+}
+.clinic-approval-block {
+  padding: 16px;
+  border: 2px solid #1f4e79;
+  border-radius: 8px;
+}
+.report-approval {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border-top: 1px solid var(--line);
+}
+.clinic-approval-fields { max-width: 980px; }
+.approval-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.clinic-attestation-control { max-width: 920px; }
 
 @media (max-width: 1150px) {
   .analysis-grid { grid-template-columns: 1fr 1fr; }
@@ -267,7 +310,7 @@ th { color: var(--deep-forest); }
 @media (max-width: 760px) {
   .masthead, .section-heading, .actions { align-items: stretch; flex-direction: column; }
   .recording-row, .review-grid, .analysis-grid, .number-grid, .summary-grid, .report-summary { grid-template-columns: 1fr; }
-  .physiology-grid { grid-template-columns: 1fr; }
+  .physiology-grid, .clinic-observation-grid, .approval-grid { grid-template-columns: 1fr; }
   .segment-grid { grid-template-columns: 1fr 1fr; }
   .segment-grid > strong { grid-column: 1 / -1; }
   .metrics-panel { grid-column: auto; }
@@ -291,6 +334,14 @@ th { color: var(--deep-forest); }
   }
   .report-document canvas {
     height: 240px;
+    break-inside: avoid;
+  }
+  .clinic-report-document section { break-inside: auto; }
+  .clinic-report-document table { font-size: 8.5pt; }
+  .clinic-report-document tr,
+  .clinic-approval-block,
+  .clinic-observation-grid > div,
+  .clinic-references li {
     break-inside: avoid;
   }
   .report-document footer { break-inside: avoid; }
