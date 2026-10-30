@@ -93,36 +93,47 @@ export class SyntheticImuSource extends EventEmitter {
   }
 }
 
-export class MovesenseImuSource extends EventEmitter {
-  constructor({ role, address, rateHz = 52, pythonExecutable = null }) {
+export class MovesenseDualImuSource extends EventEmitter {
+  constructor({ leftAddress, rightAddress, rateHz = 52, pythonExecutable = null }) {
     super();
-    this.role = role;
-    this.address = address;
+    this.addresses = {
+      left_distal_shank: leftAddress,
+      right_distal_shank: rightAddress,
+    };
     this.rateHz = rateHz;
     this.pythonExecutable =
       pythonExecutable ?? path.join(REPOSITORY_ROOT, ".venv", "bin", "python");
     this.child = null;
     this.stderr = "";
-    this.info = {
-      mode: "hardware",
-      name: "Movesense",
-      address,
-      hardwareId: address,
-      imuRateHz: rateHz,
-      firmware: null,
-    };
+    this.roleErrors = new Set();
+    this.info = Object.fromEntries(
+      Object.entries(this.addresses).map(([role, address]) => [
+        role,
+        {
+          mode: "hardware",
+          name: "Movesense",
+          address,
+          hardwareId: address,
+          imuRateHz: rateHz,
+          firmware: null,
+        },
+      ]),
+    );
   }
 
   start() {
-    if (this.child) throw new Error("Movesense source is already running.");
+    if (this.child) throw new Error("Movesense dual source is already running.");
+    this.roleErrors.clear();
     this.child = spawn(
       this.pythonExecutable,
       [
         "-m",
         "movesense_opensense.acquisition.live",
-        "stream",
-        "--address",
-        this.address,
+        "dual-stream",
+        "--left-address",
+        this.addresses.left_distal_shank,
+        "--right-address",
+        this.addresses.right_distal_shank,
         "--sample-rate",
         String(this.rateHz),
       ],
@@ -141,17 +152,43 @@ export class MovesenseImuSource extends EventEmitter {
         if (!line.trim()) continue;
         try {
           const event = JSON.parse(line);
-          if (event.event === "sample") {
-            this.emit("sample", mapBridgeSample(event.sample));
-          } else if (event.event === "connected") {
-            this.emit("status", { state: "connected", sensor: this.info });
-          } else if (event.event === "connecting") {
-            this.emit("status", { state: "connecting", sensor: this.info });
+          if (event.event === "sample" && this.info[event.role]) {
+            this.emit("sample", {
+              role: event.role,
+              sample: mapBridgeSample(event.sample),
+            });
+          } else if (event.event === "connected" && this.info[event.role]) {
+            this.emit("status", {
+              role: event.role,
+              state: "connected",
+              sensor: this.info[event.role],
+            });
+          } else if (event.event === "connecting" && this.info[event.role]) {
+            this.emit("status", {
+              role: event.role,
+              state: "connecting",
+              sensor: this.info[event.role],
+            });
           } else if (event.event === "error") {
-            this.emit("error", new Error(event.message));
+            const roles = this.info[event.role]
+              ? [event.role]
+              : Object.keys(this.info);
+            for (const role of roles) {
+              this.roleErrors.add(role);
+              this.emit("role-error", {
+                role,
+                error: new Error(event.message),
+              });
+            }
           }
         } catch (error) {
-          this.emit("error", new Error(`Invalid bridge output: ${error.message}`));
+          for (const role of Object.keys(this.info)) {
+            this.roleErrors.add(role);
+            this.emit("role-error", {
+              role,
+              error: new Error(`Invalid bridge output: ${error.message}`),
+            });
+          }
         }
       }
     });
@@ -164,14 +201,22 @@ export class MovesenseImuSource extends EventEmitter {
       const expected = this.child === null;
       this.child = null;
       if (!expected && code !== 0) {
-        this.emit(
-          "error",
-          new Error(
-            `Movesense bridge exited (${signal ?? code}). ${this.stderr.trim()}`,
-          ),
-        );
+        const failedRoles = [...this.roleErrors];
+        for (const role of Object.keys(this.info)) {
+          if (this.roleErrors.has(role)) continue;
+          this.emit("role-error", {
+            role,
+            error: new Error(
+              failedRoles.length
+                ? `Dual-sensor session stopped because ${failedRoles.join(", ")} failed.`
+                : `Movesense bridge exited (${signal ?? code}). ${this.stderr.trim()}`,
+            ),
+          });
+        }
       }
-      this.emit("status", { state: "disconnected" });
+      for (const role of Object.keys(this.info)) {
+        this.emit("status", { role, state: "disconnected" });
+      }
     });
     return this.info;
   }
@@ -229,4 +274,3 @@ export async function scanMovesense({ pythonExecutable = null } = {}) {
     });
   });
 }
-

@@ -6,7 +6,8 @@ Localhost browser application for two-sensor distal-shank IMU acquisition.
 
 - Deterministic two-sensor simulator.
 - Scan and explicit left/right Movesense assignment.
-- Two independent live IMU9 streams through the existing Python BLE bridge.
+- Two role-tagged live IMU9 streams through one Python process, one shared BLE
+  discovery, and two `BleakClient` instances in one asyncio event loop.
 - Live left and right sagittal angular-velocity traces.
 - Placement and side-verification confirmation.
 - Structured assistive-device, assistance, and orthosis context.
@@ -20,6 +21,16 @@ Localhost browser application for two-sensor distal-shank IMU acquisition.
 Hardware acquisition has not yet completed the required two-sensor throughput
 and timing validation. The simulator is for interface and recording-workflow
 development only.
+
+Concurrent connection and live 52 Hz streaming were verified with two
+GSP-ready physical sensors on 2026-10-30. This bounded connection check does
+not establish sustained throughput, packet continuity, clock offset, drift, or
+reconnect performance.
+
+Both hardware sensors must expose the Movesense GATT SensorData Protocol. A
+sensor running the legacy Whiteboard/MDS application cannot provide the
+required `/Meas/IMU9/{rate}` subscription and must be updated or loaded with a
+compatible GATT SensorData application before use.
 
 ## Launch from the repository
 
@@ -67,4 +78,3 @@ Recovered artifacts are marked incomplete and require review.
 ```console
 npm --prefix projects/bilateral-gait/acquisition-app test
 ```
-

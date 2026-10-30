@@ -5,6 +5,7 @@ import struct
 
 import pytest
 
+from movesense_opensense.acquisition import gsp
 from movesense_opensense.acquisition.gsp import (
     ECG_REFERENCE,
     EcgDecoder,
@@ -14,6 +15,7 @@ from movesense_opensense.acquisition.gsp import (
     MovesenseEcgImuStream,
     PACKET_TYPE_DATA,
     PACKET_TYPE_DATA_PART2,
+    resolve_ble_devices,
 )
 
 
@@ -31,6 +33,28 @@ def imu9_packet_pair(
     first = bytes((PACKET_TYPE_DATA, IMU9_REFERENCE)) + payload[:split]
     second = bytes((PACKET_TYPE_DATA_PART2, IMU9_REFERENCE)) + payload[split:]
     return first, second
+
+
+def test_resolve_ble_devices_accumulates_two_scans(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Device:
+        def __init__(self, address: str) -> None:
+            self.address = address
+
+    scan_results = [
+        {"left": (Device("left"), object())},
+        {"right": (Device("right"), object())},
+    ]
+
+    async def discover(**_kwargs: object) -> dict[str, tuple[Device, object]]:
+        return scan_results.pop(0)
+
+    monkeypatch.setattr(gsp.BleakScanner, "discover", discover)
+
+    resolved = asyncio.run(
+        resolve_ble_devices(["left", "right"], timeout_seconds=0, attempts=2)
+    )
+
+    assert set(resolved) == {"left", "right"}
 
 
 def test_decodes_two_part_imu9_packet() -> None:

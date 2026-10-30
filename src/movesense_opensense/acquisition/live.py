@@ -14,6 +14,7 @@ from .gsp import (
     MovesenseEcgImuStream,
     MovesenseImu9Stream,
     discover_movesense,
+    resolve_ble_devices,
 )
 
 
@@ -47,6 +48,83 @@ async def stream(address: str, sample_rate_hz: int) -> None:
             emit("sample", sample=sample.as_dict(), sample_count=sample_count)
     finally:
         emit("stopped", sample_count=sample_count)
+
+
+class RoleStreamError(Exception):
+    def __init__(self, role: str, cause: Exception) -> None:
+        super().__init__(str(cause))
+        self.role = role
+        self.cause = cause
+
+
+async def dual_stream(
+    left_address: str,
+    right_address: str,
+    sample_rate_hz: int,
+) -> None:
+    stop_event = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    for signal_name in (signal.SIGINT, signal.SIGTERM):
+        try:
+            loop.add_signal_handler(signal_name, stop_event.set)
+        except NotImplementedError:
+            pass
+
+    addresses = {
+        "left_distal_shank": left_address,
+        "right_distal_shank": right_address,
+    }
+    for role, address in addresses.items():
+        emit(
+            "connecting",
+            role=role,
+            address=address,
+            sample_rate_hz=sample_rate_hz,
+        )
+
+    devices = await resolve_ble_devices(list(addresses.values()))
+
+    async def pump(role: str, address: str) -> None:
+        source = MovesenseImu9Stream(devices[address], sample_rate_hz)
+        sample_count = 0
+        try:
+            async for sample in source.samples(stop_event):
+                if sample_count == 0:
+                    emit(
+                        "connected",
+                        role=role,
+                        address=address,
+                        sample_rate_hz=sample_rate_hz,
+                    )
+                sample_count += 1
+                emit(
+                    "sample",
+                    role=role,
+                    sample=sample.as_dict(),
+                    sample_count=sample_count,
+                )
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:
+            raise RoleStreamError(role, error) from error
+        finally:
+            emit("stopped", role=role, sample_count=sample_count)
+
+    tasks = [
+        asyncio.create_task(pump(role, address))
+        for role, address in addresses.items()
+    ]
+    try:
+        await asyncio.gather(*tasks)
+    except Exception:
+        stop_event.set()
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        raise
+    finally:
+        stop_event.set()
 
 
 async def tilt_stream(
@@ -113,6 +191,14 @@ def parser() -> argparse.ArgumentParser:
     stream_parser.add_argument("--address", required=True)
     stream_parser.add_argument("--sample-rate", type=int, default=52)
 
+    dual_parser = subparsers.add_parser(
+        "dual-stream",
+        help="Stream two concurrent IMU9 devices as role-tagged JSON lines",
+    )
+    dual_parser.add_argument("--left-address", required=True)
+    dual_parser.add_argument("--right-address", required=True)
+    dual_parser.add_argument("--sample-rate", type=int, default=52)
+
     tilt_parser = subparsers.add_parser(
         "tilt-stream",
         help="Stream concurrent ECG and IMU9 data as JSON lines",
@@ -128,6 +214,12 @@ async def run(arguments: argparse.Namespace) -> None:
         await scan(arguments.timeout)
     elif arguments.command == "stream":
         await stream(arguments.address, arguments.sample_rate)
+    elif arguments.command == "dual-stream":
+        await dual_stream(
+            arguments.left_address,
+            arguments.right_address,
+            arguments.sample_rate,
+        )
     elif arguments.command == "tilt-stream":
         await tilt_stream(
             arguments.address,
@@ -140,6 +232,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = parser().parse_args(argv)
     try:
         asyncio.run(run(arguments))
+    except RoleStreamError as error:
+        emit(
+            "error",
+            role=error.role,
+            message=str(error.cause),
+            error_type=type(error.cause).__name__,
+        )
+        return 1
     except Exception as error:
         emit("error", message=str(error), error_type=type(error).__name__)
         return 1

@@ -51,6 +51,24 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
   healthy-signal and straight-versus-turning pipeline fixture, but not a
   clinical validation benchmark because it lacks a stroke population and an
   independent gait-event reference standard.
+- Replaced competing per-sensor Python BLE bridge processes with one shared
+  discovery and two role-tagged `BleakClient` instances in one asyncio event
+  loop.
+- Added explicit GSP-versus-legacy-MDS errors and verified that three initially
+  tested sensors still exposed the legacy application rather than the required
+  GATT SensorData Protocol.
+- After a second sensor was updated, verified concurrent live 52 Hz streaming
+  from two physical GSP-ready sensors. Both streams advanced together to 420
+  samples without connection errors during the bounded check; sustained
+  throughput, packet continuity, clock offset, drift, and reconnect validation
+  remain pending.
+- Added a repeatable sensor-readiness protocol covering serial-number scan,
+  battery and GSP-profile inventory, post-update individual streaming, fresh
+  pair scan, concurrent counter checks, and limb-role verification.
+- Verified updated sensors `234230000540`, `234230000587`, and
+  `234230000604` as GSP-ready. Sensor `604` passed individual 52 Hz streaming
+  and a concurrent check with `587`; both remained connected without errors
+  and advanced to approximately 916 samples during the bounded observation.
 
 ## 2026-10-24
 

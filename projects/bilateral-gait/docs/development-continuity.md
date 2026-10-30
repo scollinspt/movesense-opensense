@@ -6,7 +6,10 @@ The project has a documentation, protocol, and initial schema foundation. The
 first localhost acquisition application supports simulator review, two-sensor
 hardware assignment, live preview, governed SQLite recording, structured
 events, finalization, checksums, and explicit recovery. Hardware timing and
-throughput validation remains pending. The processing application has not yet
+throughput validation remains pending. A bounded 2026-10-30 hardware check
+confirmed concurrent 52 Hz streaming from two GSP-ready sensors after the BLE
+bridge was consolidated into one Python process and asyncio event loop. The
+processing application has not yet
 been implemented. The HMS Lab Zotero collection for this project contains an
 initial 16-paper evidence set with locally accessible PDFs for algorithm,
 benchmark, validation, and interpretation work.

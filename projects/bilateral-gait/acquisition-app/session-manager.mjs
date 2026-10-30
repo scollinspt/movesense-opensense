@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 
 import { GaitRecordingSession } from "./recording.mjs";
 import {
-  MovesenseImuSource,
+  MovesenseDualImuSource,
   SyntheticImuSource,
   scanMovesense,
 } from "./sources.mjs";
@@ -209,23 +209,47 @@ export class GaitSessionManager extends EventEmitter {
       throw new Error("Select a supported IMU9 rate.");
     }
     await this.disconnect();
-    this.#attach(
-      "left_distal_shank",
-      new MovesenseImuSource({
-        role: "left_distal_shank",
-        address: leftAddress.trim(),
-        rateHz: rate,
-      }),
-    );
-    this.#attach(
-      "right_distal_shank",
-      new MovesenseImuSource({
-        role: "right_distal_shank",
-        address: rightAddress.trim(),
-        rateHz: rate,
-      }),
-    );
+    this.#attachDual(new MovesenseDualImuSource({
+      leftAddress: leftAddress.trim(),
+      rightAddress: rightAddress.trim(),
+      rateHz: rate,
+    }));
     return this.state;
+  }
+
+  #attachDual(source) {
+    this.sources.set("dual_hardware", source);
+    for (const role of ROLES) {
+      this.roles[role] = {
+        ...emptyRoleState(),
+        connectionState: "connecting",
+      };
+    }
+    source.on("sample", ({ role, sample }) => this.#handleSample(role, sample));
+    source.on("status", ({ role, state, sensor }) => {
+      if (!ROLES.includes(role)) return;
+      this.roles[role].connectionState =
+        state === "disconnected" && this.roles[role].errorMessage
+          ? "error"
+          : state;
+      if (sensor) this.roles[role].sensor = sensor;
+      this.#broadcast("state", this.state);
+    });
+    source.on("role-error", ({ role, error }) => {
+      if (!ROLES.includes(role)) return;
+      this.roles[role].errorMessage = error.message;
+      this.roles[role].connectionState = "error";
+      this.#broadcast("state", this.state);
+    });
+    source.on("error", (error) => {
+      for (const role of ROLES) {
+        this.roles[role].errorMessage = error.message;
+        this.roles[role].connectionState = "error";
+      }
+      this.#broadcast("state", this.state);
+    });
+    const sensors = source.start();
+    for (const role of ROLES) this.roles[role].sensor = sensors[role];
   }
 
   #attach(role, source) {

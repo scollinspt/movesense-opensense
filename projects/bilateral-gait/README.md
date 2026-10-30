@@ -4,8 +4,10 @@
 
 The first localhost acquisition application is operational for simulator-based
 workflow review and initial two-sensor hardware integration. Required hardware
-timing and throughput validation remains pending. The processing application
-has not yet been built.
+timing and throughput validation remains pending. An initial bilateral processing studio now verifies finalized recordings,
+compares both distal-shank streams, and displays acquisition-event anchors.
+Metric-grade clock alignment, reviewed gait-event detection, and derived gait
+metrics remain under development.
 
 ## Purpose
 
@@ -55,11 +57,12 @@ or derived clinical artifacts to this public repository.
   calibration, bounded recording, structured triggers, SQLite finalization,
   checksums, and recovery. See the
   [acquisition application](acquisition-app/README.md).
-- **Processing application:** read-only discovery, source-integrity and timing
-  verification, side-aware calibration, reviewed gait-event detection,
-  provenance-linked metrics, and later de-identified reporting.
-
-The processing application does not yet exist.
+- **Processing application:** the repository-owned Bilateral Gait Processing
+  Studio provides read-only discovery, checksum and SQLite verification,
+  bilateral stream-quality summaries, signal comparison, and acquisition-event
+  review. Side-aware calibration, metric-grade inter-sensor alignment, reviewed
+  gait-event detection, provenance-linked metrics, and later de-identified
+  reporting remain planned stages.
 
 On macOS, double-click:
 
@@ -103,6 +106,7 @@ not silently combined with ordinary flat-overground walking.
 - [Project charter](docs/project-charter.md)
 - [Acquisition requirements](docs/acquisition-requirements.md)
 - [Placement and calibration protocol](docs/placement-and-calibration-protocol.md)
+- [Sensor readiness protocol](docs/sensor-readiness-protocol.md)
 - [Gait context and event model](docs/gait-context-and-events.md)
 - [Synchronization and timing plan](docs/synchronization-and-timing-plan.md)
 - [Processing and metric plan](docs/processing-and-metric-plan.md)

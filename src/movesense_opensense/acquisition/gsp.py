@@ -266,6 +266,36 @@ async def discover_movesense(timeout_seconds: float = 5.0) -> list[DiscoveredSen
     return sorted(sensors, key=lambda sensor: sensor.name)
 
 
+async def resolve_ble_devices(
+    addresses: list[str],
+    timeout_seconds: float = 5.0,
+    attempts: int = 2,
+) -> dict[str, BLEDevice]:
+    if attempts <= 0:
+        raise ValueError("attempts must be positive")
+    requested = {address.casefold(): address for address in addresses}
+    resolved: dict[str, BLEDevice] = {}
+    for _attempt in range(attempts):
+        discovered = await BleakScanner.discover(
+            timeout=timeout_seconds,
+            return_adv=True,
+        )
+        resolved.update(
+            {
+                requested[device.address.casefold()]: device
+                for device, _advertisement in discovered.values()
+                if device.address.casefold() in requested
+            }
+        )
+        if len(resolved) == len(requested):
+            return resolved
+    missing = [address for address in addresses if address not in resolved]
+    raise ConnectionError(
+        "Could not rediscover the requested Movesense sensor(s) after "
+        f"{attempts} scans: " + ", ".join(missing)
+    )
+
+
 class MovesenseImu9Stream:
     def __init__(
         self,
