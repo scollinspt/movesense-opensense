@@ -54,6 +54,8 @@
   "kneeCalibration": {
     "preferredMovementMode": "active",
     "assistanceWhenNeeded": true,
+    "firstDiscernibleMovement": "extension",
+    "functionalRotationPositiveDirection": "flexion",
     "allowedMovementModes": [
       "active",
       "active_assisted",

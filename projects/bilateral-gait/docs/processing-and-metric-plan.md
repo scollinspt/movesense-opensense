@@ -50,6 +50,33 @@ provide an independent gait-event reference standard for the IMUs.
 10. Calculate metrics only from eligible reviewed intervals.
 11. Save derived artifacts without changing source acquisition.
 
+## Side-aware frame and gravity pipeline
+
+The initial transform implementation is in
+`src/movesense_opensense/gait/transforms.py` and follows the placement protocol's
+frame chain:
+
+1. Estimate gyroscope bias and a proximal shank direction from the initial
+   seated static interval under the documented near-vertical-shank assumption.
+2. Estimate a through-origin principal rotation axis from each limb's isolated
+   knee extension/flexion interval.
+3. Resolve its sign from the protocol-defined first movement and construct a
+   proper right-handed local frame: anterior, flexion-positive rotation axis,
+   proximal.
+4. Transform each limb independently so mirrored raw sensor axes map to
+   corresponding functional shank axes.
+5. Fuse transformed gyroscope and accelerometer data without magnetometer
+   heading.
+6. Subtract the estimated gravity vector to produce shank-frame linear
+   acceleration and retain orientation and rejection diagnostics.
+
+This implementation is an engineering candidate, not a validated gait output.
+The sagittal functional-axis sign requires protocol adherence and review.
+Earth-frame heading remains unobservable without a validated magnetic or
+external heading reference. See the
+[processing reading list](processing-reading-list.md) for the evidence and
+limitations informing these choices.
+
 ## Initial candidate outputs
 
 Subject to validation:

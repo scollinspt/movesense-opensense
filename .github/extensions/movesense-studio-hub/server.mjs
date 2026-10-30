@@ -16,6 +16,13 @@ export const STUDIOS = [
     next: "Use this after each recording passes acquisition integrity checks.",
   },
   {
+    id: "movesense-bilateral-gait-processing-studio",
+    name: "Bilateral Gait Processing Studio",
+    prompt: "Open Bilateral Gait Processing Studio",
+    purpose: "Verify bilateral distal-shank recordings, compare both IMU streams, and review gait acquisition events.",
+    next: "Use this for the bilateral-gait project before calculating temporal, symmetry, or coordination metrics.",
+  },
+  {
     id: "movesense-opensense-firmware-update-studio",
     name: "Firmware Update Studio",
     prompt: "Open Movesense Firmware Update Studio",
@@ -62,7 +69,7 @@ function page() {
     h1 { margin:5px 0 12px; font-size:clamp(34px,6vw,62px); line-height:1; letter-spacing:-.05em; }
     header p, footer, .next { color:var(--muted); }
     .instruction { padding:14px 16px; margin:0 0 20px; border-left:3px solid var(--green); border-radius:9px; background:#0c2934; }
-    main { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+    main { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
     .card { display:flex; flex-direction:column; min-width:0; padding:22px; border:1px solid var(--line); border-radius:16px; background:rgba(16,30,41,.94); }
     h2 { margin:8px 0; font-size:23px; }
     .next { flex:1; }

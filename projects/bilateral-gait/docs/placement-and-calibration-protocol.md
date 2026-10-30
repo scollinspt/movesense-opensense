@@ -62,9 +62,10 @@ and data-quality checks. It does not assert identical anatomical alignment.
 ## Knee extension/flexion verification and calibration
 
 Ask for two controlled active knee extension-and-flexion repetitions on one leg
-at a time. Use active-assisted or passive movement when active movement does
-not provide a clear, clinically appropriate excursion, and record the mode for
-each limb:
+at a time. The first discernible excursion starts from the supported seated
+position and proceeds into knee extension; return/flexion follows. Use
+active-assisted or passive movement when active movement does not provide a
+clear, clinically appropriate excursion, and record the mode for each limb:
 
 1. Keep the right leg still; extend and flex the left knee through a clinically
    appropriate range.
@@ -83,6 +84,10 @@ This stage can establish:
 - Extension and return sign.
 - Gross mount stability.
 - Comparable sensor response.
+
+The transform defines positive sagittal rotation as flexion. Processing uses
+the first extension excursion to resolve the otherwise sign-ambiguous
+functional axis separately for each limb.
 
 It is named **side verification and functional sagittal-axis calibration**.
 It can support the initial shank-based processing method but does not preclude
@@ -125,3 +130,8 @@ raw Movesense frame
 ```
 
 Raw axes must not be labeled anatomical without this provenance.
+
+The initial seated gravity direction is a proximal-axis estimate only under the
+protocol assumption that the shank is near vertical. Any structured deviation
+from that pose limits anatomical frame accuracy and must remain attached to the
+derived transform.
