@@ -17,7 +17,7 @@ Its second phase will investigate ambulatory ECG and inertial logging to
 verified Movesense Flash storage. This project reuses acquisition and
 governance infrastructure but does not use OpenSense.
 
-The documentation-first
+The operational
 [bilateral gait project](../projects/bilateral-gait/README.md) develops
 concurrent left/right distal-shank acquisition for flat-overground straight
 and turning gait. It begins with reliable placement, explicit side assignment,
@@ -27,25 +27,27 @@ claimed.
 
 ## Parallel bilateral gait execution order
 
-1. Review the project charter, placement protocol, acquisition requirements,
-   event model, schemas, and clinical-development boundaries.
-2. Measure two-sensor BLE throughput, native-clock offset, drift, gaps,
-   reconnect behavior, and residual alignment on a rigid fixture.
-3. Build a deterministic two-sensor simulator and recoverable recording
-   contract.
-4. Build localhost acquisition for explicit left/right assignment, preview,
-   calibration, structured context, bounded start/stop, exact events, and
-   finalization.
-5. Validate bilateral placement, one-leg-at-a-time passive knee-extension
-   calibration, and initial-to-final seated return error.
-6. Record controlled flat-overground straight and turning gait in authorized
-   non-patient development.
+1. Maintain the implemented project charter, placement protocol, acquisition
+   requirements, event model, schemas, and clinical-development boundaries.
+2. Use the operational acquisition application to collect the first governed
+   real two-sensor recording under the applicable authorized workflow.
+3. Measure two-sensor BLE throughput, native-clock offset, drift, gaps,
+   reconnect behavior, and residual alignment.
+4. Review packet continuity, event projections, active knee
+   extension/flexion calibration, straight segments, turns, pauses, repeated
+   gait bouts, and optional post-session quality references.
+5. Validate the workflow further with a rigid fixture and controlled
+   non-patient movement where technically meaningful.
+6. Use the HMS Lab Zotero evidence set to compare candidate gait-event methods,
+   benchmark implementations, applicable datasets, and validation references.
 7. Select and validate candidate gait-event methods against an appropriate
-   timing reference.
-8. Build read-only processing only after acquisition and timing contracts are
-   stable.
-9. Advance to governed clinical-development use only after applicable
-   authorization and metric-specific validation.
+   independent timing reference, including separate straight and turning
+   performance.
+8. Build read-only processing after the first source recordings establish the
+   acquisition and timing contracts.
+9. Advance each metric only after metric-specific validation; clinical-
+   development measurements remain adjuncts to the physical therapy
+   examination and movement system interpretation.
 
 ## Parallel tilt ECG execution order
 

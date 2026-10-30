@@ -6,14 +6,16 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
 
 ### Bilateral gait IMU project foundation
 
-- Created the documentation-first Bilateral Gait IMU Measurement and Recovery
-  Tracking project under `projects/bilateral-gait/`.
+- Created the Bilateral Gait IMU Measurement and Recovery Tracking project
+  under `projects/bilateral-gait/`, beginning with documentation and protocol
+  contracts before implementing acquisition.
 - Defined bilateral distal medial shank placement immediately proximal to the
   medial malleoli, with visually and palpably symmetrical placement and no
   centimeter measurement requirement.
 - Standardized `M` proximal on both limbs, explicit hardware-ID-to-side
-  assignment, and one-leg-at-a-time passive knee extension for role
-  verification and functional sagittal-axis calibration.
+  assignment, and one-leg-at-a-time active knee extension/flexion for role
+  verification and functional sagittal-axis calibration, with recorded
+  active-assisted or passive modes when needed.
 - Defined application-bounded start, stop, finalization, and recovery, with
   structured assistive-device, assistance, orthosis, surface, gait-bout,
   straight, and turning context.
@@ -30,6 +32,25 @@ Maintain this as a chronological record of completed work, evidence, decisions, 
 - Added a macOS launcher for browser operation outside VS Code. Hardware
   two-sensor timing and throughput validation and all processing remain
   pending.
+- Refined the acquisition workflow around active knee extension/flexion with
+  active-assisted or passive modes when needed, removed the separate walking
+  calibration, and moved optional post-walking standing and the strongly
+  recommended post-gait seated reference into a post-session quality check.
+- Clarified repeated gait-bout operation and context changes, including
+  user-facing controls to save device, assistance, and orthosis selections for
+  the next gait bout.
+- Created the project Zotero collection **Bilateral Gait IMU Measurement and
+  Recovery Tracking** and curated an initial 16-paper evidence set spanning
+  bilateral shank and foot sensing, post-stroke gait, impaired-gait event
+  detection, turning, orientation estimation, stride parameters, and algorithm
+  benchmarking.
+- Added a workspace-local, read-only Zotero helper and discoverable literature
+  skill. Verified library search, synchronized-PDF resolution, temporary text
+  extraction, and cleanup through Zotero Desktop without an API key.
+- Identified the PhysioNet multimodal posture and gait dataset as a possible
+  healthy-signal and straight-versus-turning pipeline fixture, but not a
+  clinical validation benchmark because it lacks a stroke population and an
+  independent gait-event reference standard.
 
 ## 2026-10-24
 

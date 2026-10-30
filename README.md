@@ -17,6 +17,18 @@ The Human Movement Systems Laboratory public project page describes the current
 [Tilt ECG Measurement and Physiology Review](https://movementsystems.org/hms-lab/projects/tilt-ecg-measurement-review/)
 work, its boundaries, and its future directions.
 
+## HMS Lab literature access
+
+When Zotero Desktop is open and its local API is enabled, this workspace can
+search the HMS Lab group library, resolve synchronized PDF attachments, and
+extract temporary searchable text with the
+[`scripts/zotero-library.mjs`](scripts/zotero-library.mjs) helper. A
+project-level Copilot skill makes this workflow discoverable for literature,
+evidence, citation, and paper-review tasks.
+
+See [`scripts/README.md`](scripts/README.md) for commands and prerequisites.
+PDFs and extracted full text remain outside this public repository.
+
 ## Repository projects
 
 - The root OpenSense work develops governed IMU acquisition, orientation
@@ -27,10 +39,10 @@ work, its boundaries, and its future directions.
   ambulatory on-sensor Flash logging. The project reuses Movesense
   infrastructure but has no OpenSense dependency.
 - [`projects/bilateral-gait/`](projects/bilateral-gait/) is a
-  documentation-first project for two-sensor bilateral shank acquisition,
-  structured gait context, synchronization validation, and later reviewed gait
-  metrics. Its acquisition and processing applications have not yet been
-  built.
+  project for two-sensor bilateral shank acquisition, structured gait context,
+  synchronization validation, and later reviewed gait metrics. Its governed
+  localhost acquisition application is operational; real two-sensor timing
+  validation and the processing application remain pending.
 
 ## Tilt ECG measurement and physiology review
 

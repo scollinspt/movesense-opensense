@@ -7,7 +7,9 @@ first localhost acquisition application supports simulator review, two-sensor
 hardware assignment, live preview, governed SQLite recording, structured
 events, finalization, checksums, and explicit recovery. Hardware timing and
 throughput validation remains pending. The processing application has not yet
-been implemented.
+been implemented. The HMS Lab Zotero collection for this project contains an
+initial 16-paper evidence set with locally accessible PDFs for algorithm,
+benchmark, validation, and interpretation work.
 
 ## Confirmed decisions
 
@@ -26,6 +28,8 @@ been implemented.
   when needed and recorded by limb.
 - A strongly recommended post-gait supported-seated reference follows the gait
   bouts and supports return-error review; it is not a gait calibration stage.
+- No separate walking-calibration stage is used; recorded gait bouts provide
+  the walking data for later algorithm development.
 - Application-bounded start, stop, finalization, and recovery.
 - First protocol: flat overground, including straight and turning gait.
 - Assistive device, physical assistance, orthosis, surface, and path geometry
@@ -41,18 +45,23 @@ been implemented.
 - Which reference system will validate each candidate gait event.
 - Metric-specific acceptance thresholds.
 - Whether a later report is useful before longitudinal repeatability is known.
+- Which literature-derived detector should be implemented first after the
+  initial recording establishes the source and timing contracts.
 
 ## Immediate next implementation sequence
 
-1. Review the documentation and initial contracts.
-2. Review the acquisition interface using its deterministic two-sensor
-   simulator.
-3. Measure two-sensor BLE and native-clock behavior.
-4. Validate hardware preview, role assignment, recording, finalization, and
-   recovery.
-5. Validate with a rigid fixture and non-patient development walking.
-6. Begin the processing application only after source and timing contracts are
-   stable.
+1. Collect and finalize the first governed real two-sensor recording under the
+   applicable authorized workflow.
+2. Inspect sample continuity, effective rates, native-clock behavior,
+   event-to-sample projections, and left/right role integrity.
+3. Confirm that initial calibration, gait-bout, path, context-change, and
+   post-session quality events support reproducible processing.
+4. Compare the Lanotte, Romijnders, Voisard, Gaitmap, and foundational
+   inertial-gait methods against the observed signal and timing contracts.
+5. Define an independent event-timing reference and metric-specific acceptance
+   criteria.
+6. Build read-only processing only after the source, synchronization, and
+   review contracts are stable.
 
 ## Boundary
 

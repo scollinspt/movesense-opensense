@@ -6,6 +6,35 @@ Convert finalized two-shank recordings into reviewed, provenance-linked gait
 events and descriptive measurements without overstating what two sensors can
 measure.
 
+## Literature and benchmark foundation
+
+The HMS Lab Zotero collection **Bilateral Gait IMU Measurement and Recovery
+Tracking** (`UU3XSCIM`) is the source of truth for the project's algorithm,
+benchmark, validation, and interpretation literature. Initial priorities are:
+
+- Lanotte et al. for bilateral leg-worn IMU gait tracking and temporal
+  asymmetry after stroke.
+- Romijnders et al. for the effect of curved walking and turning on bilateral
+  shank gait-event detection.
+- Voisard et al. for event-detection performance in moderate to severe
+  impaired gait, including post-stroke equinovarus gait.
+- Gaitmap for reproducible algorithm implementations and benchmarking
+  structure.
+- Sabatini, Salarian, Zdragkas, Rampp, and related foundational work for
+  algorithm lineage, signal features, and known limitations.
+- Yun and Bachmann for orientation-estimation methods when orientation becomes
+  necessary for a defined output.
+
+For every adopted method, record the source population, sensor placement,
+reference standard, walking conditions, outcomes, and limitations. A published
+method is not considered validated for this project until it meets a
+project-specific reference and acceptance criterion.
+
+The PhysioNet multimodal posture and gait dataset may support healthy-signal
+pipeline and straight-versus-turning checks. It must not be treated as a
+clinical benchmark because it contains healthy participants and does not
+provide an independent gait-event reference standard for the IMUs.
+
 ## Processing order
 
 1. Verify source finalization and checksums.
