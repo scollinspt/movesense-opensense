@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://movementsystems.org/schemas/bilateral-gait-event-v1.schema.json",
+  "title": "Bilateral gait acquisition event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "sequence",
+    "type",
+    "label",
+    "semantics",
+    "hostMonotonicSeconds",
+    "hostWallClockTime",
+    "streamProjection",
+    "data"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "bilateral-gait-event-v1"
+    },
+    "eventId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "type": {
+      "enum": [
+        "recording",
+        "calibration",
+        "gait_bout",
+        "path_segment",
+        "context_change",
+        "observation"
+      ]
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "semantics": {
+      "enum": [
+        "start",
+        "end",
+        "change",
+        "point"
+      ]
+    },
+    "hostMonotonicSeconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "hostWallClockTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "streamProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "left_distal_shank",
+        "right_distal_shank"
+      ],
+      "properties": {
+        "left_distal_shank": {
+          "$ref": "#/$defs/projection"
+        },
+        "right_distal_shank": {
+          "$ref": "#/$defs/projection"
+        }
+      }
+    },
+    "data": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "projection": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "sensorTimestamp",
+        "sampleIndex",
+        "absoluteTimeDifferenceSeconds"
+      ],
+      "properties": {
+        "sensorTimestamp": {
+          "type": "number"
+        },
+        "sampleIndex": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "absoluteTimeDifferenceSeconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
+

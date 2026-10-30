@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HMS Lab Bilateral Gait Acquisition</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Human Movement System Laboratory</p>
+      <h1>Bilateral Gait Acquisition</h1>
+    </div>
+    <div class="header-actions">
+      <span id="recording-badge" class="badge" hidden>Recording</span>
+      <button id="fullscreen" class="quiet inverse" type="button">Full screen</button>
+    </div>
+  </header>
+
+  <aside class="safety" role="note">
+    <strong>Clinical-development acquisition only.</strong>
+    This application is not a fall alarm and does not replace clinical
+    observation, guarding, assistive-device decisions, or stopping criteria.
+  </aside>
+
+  <main>
+    <section class="panel" aria-labelledby="connect-heading">
+      <div class="section-heading">
+        <div>
+          <p class="step">1 · Connect</p>
+          <h2 id="connect-heading">Assign two Movesense sensors</h2>
+        </div>
+        <button id="run-simulator" class="secondary" type="button">Run two-sensor simulator</button>
+      </div>
+      <p class="hint">
+        Assignment is explicit. The application never infers left and right
+        from the gait signal.
+      </p>
+      <div class="sensor-assignment">
+        <article class="sensor-card left">
+          <span class="side-label">Left distal shank</span>
+          <label>Movesense sensor
+            <select id="left-sensor">
+              <option value="">Scan to find sensors</option>
+            </select>
+          </label>
+          <dl>
+            <div><dt>Status</dt><dd id="left-status">Idle</dd></div>
+            <div><dt>Hardware</dt><dd id="left-hardware">—</dd></div>
+            <div><dt>Samples</dt><dd id="left-count">0</dd></div>
+          </dl>
+        </article>
+        <div class="connection-actions">
+          <button id="scan" class="secondary" type="button">Scan</button>
+          <button id="connect-hardware" type="button" disabled>Connect assigned sensors</button>
+          <button id="disconnect" class="danger" type="button" disabled>Disconnect</button>
+        </div>
+        <article class="sensor-card right">
+          <span class="side-label">Right distal shank</span>
+          <label>Movesense sensor
+            <select id="right-sensor">
+              <option value="">Scan to find sensors</option>
+            </select>
+          </label>
+          <dl>
+            <div><dt>Status</dt><dd id="right-status">Idle</dd></div>
+            <div><dt>Hardware</dt><dd id="right-hardware">—</dd></div>
+            <div><dt>Samples</dt><dd id="right-count">0</dd></div>
+          </dl>
+        </article>
+      </div>
+      <p id="connection-message" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="live-grid" aria-label="Live bilateral shank signals">
+      <article class="panel signal-card">
+        <div class="section-heading">
+          <div>
+            <p class="step">Live left shank</p>
+            <h2>Sagittal angular velocity</h2>
+          </div>
+          <strong id="left-velocity">— °/s</strong>
+        </div>
+        <canvas id="left-chart" width="900" height="240" aria-label="Live left shank angular velocity"></canvas>
+      </article>
+      <article class="panel signal-card">
+        <div class="section-heading">
+          <div>
+            <p class="step">Live right shank</p>
+            <h2>Sagittal angular velocity</h2>
+          </div>
+          <strong id="right-velocity">— °/s</strong>
+        </div>
+        <canvas id="right-chart" width="900" height="240" aria-label="Live right shank angular velocity"></canvas>
+      </article>
+    </section>
+
+    <section class="panel" aria-labelledby="setup-heading">
+      <div class="section-heading">
+        <div>
+          <p class="step">2 · Confirm</p>
+          <h2 id="setup-heading">Placement, side verification, and gait context</h2>
+        </div>
+        <span id="setup-state" class="state">Pending</span>
+      </div>
+      <div class="setup-layout">
+        <fieldset>
+          <legend>Placement</legend>
+          <label class="check"><input id="proximal-malleoli" type="checkbox"> Immediately proximal to both medial malleoli</label>
+          <label class="check"><input id="symmetrical-placement" type="checkbox"> Bilaterally symmetrical placement confirmed</label>
+          <label class="check"><input id="wordmarks-parallel" type="checkbox"> Wordmarks parallel to the shank long axes</label>
+          <label class="check"><input id="m-ends-proximal" type="checkbox"> M points proximally on both limbs</label>
+          <label class="check"><input id="mounts-stable" type="checkbox"> Mounts stable and clear of footwear and orthoses</label>
+        </fieldset>
+        <fieldset>
+          <legend>Side verification</legend>
+          <p class="hint">
+            Ask for active knee extension and flexion one leg at a time. Use
+            active-assisted or passive movement when needed and record the mode.
+          </p>
+          <label class="check"><input id="left-movement-verified" type="checkbox"> Left movement appeared in the left stream</label>
+          <label>Left movement mode
+            <select id="left-knee-movement-mode">
+              <option value="active">Active</option>
+              <option value="active_assisted">Active-assisted</option>
+              <option value="passive">Passive</option>
+            </select>
+          </label>
+          <label class="check"><input id="right-movement-verified" type="checkbox"> Right movement appeared in the right stream</label>
+          <label>Right movement mode
+            <select id="right-knee-movement-mode">
+              <option value="active">Active</option>
+              <option value="active_assisted">Active-assisted</option>
+              <option value="passive">Passive</option>
+            </select>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Initial gait context</legend>
+          <label>Environment
+            <select id="environment" disabled>
+              <option value="flat_overground">Flat overground</option>
+            </select>
+          </label>
+          <label>Assistive device
+            <select id="assistive-device">
+              <option value="none">None</option>
+              <option value="single_point_cane">Single-point cane</option>
+              <option value="quad_cane">Quad cane</option>
+              <option value="hemi_walker">Hemi-walker</option>
+              <option value="front_wheeled_walker">Front-wheeled walker</option>
+              <option value="four_wheeled_walker">Four-wheeled walker</option>
+              <option value="platform_walker">Platform walker</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label>Physical assistance
+            <select id="assistance-level">
+              <option value="independent">Independent</option>
+              <option value="supervision">Supervision</option>
+              <option value="contact_guard">Contact guard</option>
+              <option value="minimal_assistance">Minimal assistance</option>
+              <option value="moderate_assistance">Moderate assistance</option>
+              <option value="maximum_assistance">Maximum assistance</option>
+              <option value="total_assistance">Total assistance</option>
+            </select>
+          </label>
+          <label>Orthosis
+            <select id="orthosis">
+              <option value="none">None</option>
+              <option value="left_afo">Left AFO</option>
+              <option value="right_afo">Right AFO</option>
+              <option value="bilateral_afo">Bilateral AFO</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label>Other device or orthosis
+            <input id="other-description" type="text" maxlength="120" placeholder="Required only when Other is selected">
+          </label>
+        </fieldset>
+      </div>
+      <button id="confirm-setup" type="button" disabled>Confirm setup and context</button>
+      <p id="setup-message" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="recording-heading">
+      <div class="section-heading">
+        <div>
+          <p class="step">3 · Acquire</p>
+          <h2 id="recording-heading">Flat overground gait session</h2>
+        </div>
+        <span id="recording-clock" class="clock">00:00</span>
+      </div>
+      <div id="start-controls" class="start-controls">
+        <label>Governed data root
+          <input id="data-root" type="text" autocomplete="off">
+        </label>
+        <button id="start-recording" type="button" disabled>Start recording</button>
+      </div>
+
+      <div id="acquisition-controls" class="acquisition-controls inactive" aria-disabled="true">
+        <p id="acquisition-guidance" class="guidance">
+          Recording controls activate after setup confirmation and recording start.
+        </p>
+
+        <div class="control-group">
+          <h3>Calibration stages</h3>
+          <div class="button-grid calibration-grid">
+            <button data-calibration="initial_seated_reference" type="button">Initial seated reference</button>
+            <button data-calibration="left_knee_extension_flexion" type="button">Left knee extension / flexion</button>
+            <button data-calibration="right_knee_extension_flexion" type="button">Right knee extension / flexion</button>
+            <button data-calibration="pre_walking_supported_standing" class="secondary" type="button">Pre-walking supported standing</button>
+          </div>
+          <p class="hint">Press once to start a stage and again to end it.</p>
+        </div>
+
+        <div class="control-group gait-controls">
+          <div>
+            <h3>Gait bout</h3>
+            <button id="toggle-gait-bout" type="button">Start gait bout</button>
+          </div>
+          <div class="path-controls">
+            <h3>Path segment</h3>
+            <div class="button-grid path-grid">
+              <button data-path="straight" type="button">Straight</button>
+              <button data-path="turn_left" type="button">Turn left</button>
+              <button data-path="turn_right" type="button">Turn right</button>
+              <button data-path="transition" class="secondary" type="button">Transition</button>
+              <button data-path="pause" class="secondary" type="button">Pause</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-group context-change">
+          <h3>Save device/assistance change</h3>
+          <p class="hint">
+            After ending the current gait bout, update the selections above and
+            save them before starting the next gait bout.
+          </p>
+          <button id="record-context-change" class="secondary" type="button">Apply context to next gait bout</button>
+        </div>
+
+        <div class="control-group observation-row">
+          <label>De-identified observation label
+            <input id="observation-label" type="text" maxlength="100" placeholder="Example: unexpected interruption">
+          </label>
+          <label>Optional note
+            <input id="observation-note" type="text" maxlength="200" placeholder="Do not enter direct identifiers">
+          </label>
+          <button id="record-observation" class="secondary" type="button">Record observation</button>
+        </div>
+
+        <div class="control-group">
+          <h3>Post-session quality check</h3>
+          <p class="hint">
+            Complete after the gait bouts when clinically appropriate. These
+            references assess return error and possible attachment movement;
+            they are not gait outcomes.
+          </p>
+          <div class="button-grid post-session-grid">
+            <button data-calibration="post_walking_supported_standing" data-post-session class="secondary" type="button">Post-walking supported standing</button>
+            <button data-calibration="post_gait_seated_reference" data-post-session type="button">Post-gait seated reference</button>
+          </div>
+        </div>
+
+        <div class="event-log-wrap">
+          <h3>Acquired events</h3>
+          <ol id="event-log" class="event-log" reversed></ol>
+        </div>
+
+        <div class="final-actions">
+          <button id="stop-recording" class="danger" type="button">Stop and finalize</button>
+          <span id="recording-message" class="status" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="stop-dialog">
+    <form method="dialog">
+      <h2>Stop and finalize recording?</h2>
+      <p>
+        End any active calibration stage and gait bout first. Finalization
+        checkpoints the database and writes the checksum manifest.
+      </p>
+      <label>Type STOP AND FINALIZE
+        <input id="stop-confirmation" type="text" autocomplete="off">
+      </label>
+      <div class="dialog-actions">
+        <button value="cancel" class="secondary">Cancel</button>
+        <button id="confirm-stop" value="default" class="danger">Finalize</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

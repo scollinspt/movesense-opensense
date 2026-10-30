@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://movementsystems.org/schemas/bilateral-gait-manifest-v1.schema.json",
+  "title": "Bilateral gait recording manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "recordingId",
+    "startedAt",
+    "stoppedAt",
+    "finalized",
+    "protocol",
+    "sensors",
+    "placement",
+    "calibrationPlan",
+    "initialContext",
+    "sampleCounts",
+    "eventCount",
+    "artifacts",
+    "software"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "bilateral-gait-manifest-v1"
+    },
+    "projectId": {
+      "const": "hms-lab-bilateral-gait"
+    },
+    "recordingId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "stoppedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finalized": {
+      "const": true
+    },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "configId",
+        "environment"
+      ],
+      "properties": {
+        "configId": {
+          "const": "bilateral-gait-flat-overground-v1"
+        },
+        "environment": {
+          "const": "flat_overground"
+        }
+      }
+    },
+    "sensors": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "required": [
+              "role"
+            ],
+            "properties": {
+              "role": {
+                "const": "left_distal_shank"
+              }
+            }
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": [
+              "role"
+            ],
+            "properties": {
+              "role": {
+                "const": "right_distal_shank"
+              }
+            }
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "hardwareId",
+          "resource",
+          "requestedRateHz",
+          "sideVerificationAccepted"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "left_distal_shank",
+              "right_distal_shank"
+            ]
+          },
+          "hardwareId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "resource": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requestedRateHz": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "sideVerificationAccepted": {
+            "const": true
+          }
+        }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bilaterallySymmetrical",
+        "immediatelyProximalToMedialMalleoli",
+        "wordmarksParallel",
+        "mEndsProximal",
+        "mountsStable"
+      ],
+      "properties": {
+        "bilaterallySymmetrical": {
+          "const": true
+        },
+        "immediatelyProximalToMedialMalleoli": {
+          "const": true
+        },
+        "wordmarksParallel": {
+          "const": true
+        },
+        "mEndsProximal": {
+          "const": true
+        },
+        "mountsStable": {
+          "const": true
+        }
+      }
+    },
+    "calibrationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preferredMovementMode",
+        "assistanceWhenNeeded",
+        "leftKneeMovementMode",
+        "rightKneeMovementMode"
+      ],
+      "properties": {
+        "preferredMovementMode": {
+          "const": "active"
+        },
+        "assistanceWhenNeeded": {
+          "const": true
+        },
+        "leftKneeMovementMode": {
+          "enum": [
+            "active",
+            "active_assisted",
+            "passive"
+          ]
+        },
+        "rightKneeMovementMode": {
+          "enum": [
+            "active",
+            "active_assisted",
+            "passive"
+          ]
+        }
+      }
+    },
+    "initialContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "environment",
+        "assistiveDevice",
+        "assistanceLevel",
+        "orthosis"
+      ],
+      "properties": {
+        "environment": {
+          "const": "flat_overground"
+        },
+        "assistiveDevice": {
+          "enum": [
+            "none",
+            "single_point_cane",
+            "quad_cane",
+            "hemi_walker",
+            "front_wheeled_walker",
+            "four_wheeled_walker",
+            "platform_walker",
+            "other"
+          ]
+        },
+        "assistanceLevel": {
+          "enum": [
+            "independent",
+            "supervision",
+            "contact_guard",
+            "minimal_assistance",
+            "moderate_assistance",
+            "maximum_assistance",
+            "total_assistance"
+          ]
+        },
+        "orthosis": {
+          "enum": [
+            "none",
+            "left_afo",
+            "right_afo",
+            "bilateral_afo",
+            "other"
+          ]
+        },
+        "otherDescription": {
+          "type": "string",
+          "maxLength": 120
+        }
+      }
+    },
+    "sampleCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "left_distal_shank",
+        "right_distal_shank"
+      ],
+      "properties": {
+        "left_distal_shank": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "right_distal_shank": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "eventCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "relativePath",
+          "sha256",
+          "bytes"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "signals_sqlite",
+              "event_export",
+              "other"
+            ]
+          },
+          "relativePath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "software": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "applicationVersion"
+      ],
+      "properties": {
+        "applicationVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

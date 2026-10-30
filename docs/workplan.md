@@ -17,6 +17,36 @@ Its second phase will investigate ambulatory ECG and inertial logging to
 verified Movesense Flash storage. This project reuses acquisition and
 governance infrastructure but does not use OpenSense.
 
+The documentation-first
+[bilateral gait project](../projects/bilateral-gait/README.md) develops
+concurrent left/right distal-shank acquisition for flat-overground straight
+and turning gait. It begins with reliable placement, explicit side assignment,
+application-bounded recording, structured assistive-device and assistance
+context, and measured inter-sensor timing before gait metrics are selected or
+claimed.
+
+## Parallel bilateral gait execution order
+
+1. Review the project charter, placement protocol, acquisition requirements,
+   event model, schemas, and clinical-development boundaries.
+2. Measure two-sensor BLE throughput, native-clock offset, drift, gaps,
+   reconnect behavior, and residual alignment on a rigid fixture.
+3. Build a deterministic two-sensor simulator and recoverable recording
+   contract.
+4. Build localhost acquisition for explicit left/right assignment, preview,
+   calibration, structured context, bounded start/stop, exact events, and
+   finalization.
+5. Validate bilateral placement, one-leg-at-a-time passive knee-extension
+   calibration, and initial-to-final seated return error.
+6. Record controlled flat-overground straight and turning gait in authorized
+   non-patient development.
+7. Select and validate candidate gait-event methods against an appropriate
+   timing reference.
+8. Build read-only processing only after acquisition and timing contracts are
+   stable.
+9. Advance to governed clinical-development use only after applicable
+   authorization and metric-specific validation.
+
 ## Parallel tilt ECG execution order
 
 1. Inventory the candidate sensor's model, hardware revision, firmware, ECG

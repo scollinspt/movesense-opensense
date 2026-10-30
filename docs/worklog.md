@@ -2,6 +2,35 @@
 
 Maintain this as a chronological record of completed work, evidence, decisions, and blockers. Planned work belongs in the workplan; this log records what actually happened.
 
+## 2026-10-30
+
+### Bilateral gait IMU project foundation
+
+- Created the documentation-first Bilateral Gait IMU Measurement and Recovery
+  Tracking project under `projects/bilateral-gait/`.
+- Defined bilateral distal medial shank placement immediately proximal to the
+  medial malleoli, with visually and palpably symmetrical placement and no
+  centimeter measurement requirement.
+- Standardized `M` proximal on both limbs, explicit hardware-ID-to-side
+  assignment, and one-leg-at-a-time passive knee extension for role
+  verification and functional sagittal-axis calibration.
+- Defined application-bounded start, stop, finalization, and recovery, with
+  structured assistive-device, assistance, orthosis, surface, gait-bout,
+  straight, and turning context.
+- Limited the initial protocol to flat overground gait. Treadmill, obstacles,
+  ramps, stairs, and uneven surfaces remain deferred and separately modeled.
+- Added project charter, acquisition requirements, placement/calibration,
+  event model, synchronization, processing, validation, governance, continuity,
+  versioned configuration, and initial manifest and event schemas.
+- Built the first localhost bilateral-gait acquisition application with a
+  deterministic two-sensor simulator, explicit left/right hardware assignment,
+  live bilateral shank traces, placement and context confirmation, calibration
+  and gait triggers, governed SQLite finalization, checksums, and interrupted
+  recovery.
+- Added a macOS launcher for browser operation outside VS Code. Hardware
+  two-sensor timing and throughput validation and all processing remain
+  pending.
+
 ## 2026-10-24
 
 ### Panther PT passive head-up tilt report

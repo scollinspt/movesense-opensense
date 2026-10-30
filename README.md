@@ -6,6 +6,8 @@ An open development repository for governed Movesense measurement workflows:
    OpenSense/OpenSim.
 2. ECG and chest-angle acquisition, physiology review, and de-identified
    reporting during tilt-table testing.
+3. Bilateral distal-shank IMU acquisition and gait-measurement development for
+   physical therapy.
 
 Working software and engineering validation do not establish scientific
 validity, diagnostic validity, normative reference values, or readiness for
@@ -24,6 +26,11 @@ work, its boundaries, and its future directions.
   chest orientation during tilt-table testing. Later work may investigate
   ambulatory on-sensor Flash logging. The project reuses Movesense
   infrastructure but has no OpenSense dependency.
+- [`projects/bilateral-gait/`](projects/bilateral-gait/) is a
+  documentation-first project for two-sensor bilateral shank acquisition,
+  structured gait context, synchronization validation, and later reviewed gait
+  metrics. Its acquisition and processing applications have not yet been
+  built.
 
 ## Tilt ECG measurement and physiology review
 

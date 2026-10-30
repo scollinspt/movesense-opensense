@@ -1,0 +1,13 @@
+{
+  "name": "@hms-lab/bilateral-gait-acquisition",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "recover": "node recover.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}

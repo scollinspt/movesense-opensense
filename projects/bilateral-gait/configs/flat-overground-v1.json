@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "bilateral-gait-config-v1",
+  "configId": "bilateral-gait-flat-overground-v1",
+  "projectId": "hms-lab-bilateral-gait",
+  "status": "documentation_only",
+  "sensorRoles": [
+    "left_distal_shank",
+    "right_distal_shank"
+  ],
+  "placement": {
+    "landmark": "immediately proximal to but not on the medial malleolus",
+    "bilateralSymmetryRequired": true,
+    "distanceMeasurementRequired": false,
+    "strapRelationToShank": "perpendicular",
+    "wordmarkRelationToShank": "parallel",
+    "mEndDirection": "proximal"
+  },
+  "resources": {
+    "imu": {
+      "pathTemplate": "/Meas/IMU9/{rate}",
+      "requestedRateHz": 52,
+      "rateRequiresTwoSensorValidation": true,
+      "accelerationUnit": "m/s^2",
+      "angularVelocityUnit": "deg/s",
+      "magneticFieldUnit": "uT"
+    }
+  },
+  "enabledEnvironment": [
+    "flat_overground"
+  ],
+  "enabledPathSegments": [
+    "straight",
+    "turn_left",
+    "turn_right",
+    "transition",
+    "pause"
+  ],
+  "deferredTasks": [
+    "flat_treadmill",
+    "obstacles",
+    "ramps",
+    "stairs",
+    "uneven_overground"
+  ],
+  "requiredCalibrationLabels": [
+    "initial_seated_reference",
+    "left_knee_extension_flexion",
+    "right_knee_extension_flexion"
+  ],
+  "optionalPostSessionQualityLabels": [
+    "post_walking_supported_standing",
+    "post_gait_seated_reference"
+  ],
+  "kneeCalibration": {
+    "preferredMovementMode": "active",
+    "assistanceWhenNeeded": true,
+    "allowedMovementModes": [
+      "active",
+      "active_assisted",
+      "passive"
+    ],
+    "recordModeByLimb": true
+  },
+  "requiredRecordingEvents": [
+    "recording_start",
+    "gait_bout_start",
+    "path_segment_start",
+    "gait_bout_end",
+    "recording_stop"
+  ],
+  "output": {
+    "manifestSchemaVersion": "bilateral-gait-manifest-v1",
+    "eventSchemaVersion": "bilateral-gait-event-v1"
+  }
+}

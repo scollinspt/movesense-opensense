@@ -8,6 +8,7 @@ This directory will define the architecture, data contracts, synchronization, ca
 - [Worklog](worklog.md)
 - [Ambulatory movement R&D strategy](ambulatory-movement-rd-strategy.md)
 - [Tilt ECG project](../projects/tilt-ecg/README.md)
+- [Bilateral gait IMU project](../projects/bilateral-gait/README.md)
 - [Lower-extremity rig design brief](lower-extremity-rig-design-brief.md)
 - [Passive gimbal build guide (optional future fixture)](passive-gimbal-build-guide.md)
 - [Governance boundaries](governance-boundaries.md)
